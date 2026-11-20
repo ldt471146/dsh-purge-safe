@@ -236,3 +236,38 @@
 :is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-detail .rt-err {
 	color: #ffb4b4 !important;
 }
+
+/* 13. 技能库全局强制配色：不管面板根节点挂的是 rt-dock / rt-full / rt-embedded 还是带 rt-studio，
+      技能目录与详情的文字一律亮色、面板一律深色，杜绝"深底深字=点了没反应"。 */
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace {
+	background: #0b1b2b !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace :is(h1, h2, h3, h4, h5, p, span, small, strong, b, li, dt, dd, label, summary, em, code, pre, button, input, div.rt-skills-description, div.rt-skills-source, div.rt-skills-name) {
+	color: #e9f0f8 !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace :is(.rt-skills-description, .rt-skills-facts dt, .rt-skills-empty p, .rt-skills-path, small) {
+	color: #b9c8da !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace :is(.rt-skills-card, .rt-skills-catalog, .rt-skills-detail, .rt-skills-section, .rt-skills-tpl) {
+	background: rgba(13, 31, 50, .92) !important;
+	border-color: rgba(255, 255, 255, .14) !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace :is(.rt-skills-card.on, .rt-skills-card:hover) {
+	background: rgba(29, 78, 122, .92) !important;
+	border-color: rgba(120, 190, 255, .55) !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace :is(.rt-avail-available) {
+	color: #6ee7a8 !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace :is(.rt-avail-broken) {
+	color: #ff9d9d !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace pre {
+	background: rgba(0, 0, 0, .40) !important;
+	color: #e6eefc !important;
+}
+:is(.rt-dock, .rt-full, .rt-embedded, .rt-studio) .rt-skills-workspace input.rt-input {
+	background: rgba(255, 255, 255, .06) !important;
+	border-color: rgba(255, 255, 255, .18) !important;
+	color: #e9f0f8 !important;
+}
