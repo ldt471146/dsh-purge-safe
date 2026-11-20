@@ -173,3 +173,34 @@
 		align-items: start;
 	}
 }
+
+/* 11. 技能库两栏/单栏由实测宽度决定（rt-lay-wide / rt-lay-stack），不依赖容器查询 */
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-workspace {
+	max-width: 100%;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-wide {
+	display: grid !important;
+	grid-template-columns: minmax(240px, 32%) minmax(0, 1fr) !important;
+	align-items: start;
+	gap: 14px;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-wide > .rt-skills-catalog {
+	max-height: calc(100vh - 260px);
+	overflow: auto;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-wide > .rt-skills-detail {
+	min-width: 0;
+	min-height: 320px;
+	max-height: none;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-stack {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 12px;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-stack > .rt-skills-catalog {
+	max-height: 46vh;
+	overflow: auto;
+}

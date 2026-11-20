@@ -15838,6 +15838,37 @@ const productTheme = createProductTheme();
 	}
 }
 
+/* 11. 技能库两栏/单栏由实测宽度决定（rt-lay-wide / rt-lay-stack），不依赖容器查询 */
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-workspace {
+	max-width: 100%;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-wide {
+	display: grid !important;
+	grid-template-columns: minmax(240px, 32%) minmax(0, 1fr) !important;
+	align-items: start;
+	gap: 14px;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-wide > .rt-skills-catalog {
+	max-height: calc(100vh - 260px);
+	overflow: auto;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-wide > .rt-skills-detail {
+	min-width: 0;
+	min-height: 320px;
+	max-height: none;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-stack {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 12px;
+}
+:is(.rt-dock.rt-studio, .rt-full.rt-studio) .rt-skills-layout.rt-lay-stack > .rt-skills-catalog {
+	max-height: 46vh;
+	overflow: auto;
+}
+
 /* __DSH_PRODUCT_SKIN_END__ */
 `    /* ---------------------------------------------------------- 桥接与状态 */
     /** 是否在「全屏浏览」独立窗口里（URL hash 标记，复用同一套界面代码）。 */
@@ -17000,6 +17031,19 @@ const productTheme = createProductTheme();
       const [brokenOnly, setBrokenOnly] = React.useState(false)
       const [detailLoading, setDetailLoading] = React.useState(false)
       const detailRequest = React.useRef(0)
+      /* 面板宽度实测：>=880 用左右两栏（目录 + 详情同时可见），否则上下排布。
+         不依赖 @container / @media —— 宿主把面板塞进各种宽度容器里，媒体查询靠不住。 */
+      const wsRef = React.useRef(null)
+      const [wide, setWide] = React.useState(false)
+      React.useEffect(() => {
+        const el = wsRef.current
+        if (!el || typeof ResizeObserver === 'undefined') return undefined
+        const measure = () => { try { setWide(el.getBoundingClientRect().width >= 880) } catch { setWide(false) } }
+        measure()
+        const ro = new ResizeObserver(measure)
+        ro.observe(el)
+        return () => ro.disconnect()
+      }, [])
 
       const load = (force) => {
         setBusy(true)
@@ -17087,13 +17131,13 @@ const productTheme = createProductTheme();
       const fact = (label, value, className) => h(React.Fragment, null,
         h('dt', null, label), h('dd', { className: className || '' }, value || '—'))
 
-      return h('div', { className: 'rt-skills-workspace' },
+      return h('div', { className: 'rt-skills-workspace', ref: wsRef },
         h('div', { className: 'rt-skills-overview', 'aria-label': '技能目录概况' },
           h('div', { className: 'rt-skills-stat' }, h('strong', null, items.length), h('small', null, '目录技能')),
           h('div', { className: 'rt-skills-stat' }, h('strong', null, typeof meta.fromPlugin === 'number' ? meta.fromPlugin : '—'), h('small', null, '本插件自带')),
           h('div', { className: 'rt-skills-stat' }, h('strong', null, availSummary ? availSummary.available || 0 : '—'), h('small', null, '检查可用')),
           h('div', { className: 'rt-skills-stat' }, h('strong', null, availSummary ? (availSummary.broken || 0) + (availSummary.unknown || 0) : '—'), h('small', null, '不可用 / 未知'))),
-        h('div', { className: 'rt-skills-layout' },
+        h('div', { className: 'rt-skills-layout ' + (wide ? 'rt-lay-wide' : 'rt-lay-stack') },
           h('aside', { className: 'rt-skills-catalog', 'aria-label': '技能目录' },
             h('div', { className: 'rt-skills-filters' },
               h('div', { className: 'rt-skills-filter-heading' }, h('strong', null, '技能目录'), h('span', null, filtered.length + ' / ' + items.length)),
