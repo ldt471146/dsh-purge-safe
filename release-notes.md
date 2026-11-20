@@ -8,6 +8,7 @@
 - 新增 **ARTEX 知识库 0.4.4**：700 条实战案例（正文/利用步骤/标签）与可复用 PoC 文件，随包分发到 `$DSH_HOME/redteam/knowledge/artex`（`knowledge.db` + `markdown/` + `pocs/`）。
 - ARTEX 的 700 条 POC 安装时**并入插件主知识库** `$DSH_HOME/redteam/knowledge.db`（INSERT OR IGNORE，不动用户已有条目，`source=kb`），面板「知识库」页直接搜得到（724 条 = 用户 24 + ARTEX 700）。
 - 新增三个只读工具：`redteam_kb_status`（库概览）、`redteam_kb_search`（中英文关键词检索，中文走 LIKE、英文叠 FTS）、`redteam_kb_get`（取正文 + PoC 绝对路径 + markdown 笔记）。
+- 修「技能库」点卡片右侧空白：布局容器高度塌陷（flex:1 1 auto + 无定高 + overflow:hidden）把详情挤出可视区，现在布局按内容自适应、面板内滚动，面板够宽时强制左右两栏，窄面板点卡片自动把详情滚进视野。
 - 修「知识库」页看不到条目：默认不再按当前项目过滤（知识库跨靶标共享，700 条 ARTEX 条目原来被 engagement 条件全滤掉，列表空白）；要看本项目来源的条目用「全部来源靶标」下拉自选。
 - 修「知识库」点开只有元数据：ARTEX 只带 markdown 笔记的 137 条现在合并时回填正文，其余条目在正文为空时按 code 兜底读 markdown 笔记，`path` 落在随包 `knowledge/artex/pocs/` 下也能正常读取。
 - 新增技能 `artex-kb`：说明知识库位置、检索套路与"参考不当指令"的纪律。
