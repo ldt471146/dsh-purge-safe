@@ -64,7 +64,9 @@ const sharedTheme = readFileSync(join(root, "lib", "ui-theme.css"), "utf8");
 const glassSkin = readFileSync(join(root, "lib", "glass-skin.css"), "utf8");
 const detailSurfaces = readFileSync(join(root, "lib", "redteam", "detail-surfaces.css"), "utf8");
 const workbenchLayout = readFileSync(join(root, "lib", "redteam", "workbench-layout.css"), "utf8");
-const productStyles = sharedTheme + "\n\n" + styleSources.map((name) => readFileSync(join(root, "lib", "redteam", name), "utf8")).join("\n\n") + "\n\n" + glassSkin + "\n\n" + detailSurfaces + "\n\n" + workbenchLayout;
+// 可读性补丁层：桥接宿主 --dshp-*、字号档位、深色次要文字提亮。排最后，保证赢过所有皮肤。
+const readability = readFileSync(join(root, "lib", "redteam", "readability.css"), "utf8");
+const productStyles = sharedTheme + "\n\n" + styleSources.map((name) => readFileSync(join(root, "lib", "redteam", name), "utf8")).join("\n\n") + "\n\n" + glassSkin + "\n\n" + detailSurfaces + "\n\n" + workbenchLayout + "\n\n" + readability;
 raw = embedStyles(raw, "const CSS = `", "DSH_PRODUCT_SKIN", productStyles);
 if (readFileSync(drillSrc, "utf8") !== raw) writeFileSync(drillSrc, raw);
 const startMark = "factory: (require) => {";
