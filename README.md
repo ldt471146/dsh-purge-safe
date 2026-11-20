@@ -4,7 +4,7 @@
 
 <h1 align="center">⚔️ DeepSeek Harness cybersecurity red-team tool (dsh-purge-safe)</h1>
 
-<p align="center"><strong>Version 2.0.0</strong></p>
+<p align="center"><strong>Version 2.1.1</strong></p>
 
 <p align="center">
   <em>Full-featured edition + Super Agent support · DSH 0.2.2-rc.3 · Optimized prompts, fewer refusals, improved stability.</em>
@@ -46,6 +46,14 @@ Join our Telegram community to learn, exchange ideas, get technical support, and
 ---
 
 ## Latest updates
+
+**2.1.1 — skills & knowledge bundle**
+
+- Skills catalog now ships **293 skills** (41 flat skills + **252 directory skill packs** with references/examples).
+- Bundled **ARTEX knowledge base 0.4.4**: 700 POCs merged into the plugin knowledge DB (**724 rows total**), full text backfilled from markdown notes.
+- Three new agent tools: `redteam_kb_status`, `redteam_kb_search`, `redteam_kb_get` — query the knowledge base without leaving the session.
+- Skills page rewritten: inline-styled, detail panel pinned above the list, 293 skills clickable and readable regardless of host theme.
+- Knowledge page shows entries globally by default; POC detail no longer blank for markdown-only entries.
 
 **Full-featured edition + Super Agent support**
 

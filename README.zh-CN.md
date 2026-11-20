@@ -4,7 +4,7 @@
 
 <h1 align="center">⚔️ DeepSeek Harness 网络安全红队工具（dsh-purge-safe）</h1>
 
-<p align="center"><strong>Version 2.0.0</strong></p>
+<p align="center"><strong>Version 2.1.1</strong></p>
 
 <p align="center">
   <em>满血版本 + Super Agent 适配 · DSH 0.2.2-rc.3 · 优化提示词，降低拒绝率，提升稳定性。</em>
@@ -46,6 +46,14 @@
 ---
 
 ## 更新内容
+
+**2.1.1 — 技能与知识库整装**
+
+- 技能库一次装齐 **293 个技能**（41 个单文件技能 + **252 个目录式技能包**，含 references/examples）。
+- 随包 **ARTEX 知识库 0.4.4**：700 条 POC 合并进插件知识库（**全库 724 条**），正文全部由 markdown 笔记回填。
+- 新增三个智能体工具：`redteam_kb_status`、`redteam_kb_search`、`redteam_kb_get`。
+- 技能页整块重写：内联样式、详情固定在列表上方，293 个技能点开即读，不受宿主皮肤影响。
+- 知识库页默认全局展示；只有 markdown 笔记的条目点开也有正文。
 
 **满血版本 + Super Agent 适配**
 

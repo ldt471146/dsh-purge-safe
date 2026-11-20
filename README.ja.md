@@ -4,7 +4,7 @@
 
 <h1 align="center">⚔️ DeepSeek Harness サイバーセキュリティ レッドチームツール (dsh-purge-safe)</h1>
 
-<p align="center"><strong>バージョン 2.0.0</strong></p>
+<p align="center"><strong>バージョン 2.1.1</strong></p>
 
 <p align="center">
   <em>フル機能版 + Super Agent 対応 · DSH 0.2.2-rc.3 · プロンプト最適化、拒否率低減、安定性向上。</em>
