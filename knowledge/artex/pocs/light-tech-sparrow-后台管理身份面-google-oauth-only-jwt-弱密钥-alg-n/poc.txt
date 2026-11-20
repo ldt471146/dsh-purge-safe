@@ -1,0 +1,29 @@
+# Sparrow 管理身份面阴性结论（2026-11-11，intent 2414）
+
+## 认证实现
+- Vite+React SPA，前端路由仅 `/`、`/application/:appId`；无 /login、/admin 静态页。
+- 唯一登录：Google Identity Services，client_id `504112649413-ntas0dkjru60041m43cominotfgnamo9.apps.googleusercontent.com`。
+- 流程：GSI credential → `POST /api/auth/google {"token": credential}` → 成功 `{email, token, name, picture, exp}` → localStorage.user → 后续 `Authorization: Bearer <token>`。
+- 前端 bundle 无 client_secret / API key / 内嵌凭据。
+
+## 路由面（Express + nginx/1.26.0）
+- `POST /api/auth/google` → 无有效 Google ID token 时 401 `{"error":"Invalid token"}`（GET 404）。
+- `GET /api/applications` 200 匿名；`POST /api/applications` 201 匿名；`DELETE /api/applications/{appId}` 200 匿名（既有 #2001）。
+- `GET /api/applications/{appId}/emails` 与 `/emails/download` → 401 `Unauthorized: token required for reading emails`。
+- `GET /api/ab-test/{testId}` → 200 `[]` 匿名；`GET /api/ab-test/{testId}/{key}` → 404 `A/B test not found` 匿名；`POST/PUT/DELETE /api/ab-test/*` → 401 `Unauthorized`。
+- 其余 23+ 常见路径 404 `Cannot GET/POST`；注册/邀请/本地登录路径全 404。
+
+## 阴性测试（全 401/404，无一条 200）
+- /api/auth/google：空/{} /空 token/junk/三段 junk、alg=none 伪 Google ID token（正确 iss/aud/azp/sub/email_verified/exp，email 4 候选）、错 aud、缺 exp、过期、HS256 8 弱 secret、字段变体 credential/id_token/idToken/access_token/credential_token/googleToken、Wix 材料 instance/svSession/ctToken/mediaAuthToken/siteOwnerId/instanceId/siteId/metaSiteId/wixToken。
+- emails 读：无 auth、Bearer junk、原始 JWT、alg none/None/NONE/无 alg/HS384/空 secret、HS256 34 个贴合弱 secret、Wix 材料 Bearer、Cookie svSession/token/access_token/user、query token/access_token/auth/jwt/id_token、自定义头 x-access-token/x-auth-token/x-api-token/token/X-Token/x-sparrow-token/x-google-token。
+- ab-test 写：无 auth/alg=none/HS256 弱 secret → 401。
+
+## 判据与边界
+- 阳性门槛（admin 会话 或 可读 emails 的令牌）未达成；证伪条件=任一伪造返回 200 或错误消息变化。
+- 弱密钥未命中不代表不存在（无真实 token 样本）；服务端 Bearer 若为随机串则弱密钥路线不适用；Google ID token 需 Google 私钥，不碰 Google 账号。
+- 异常行为：非 JSON Content-Type → POST /api/auth/google 500（未捕获 TypeError）；非白名单 Origin → /api/applications 500（CORS 中间件抛错）。
+
+## 遗留线索
+1. `GET /api/ab-test/{真实testId}` 匿名可读性待验。
+2. 500 未捕获异常若开 stack trace 可泄露源码路径。
+3. sparrow-* 多租户，本结论仅覆盖本站实例。

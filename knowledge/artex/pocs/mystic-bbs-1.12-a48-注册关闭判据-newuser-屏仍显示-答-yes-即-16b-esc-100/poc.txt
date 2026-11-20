@@ -1,0 +1,6 @@
+判据与阴性结论（实测）：
+- 注册关闭时 newuser 屏仍会显示（Mystic 先打印 newuser 文案再问 Yes/No，AllowNewUsers 检查在 Yes 之后）。
+- Yes 路径（'y' 热键、或方向键选中后 CR）→ CreateNewUser 首行 If Not bbsCfg.AllowNewUsers → OutFile('nonewusr') + Halt(0)。线上观测=仅 16 字节 ESC[?1000l + 0x08×8 后 TCP EOF（nonewusr 文件缺失时为零文本）。
+- 控制组：'n'=4398B、CR=4365B，均重绘 banner 回到 "[þ] Enter your alias/handle:"（说明会话与提示本身正常）。
+- guest 账号存在但必须有口令（121B 含 "Enter your password:"）。
+- 因此依赖"登录账号→文件区上传/View"的链路（Zmodem zip-slip、[V] virtual archive disk 解包）在注册关闭期间不可执行，属环境阻断而非阴性；不要反复连接试探（本次目标已改文案声明 under bot attack）。

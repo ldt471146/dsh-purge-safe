@@ -1,0 +1,16 @@
+目标：任意 Shopify 店自定义域，POST https://<shop>/checkouts/unstable/graphql，零 Cookie / 零 X-Checkout-One-Session-Token / 零 build-id。
+
+1) introspection 匿名可用：{"query":"{__schema{queryType{fields{name}}}}"} => 40 个 QueryRoot 字段（retro32 实测）。
+2) 免会话可读字段（retro32 实测 200）：
+- extensionApiTokens(appId) => storefrontApi JWT（见 kb#671）：appId 66228322305（本店已装 Shopify Subscriptions）与 580111（平台常量）均返回；999999999/3373963 => null（安装 oracle）。
+- checkoutProfile{id name addressAutocompleteEnabled thankYouManageOrderButtonEnabled thankYouRecommendationsEnabled activatedExtensions{id publicIdentifier settings extension{appId appName appUrl apiKey apiVersion}}} => id=gid://shopify/CheckoutProfile/10006888795、name="My Store configuration"、ActivatedUiExtension/2349286393070576、publicIdentifier 01M73TGN3BXAYKNEQXCGSAQ3HZ、settings "{}"、extension{appId 66228322305, appName Subscriptions, appUrl subscriptions-app-remix.shopify.prod.shopifyapps.com, apiKey 171f15d3ddde593e9868b5ec489b9bec, apiVersion 2026-04}
+- checkoutProfile{activatedExtensions{apiTokens{storefrontApi{token expiresAt}}}} => 同款 JWT
+- appConfiguration{isCvvBypassEnabled features{isEmailMarketingEnabled isExpressCheckoutEnabled isSmsMarketingEnabled isTipsEnabled} headerText{visibility} checkoutAsGuest{visibility} contactInformation{visibility} footer{visibility}} => 结账配置
+- 另：apiClientIdV2=gid://shopify/App/580111、version=1、cardsinkUrl=https://checkout.pci.shopifyinc.com/sessions、extensionsAssetsPath=extensions.shopifycdn.com/shopifycloud/checkout-web/assets/、trackingTokens、country、payNowAction、privacyBannerSettings、globalCheckoutUiExtensions
+3) 仍强制会话（INVALID_SESSION_TOKEN）：session / shop / mobileCheckoutSdkConfig / shops(shopIds:[...])
+4) checkoutExtensionSessionToken(appId / extensionActivationId / registrationUuid / extensionType 任意组合) => 恒 null，不签发扩展会话令牌
+5) 消费面（与 kb#695 一致）：JWT 作 X-Shopify-Storefront-Access-Token 或 Authorization: Bearer 打 /api/graphql => 401 UNAUTHORIZED；匿名同店 {shop{name}} => 200 {"shop":{"name":"Retro32"}}；JWT 当 X-Checkout-One-Session-Token => INVALID_SESSION_TOKEN
+6) checkoutProfile(id:相邻 10006888796/10006888794) => null（按店隔离，无跨店 IDOR）；/apps/subscriptions、/a/subscriptions => 404（无 app proxy）
+7) receipt(receiptId) 无会话进入解析但要求有效不透明 gid（1/UUID 均 RESOURCE_NOT_FOUND "Invalid id"），无来源时不可用
+
+坑/判据：字段级豁免 ≠ 数据面可达；checkoutProfile 读到的扩展配置（apiKey 等）在公开结账页 HTML 同样内嵌，属公开数据，别按高危上报。唯一潜在真实消费方是 app 后端（如 subscriptions-app-remix.shopify.prod.shopifyapps.com，Shopify 托管），跨出店铺域即超出多数任务授权目标。Shopify SaaS 无服务端落地面，铸出的 1h JWT 是上限，不存在驻留入口。

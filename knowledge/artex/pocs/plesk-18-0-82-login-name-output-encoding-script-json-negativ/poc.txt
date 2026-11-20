@@ -1,0 +1,11 @@
+# Plesk 18.0.82.2 login_up.php 输出编码面（2026-11-11 直连实测，阴性）
+
+- 目标：mail.goffsgames.co.uk:443（88.208.224.249，Plesk Obsidian 18.0.82.2，sw-cp-server + php-fpm）
+- 前置校验：TLS issuer = Let's Encrypt CN=YR1，subject CN=server2.visionhost.co.uk；必须 unset *_proxy + --noproxy '*' + --resolve
+- 请求预算：10 发（5 失败 POST + 5 只读 GET），单线程、间隔 5–6s；Plesk 第 6 次连续失败登录锁 ~300s，本测试未触发
+
+## 结果
+1. login_name 回显：仅 1 处，位于 `<script>//<![CDATA[ Plesk.run({"config":...,"data":{"status":[...],"values":{"login_name":"..."}}}) //]]></script>` 的 JS 双引号字符串；json_encode 语义（`"`→`\"`、`\`→`\\`、`/`→`\/`），`</script>`→`<\/script>`；`<`/`>`/`'` 保留但为惰性文本。无逃逸。
+2. 404：`.php` 路径 404/16B `File not found.\n`（md5 4845f01eaa8068384625e302e9a4eb05）；无扩展名路径 404/990B（md5 09295dfbf56aa728aa13dd7224a1f177）。两者均不回显请求路径。
+3. locale：`?locale=`、`?locale_id=` 均被忽略，响应 200/103798B 不变（lang="en"、"locale_id":"default"）。
+4. 结论：Plesk 登录页预认证反射 XSS 输出面封口；残留仅为前端若以 innerHTML 消费 values.login_name 的 DOM 级风险（未做浏览器验证，页面由 plesk-ui-library 渲染，通常绑定 input.value）。

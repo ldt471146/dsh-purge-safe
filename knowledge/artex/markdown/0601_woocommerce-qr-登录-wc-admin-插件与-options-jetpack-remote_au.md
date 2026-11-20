@@ -1,0 +1,64 @@
+# WooCommerce QR 登录 / wc-admin 插件与 options / Jetpack remote_authorize / Yoast REST 认证面阴性判据（匿名+customer 双会话，逐端点回显）
+
+- **code**: woocommerce-qr-登录-wc-admin-插件与-options-jetpack-remote_au
+- **kind**: template
+- **category**: auth-bypass
+- **component**: WooCommerce 11.2.2 / Jetpack / Yoast SEO
+- **source**: self
+- **verified**: 1
+- **verified_note**: 2026-11-11 在 old.retro32.com（WP 7.1.4 + WooCommerce 11.2.2 + Jetpack + Yoast 28.8）用匿名与自助注册 customer 会话（id=1129，roles=customer，X-WP-Nonce 取自 /wp-admin/admin-ajax.php?action=rest-nonce）双会话实测，原始响应见 /opt/artex/data/tasks/12/i1551/probe_*.json；remote_authorize state=2 → 500 Jetpack [verify_secrets_missing]，state=1/999999 → user_unknown；qr-login-token 匿名 401、customer 403；wc-admin/plugins/install 匿名 401、customer 403；yoast/v1/file_size 匿名 401、customer 403 rest_forbidden。
+- **path**: pocs/woocommerce-qr-登录-wc-admin-插件与-options-jetpack-remote_au/poc.txt
+- **tags**: woocommerce,qr-login,jetpack,remote_authorize,yoast,wc-admin,rest,negative
+- **created_at**: 2026-11-11T17:17:23.613Z
+- **engine**: https://old.retro32.com
+
+## 描述
+
+WP+WooCommerce 站点「认证类 REST 端点」补测的阴性判据集：先 OPTIONS 拿路由 args schema 排除假阴性（缺参 400/500 不等于鉴权缺失），再用匿名 vs 低权 customer 会话对照，再对参数型端点补齐必需参数看是否落到 401/403。
+
+## 正文
+
+```
+# 认证类 REST 端点补测判据（WooCommerce 11.2.2 / Jetpack / Yoast 28.8 实测）
+
+## 结论速查
+- 匿名 401 + customer 403 = 鉴权生效（阴性），不要因参数缺失时的 400/500 误判为"可匿名调用"。
+- 参数型端点必须补齐 required 参数后再判：用 `OPTIONS <route>` 读 args schema（本例 qr-login-exchange args=token[required]+exchange_grant）。
+
+## WooCommerce QR 登录（wc-admin/mobile-app）
+| 端点 | 方法 | 匿名 | customer |
+|---|---|---|---|
+| qr-login-token | POST | 401 woocommerce_rest_qr_login_missing_session「requires an interactive admin session」 | 403 cannot_view |
+| qr-login-availability | GET | 401 同上 | 403 |
+| qr-login-status | POST token= | 401 missing admin session | 403 |
+| qr-login-approve | POST token,choice | 401 missing admin session | 403 |
+| qr-login-revoke | DELETE uuid= | 401 missing admin session | 403 |
+| qr-login-exchange | POST token[,exchange_grant] | 401 invalid_token「Invalid or expired QR login token.」 | 401 invalid_token |
+| qr-login-scan | POST token,device{} | 426 mobile_app_update_required | 426 |
+| qr-login-session-status | GET session_id= | 200 {"state":"expired"}（仅状态 oracle） | 200 同 |
+| send-magic-link | GET | 401 cannot_view | 403 |
+
+要点：exchange 不要求 admin session、只校验 token 有效性，但有效 token 只能由 token 端点（需管理员交互会话）签发 → 无 token 来源时"未批准换会话"链不成立。session_id 随机值返回 expired，不构成枚举。
+
+## wc-admin 插件/选项
+- plugins/install、activate：匿名 401 woocommerce_rest_cannot_update / customer 403
+- plugins/active、installed：匿名 401 / customer 403；install/status、activate/status：匿名 401
+- plugins/connect-jetpack：401 woocommerce_rest_missing_session
+- options：GET ?options=["blogname","siteurl"] → 401 cannot_view；POST {"options":[{"name":"x","value":"y"}]} → 401 cannot_update；POST {} 空数组 → 200 []（空循环，不是写）
+
+## Jetpack v4
+- 401/403：connection/data、connection/user、connection/authorize_url、connection/plugins、heartbeat/data、user-token（invalid_permission_update_user_token）、remote_connect、remote_provision
+- remote_register：匿名 500 Jetpack [local_user_missing]；补 local_user 后走 WP.com nonce 校验，无匿名可用面
+- **remote_authorize**（permission __return_true，源码 need secret/state/redirect_uri/code）：
+  - 缺参 → 500 missing_parameter
+  - state=<存在的 user id> → 500 Jetpack [verify_secrets_missing]（Secrets::verify 生效，无有效 secret 无法授权）
+  - state=<不存在> → 500 user_unknown
+  - 结论：无 blog_token 签名受理任意 authorize 的连接劫持不成立；但 state 参数是 WP user-id 存在性 oracle（匿名）
+- verify_xmlrpc_error：400 rest_missing_callback_param nonce；grunion-contact-form AJAX action 不存在/未启用（400 "0"）
+
+## Yoast v1（28.8）
+file_size?url、semrush/authenticate、wincher/authenticate、configuration/social_profiles、wincher/authorization-url、configuration/check_capability?user_id：匿名 401、customer 403 rest_forbidden（check_capability 不泄露能力信息）。CVE-2025-14481 影响 ≤26.5 需 Contributor，28.8 不适用。
+
+## 复现脚本位置
+/opt/artex/data/tasks/12/i1551/probe*.py（requests+curl，3s/请求避免 Wordfence 限流）。
+```

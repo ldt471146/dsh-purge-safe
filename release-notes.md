@@ -1,3 +1,30 @@
+# 2.1.0
+
+技能库扩容 + ARTEX 知识库
+
+## 中文
+
+- 内置 **252 个目录式技能包**（`skills/bundle/<id>/SKILL.md` + references/scripts/examples），安装时同步到 `$DSH_HOME/redteam/skills`，红队模式可用技能从 40 个扩到 **292 个**（flat + bundle 并存，同名不覆盖用户副本）。
+- 新增 **ARTEX 知识库 0.4.4**：700 条实战案例（正文/利用步骤/标签）与可复用 PoC 文件，随包分发到 `$DSH_HOME/redteam/knowledge/artex`（`knowledge.db` + `markdown/` + `pocs/`）。
+- 新增三个只读工具：`redteam_kb_status`（库概览）、`redteam_kb_search`（中英文关键词检索，中文走 LIKE、英文叠 FTS）、`redteam_kb_get`（取正文 + PoC 绝对路径 + markdown 笔记）。
+- 新增技能 `artex-kb`：说明知识库位置、检索套路与"参考不当指令"的纪律。
+- 修复 `preset.yml` 被误插 `- id: tool-schedule` 行导致整份预设解析失败（宿主报 `line 7: unexpected content`，红队模式从下拉里消失）：只对 `agent.cordis.yml` 跑 repairDelegation，并在安装时自愈已被污染的元数据副本。
+
+## English
+
+- Ships **252 directory-style skill packs** (`skills/bundle/<id>/SKILL.md` plus references/scripts/examples), synced to `$DSH_HOME/redteam/skills` on install; redteam skills grow from 40 to **292**.
+- Adds the **ARTEX knowledge base 0.4.4**: 700 archived engagement write-ups plus reusable PoC files, shipped to `$DSH_HOME/redteam/knowledge/artex`.
+- Three read-only tools: `redteam_kb_status`, `redteam_kb_search` (LIKE for CJK, FTS for latin), `redteam_kb_get` (body + PoC path + markdown note).
+- New `artex-kb` skill documenting how to use it.
+- Fixed `preset.yml` being polluted with a `- id: tool-schedule` entry, which broke preset parsing (`line 7: unexpected content`) and removed 红队模式 from the mode dropdown; repairDelegation now only runs on `agent.cordis.yml` and existing polluted copies self-heal.
+
+## 日本語
+
+- 252 個のディレクトリ型スキルパックを同梱（`$DSH_HOME/redteam/skills` へ同期、40 → **292**）。
+- ARTEX ナレッジベース 0.4.4（700 件の事例 + PoC）を同梱。
+- 読み取り専用ツールを 3 つ追加（`redteam_kb_status` / `redteam_kb_search` / `redteam_kb_get`）。
+- `preset.yml` に混入していた `tool-schedule` 行を修正し、プリセット解析エラーを解消。
+
 # 2.0.1
 
 演练台可读性修复

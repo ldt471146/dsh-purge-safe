@@ -1,0 +1,30 @@
+## 结论
+Fanatical 生产 API 的 URL 型参数面无 SSRF（证伪条件成立：全部参数白名单/格式校验、无任何服务端回连、内网目标与不存在域名响应同构）。
+
+## 测试矩阵（A=www 边缘，B=ws15 源站直连）
+- 通道 B：`curl -sk --noproxy '*' --resolve ws15.fanatical.com:443:3.33.161.45 -H 'Host: ws15.fanatical.com' -H 'X-Forwarded-Host: www.fanatical.com' -H 'X-Forwarded-For: 198.51.100.N' -A "$ARTEX_UA" -H 'anonid: <UUIDv4>' <url>`（响应 server: Heroku / via: 2.0 heroku-router）
+- 可控 sink：webhook.site token `2c86ab30-15c7-47ef-8517-8a5a7490634d`，全程日志 total=1（仅我方自测 token 页）。
+
+### /api/products/video-check/{src}
+- `dQw4w9WgXcQ` → 200/42B `{"status":"Video passed all conditionals"}`（冷 3.26s、热 0.4-0.9s，固定 YouTube 查询）
+- `aaaaaaaaaaa`、`169.254.169.254`、`10.0.0.1`、`100.100.100.200`、`localhost` → 200/41B `{"status":"Video is unlisted or private"}`
+- 任意 URL 形态（http(s)://webhook.site/...、http://169.254.169.254/latest/meta-data/、httpbin/delay、`//host/path`、`a@host`、`a.host`、编码斜杠）→ 均 41B、0.3-0.5s、无回连；`10.255.255.1` 无连接延迟（0.49-0.51s）→ 不是按 URL 取源
+- query `url/src/link/uri/host/target` 全部忽略（同 42B）
+
+### /api/ext/lookup/{type}/{id}
+- 合法枚举：steam / gog / humble / gmg；`steam/1245620` → 200/580B 站内商品 JSON；其它 type → 400/28B `{"err":"Type not supported"}`（实测 40+ 个 type 名）
+- id 传 URL/内网/穿越/参数注入形态 → 一律 404/27B `{"err":"Product Not Found"}`、0.2-0.6s、无回连、无报错泄露
+- query `url/site/host/fetch` 忽略（同 md5）
+
+### /api/ext/lookup/search/{term}
+- `elden ring` → 200/580B；miss → 404/27B；`site` / `price` / `currency_code` 与另外 18 个参数名全部无效
+- `site` = www.google.com / 127.0.0.1:6379 / localhost / 100.100.100.200 / 10.0.0.1 / [::1] / 169.254.169.254/latest/meta-data/iam/security-credentials/ / webhook.site token（裸/带路径/带 scheme）/ 不存在域 → body 全部同 md5 `fe691e9341`（200/580B，0.27-0.43s）
+
+### /api/blog-feed
+- 391,799B RSS（generator "RSS for Node"），内容源为 Prismic（images.prismic.io）；`url/feed/site/host/source/rss/limit` 与 POST body 全部无效
+
+## 边缘 WAF
+www 边缘 query 含 `http://169.254.169.254/...` → Cloudflare 403 4,549B「Attention Required!」。边缘阴性不作数，应用层结论以 ws15 直连（无 WAF）为准。
+
+## 遗留线索
+同一 `/api/ext/lookup/steam/1245620`，边缘与 ws15 源站稳定返回两份不同商品文档（_id 64383ff34dcce62fb4a97aaf vs 643840024dcce62fb4a993bf，GBP 4490 vs 4634），可查两通道数据源/缓存差异；video-check 对 ID 形态会触发固定 YouTube 查询（配额消耗点，非 SSRF）。

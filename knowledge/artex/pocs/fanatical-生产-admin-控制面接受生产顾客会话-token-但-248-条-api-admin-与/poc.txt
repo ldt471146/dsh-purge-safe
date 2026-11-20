@@ -1,0 +1,9 @@
+验证链（可直接复刻）：
+1) token 获取：GET https://apiprelive.fanatical.com/api/auth/fandom?redirectUrl=%2Fen%2Faccount%2Flogin&lang=en （--resolve apiprelive:443:3.33.161.45 + Host + X-Forwarded-Host + 唯一 XFF + UUID anonid）→ headful Chromium(Xvfb) 走 Fandom Hydra → 回跳 code+state → POST /api/auth/fandom/ body={code,state,snowplowId,snowplowSessionId,language} → 200 返回 token（同库且生产有效，见 finding#3610）。
+2) 生产 admin 直连：curl -sk --noproxy '*' --resolve admin.fanatical.com:443:13.248.131.213 -H "Authorization: <token>" https://admin.fanatical.com/api/admin/users
+3) 结果：403 {"code":403,"error":"User not permitted to user:view","user":"<userid>"}；无 token 401 {"code":401,"error":"User not authenticated"}；无效 token 401。
+4) bull-board：curl ... -H "Cookie: AdminAuth=<token>" https://admin.fanatical.com/bull-api/api/queues → 403 misc:queues；无 cookie → 401 "Missing authorization cookie"。
+5) 全量：从 /dist/modules.e9712d78.js.map 的 sourcesContent 提取 $http.get/post/put/delete/patch 里的 /api/admin/... 字面量（248 条），逐条按方法探测；本轮 244×403，未发现任何无权限校验端点。
+6) 跨环境：同 token adminstaging(3.33.240.98) → 401；ws15(3.33.161.45, XFH:www) /api/user/orders → 200 []。
+
+含义：生产 www 与生产 admin 共用同一顾客会话存储，认证边界为 0，唯一屏障是 admin 侧 RBAC；这不是可直接利用漏洞，但是「一旦拿到用户文档写入原语即可升级为 admin」的结构性前提。

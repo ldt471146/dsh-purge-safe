@@ -1,0 +1,7 @@
+判据（后人不重复走）：
+1) 基线：GET /?_task=login → 200/5337B；GET /plugins/<不存在>/<不存在>.php → 404/271B；GET /plugins/<不存在>/ → 403/274B（该 vhost 任意目录形态路径恒 403，403 不携带存在性语义）。
+2) 插件主文件：存在且被 PHP 解析 = 500/0B（空体 md5=d41d8cd98f00b204e9800998ecf8427e）；不存在 = 404/271B。
+3) 插件 action：GET /?_task=login&_action=plugin.<name> 若为未启用/无未认证分支插件，返回 200 标准登录页，长度 = 5337 + 3×len(action) + 9，差异仅 env JSON action、<body class="action-plugin-…">、_url 隐藏域（&amp; 转义），每次 request_token 随机。出现 3xx / 500带正文 / 非 roundcube_sessid 会话 / 无登录表单，才算异常。
+4) 核心：?_task=password、?_task=utils&_action=spell|text2html|kill_session|error、?_task=login&_action=oauth 同样全落登录页（password 仅 _url 反射 +3B）。
+5) HTTP Basic：Authorization: Basic base64(user:wrongpass) 不产生 401/WWW-Authenticate，也不产生 "Login failed"；http_authentication 插件不在预认证认证路径。
+注意：本靶标 Roundcube 为裁剪发行（new_user、squirrelmail_usercopy 目录不存在）。

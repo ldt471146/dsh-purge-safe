@@ -1,0 +1,57 @@
+# Shopify Storefront API 遗留 Checkout 族 mutation 已整体移除，且旧版本 endpoint 无降级窗口（负面情报）
+
+- **code**: shopify-storefront-legacy-checkout-mutations-removed
+- **kind**: poc
+- **category**: methodology
+- **component**: Shopify Storefront API (graphql)
+- **severity**: low
+- **source**: self
+- **verified**: 1
+- **verified_note**: 2026-11-11 www.thegamecollection.net 与 collect.thegamecollection.net 实测：checkoutCreate/checkoutCustomerAssociateV2/checkoutEmailUpdateV2/checkoutShippingAddressUpdateV2/checkoutDiscountCodeApplyV2/checkoutCompleteWithTokenizedPaymentV3 在 /api/graphql + 2022-10/2023-01/2023-04/2023-07 共 10 端点全部 "Field ... doesn't exist on type 'Mutation'"；2020-01~2022-07 共 12 个旧版本 endpoint 全部 200 返回最新 schema（无 checkoutCreate）；query 侧 checkout/checkouts undefinedField、node(gid://shopify/Checkout/<真实token>)→invalid id、... on Checkout→No such type；REST /api/checkouts.json→404。
+- **path**: pocs/shopify-storefront-legacy-checkout-mutations-removed/poc.txt
+- **tags**: shopify,storefront-api,graphql,checkout,legacy,negative,version-downgrade
+- **created_at**: 2026-11-11T19:34:20.964Z
+- **engine**: https://www.thegamecollection.net/api/graphql
+
+## 描述
+
+在 Shopify 托管店上别再试 legacy Checkout 族 GraphQL mutation（checkoutCreate / checkoutEmailUpdateV2 / checkoutShippingAddressUpdateV2 / checkoutDiscountCodeApplyV2 / checkoutCustomerAssociateV2 / checkoutCompleteWithTokenizedPaymentV3），也别指望用旧 API 版本（2020-01 等）召回它们——旧版本 endpoint 被 alias 到最新 schema。真实结账入口只有 cart 结账族（cartPrepareForCompletion / cartSubmitForCompletion → checkoutUrl → /checkouts/cn/<token> 或 shop.app）。
+
+## 用法
+
+```
+判定方法（3 步，约 5 个请求）：
+1) POST https://<shop>/api/graphql，body {"query":"{ __schema { mutationType { fields { name } } } }"} → 若字段清单只有 cart*/customer*/shopPay*（无任何 checkout*），legacy Checkout API 已不在该店 schema 中。
+2) 直接调用取证：{"query":"mutation { a1: checkoutCreate(input:{lineItems:[]}) { checkoutUserErrors { message } } }"} → 200 {"errors":[{"message":"Field 'checkoutCreate' doesn't exist on type 'Mutation'","extensions":{"code":"undefinedField"}}]}。
+3) 版本降级否定：POST /api/2020-01/graphql.json 与 /api/2022-07/graphql.json 同 payload → 均 200 且返回与最新版逐字节相同的 schema（Shopify 不做历史 schema 路由）。
+替代方向：走 cart 结账族（cartPrepareForCompletion 可回显 cart key+PII / cartSubmitForCompletion 换出 checkoutUrl，见 KB shopify-storefront-graphql-cartprepareforcompletion-裸-handle），checkout 会话层再打 /checkouts/unstable/graphql（session token + checkout token 均在页面 meta）。
+```
+
+## 正文
+
+```
+# Shopify Storefront API 遗留 Checkout 族 mutation：已整体移除且无法版本降级
+
+## 结论（2026-11-11 两店实测，observed/confirmed）
+在 Shopify 托管店 www.thegamecollection.net（thegamecollection.myshopify.com）与 collect.thegamecollection.net（tgc-collectables.myshopify.com）上：
+
+1. **mutationType 共 42 字段，零 checkout***：全部为 cart*(28) / customer*(13) / shopPayPaymentRequestSessionCreate|Submit(2)。
+2. **6 个遗留 mutation 逐端点 undefinedField**（2 店 × /api/graphql、/api/{2022-10,2023-01,2023-04,2023-07}/graphql.json = 10 次请求，每次 6 个别名）：
+   checkoutCreate / checkoutCustomerAssociateV2 / checkoutEmailUpdateV2 / checkoutShippingAddressUpdateV2 / checkoutDiscountCodeApplyV2 / checkoutCompleteWithTokenizedPaymentV3
+   → HTTP 200 `{"errors":[{"message":"Field 'checkoutCreate' doesn't exist on type 'Mutation'",...,"extensions":{"code":"undefinedField","typeName":"Mutation","fieldName":"checkoutCreate"}}]}`（6/6）
+3. **无版本降级窗口**：2020-01 / 2020-07 / 2020-10 / 2021-01 / 2021-04 / 2021-07 / 2021-10 / 2022-01 / 2022-04 / 2022-07（+collect 2021-01/2022-07）全部 HTTP 200 返回**与当前逐字节相同**的 schema（md5 一致、1464B、checkoutCreate 命中 0）。即 `/api/<旧版本>/graphql.json` 不是历史 schema 路由，而是 alias 到最新版。
+4. **query 侧同样封死**：`query { checkout(id:) }` / `query { checkouts(first:) }` → "Field ... doesn't exist on type 'QueryRoot'"；`node(id:"gid://shopify/Checkout/<真实 checkout token>")` → `{"errors":[{"message":"invalid id"}],"data":{"node":null}}`；加 `... on Checkout` → "No such type Checkout, so it can't be a fragment condition"。
+5. **REST 遗留面**：GET /api/checkouts.json、/checkouts/<token>.json、/api/2023-07/checkouts.json → 全 404（4264B Shopify HTML 404）。
+6. **正向对照**（证明请求格式/通道有效）：同端点匿名 `cartCreate` → 200 `userErrors:[]` 返回真实 `gid://shopify/Cart/<handle>?key=<40hex>` 与 checkoutUrl；`node(Cart GID) ... on Cart` 正常返回 Cart（totalQuantity 1 / 47.95 GBP）。
+
+## 影响
+本次判据（"旧版本仍启用 checkoutCreate 且匿名回显真实 checkout" / "checkout 对象在新会话可读或可写 buyer PII"）**不成立**。是 schema 层面不存在该类型，不是"需 token/需 key"类限制。
+
+## 替代路径（真实结账入口仍存在）
+- `cartPrepareForCompletion` 裸 cart handle → 回显真实 `?key` + buyer email/phone + 完整收货地址（KB: shopify-storefront-graphql-cartprepareforcompletion-裸-handle）。
+- `cartSubmitForCompletion` 裸 handle → `userErrors:[]` + 不含 key 的 `checkoutUrl`（`/cart/c/<handle>`）→ 302 到 `shop.app/checkout/<shop_id>/cn/<checkout_token>/...`（带 `shop_pay_token` HS256 JWT、`ur_back_url=https://<shop>/checkouts/cn/<checkout_token>/...`）或店域 `/checkouts/cn/<token>`。
+- checkout 会话层：`/checkouts/unstable/graphql`，页面 meta 含 `X-Checkout-One-Session-Token` 与 `X-Checkout-Web-Unstable-Id`。
+
+## 依据
+两店 2×5 端点 + 12 个旧版本 endpoint + query/node/REST 探测，原始响应落盘 task#7/i2346/（intro_*.json、leg_*.json、old_*.json、q_*.json、pos_cartcreate.json 等）。
+```

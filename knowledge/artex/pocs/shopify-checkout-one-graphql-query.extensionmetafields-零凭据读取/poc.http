@@ -1,0 +1,25 @@
+适用：Shopify 托管店（Checkout One API）。
+
+请求：
+POST /checkouts/unstable/graphql HTTP/2
+Host: <shop>
+Content-Type: application/json
+
+{"query":"{extensionMetafields{namespace key value ownerId ownerType}}"}
+
+实测响应（retro-refresh.com）：
+HTTP 200
+{"data":{"extensionMetafields":[{"namespace":"mm_google_shopping_extension","key":"merchant_id","value":"5823002905","ownerId":"gid://shopify/Shop/103967621452","ownerType":"SHOP"}]}}
+
+阴性对照：
+- {"query":"{session{__typename}}"} → {"errors":[{"message":"Invalid session token.","extensions":{"code":"INVALID_SESSION_TOKEN"},"path":["session"]}]}
+- {"query":"{shop{id}}"} → INVALID_SESSION_TOKEN
+- POST /api/2026-04/graphql.json {"query":"{shop{metafields(identifiers:[...]){...}}}"} → ACCESS_DENIED（需要 unauthenticated_read_metafields）
+
+边界：
+- mutation writeAppMetafields(operation:SET, ...) → errors:[{"message":"Invalid session"}]
+- extensionApiTokens(appId:"gid://shopify/App/<id>"){storefrontApi{token}} → 铸出 HS256 JWT（iss=shopify, sub/cid=<appId>, sid=<shopId>），以 X-Shopify-Storefront-Access-Token 或 Bearer 打 /api/graphql 均 401 UNAUTHORIZED
+- checkoutExtensionSessionToken 无 registrationUuid 时返回 null
+- receipt(receiptId) 需真实 GID，猜解返回 RESOURCE_NOT_FOUND
+
+性质：字段级鉴权豁免，非端点整体开放；泄露值不含 PII/密钥，属信息泄露。

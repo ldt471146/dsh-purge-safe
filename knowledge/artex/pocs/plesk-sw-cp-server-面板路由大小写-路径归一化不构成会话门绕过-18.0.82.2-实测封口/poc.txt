@@ -1,0 +1,15 @@
+判据（逐字节三态基线，必须在直连下做）：
+1) 不存在路径 GET /nosuch-xxx → Plesk 404 页 990B（body md5 固定）
+2) 首段大写 POST /ADMIN/... → JSON 404 41B {"code":"404","message":"Page Not Found"}
+3) 小写首段受保护 POST /admin/<mod>/<action> → 400 / Content-Length 0 / text/html; charset=UTF-8（会话门；与 /admin/<mod>/nosuch-action 的 400 完全同字节）
+4) GET 同路径 → 303 Location: https://<host>/login.php?success_redirect_url=%2Fadmin%2F<mod>
+
+已实测阴性的变体（全部不区别于 400/0B 或 41B JSON 404）：
+- 首段大小写：/Admin/、/aDmIn/、/ADMIN/RESELLER/GENERATE-SECRET、/SMB/user/…、//ADMIN/…、/ADMIN//reseller/…、/ADMIN/reseller/.../、尾点、;.css、/ADMIN/./reseller/…、/%41DMIN/、全角ＡＤＭＩＮ
+- 小写首段 + 归一化/段内大小写：/admin/reseller/generate-secret/、generate-secret.、generate-secret;.css、/admin/./reseller/…、generate-secret%20、/%61dmin/…、/admin/Reseller/…、/admin/reseller/GENERATE-SECRET、/smb/User/GENERATE-SECRET、/cp/admin/reseller/…
+- 也测过：假 Cookie、Origin/Referer、form-urlencoded、X-HTTP-Method-Override、X-Forwarded-For/X-Real-IP=127.0.0.1（前轮已阴性）
+唯一异常：/admin%2Freseller%2Fgenerate-secret → 404/268B / iso-8859-1 Apache 风格 "Not Found"（第三层处理器，非会话门非 JSON 404），值得继续试 %2F 其它位置与 %252F。
+
+旁证（同一面板）：GET /api/v2/ 未认证 200（2489B Swagger UI，列出 /api/v2/openapi.json、/api/v2/swagger.json、/api/modules/wp-toolkit/v1/specification/public）；POST /api/v2/auth → 404/736B 自定义 HTML。Plesk REST API 与面板前端是两层。
+
+【重要陷阱】本环境记录代理（HTTP_PROXY）对部分 POST（如 /admin/reseller/generate-secret）返回 curl rc=52 "Empty reply from server"，直连 --noproxy '*' 才得到真实 400/0B。判定此类并发敏感路径必须直连或双通道对照，否则会把代理故障误读成服务端差异（假阳性线索）。

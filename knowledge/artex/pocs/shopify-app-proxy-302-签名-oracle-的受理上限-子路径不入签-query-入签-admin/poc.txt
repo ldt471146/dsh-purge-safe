@@ -1,0 +1,24 @@
+## 判据（可复现）
+1. GET https://<shop>/apps/<handle> 与 /apps/<handle>/api，看三类指纹：
+   - 404 len=0 → 未注册；
+   - 302 → Location=https://<shop>.myshopify.com/admin/apps/<api_key>/proxy<sub>?logged_in_customer_id=&path_prefix=%2Fapps%2F<handle>&signature=<64hex>&timestamp=<unix> → 已注册，落点为 admin proxy；
+   - 404 有非主题长度/上游头（x-runtime、vary: Accept,X-Requested-With,Origin、link 指向 app 域名）→ 已注册且代理直连上游。
+2. 签名语义拆变量（需同秒并发 2 条，仅此实验允许打破 3s 间隔）：
+   - 同 timestamp、同 query、不同子路径 → signature 相同 ⇒ 子路径不入签；
+   - 同 timestamp、同子路径、不同 query → signature 不同 ⇒ extra(query) 入签。
+3. 受理面测试：把 302 Location 投回（有效 / signature 全0 / 跨店 / 篡改 extra / timestamp 回拨），比较响应。全部同一 302 /admin/auth/login ⇒ 该端点验签前先做 staff 门禁，签名 oracle 无可用接收面。
+
+## 实测结果（thegamecollection.net 两店）
+- revize：www/collect 全部子路径（含 /api/v1/orders、/returns、/portal、/rma、/graphql 等）均 302 admin proxy；POST 子路径为 404 Rails 默认页 1722B；无任何 200/JSON。
+- download-pdf（Order Printer Pro）：仅 /<template_guid>/orders/<order_id> 与 /<template_guid>/draft_orders/<id> 命中上游（404 852B、title=Documents、正文 ORDER NOT FOUND、link 指向 orderprinterpro.com/assets）；随机/全零 guid → Shopify 0B 404；order_id=1/0/-1/abc/999999999/9999999999999、?security=/?security_token=/?token=/?s=/?template_id=/?shop=、POST、跨店 guid 全部 852B 同型，无错误差异。
+- 客户态：已登录客户 cookie → revize 302 admin proxy 且 logged_in_customer_id=<customer_id>（客户身份入签）；持未登录会话 cookie → 302 /customer_authentication/sso_redirect?return_to=<同源>；完全无 Cookie → 直达上游/302 admin proxy（不触发 SSO）。sso_redirect 对外部/协议相对 return_to 一律退 account 首页或 OAuth，同源才直跳。
+- 跨店：www 的 template guid 在 collect 店同样命中上游（模板 guid 全局），但订单数据仍 ORDER NOT FOUND。
+
+## 证伪条件（出现任一条即结论需重开）
+- admin proxy 端点对无效签名返回 403/400（而非统一 302 login）⇒ 验签可观测；
+- 同 timestamp 同 query 不同子路径 signature 不同 ⇒ 子路径入签；
+- 拿到任一自建订单号后匿名 GET 返回 200 PDF/HTML 含订单字段 ⇒ download-pdf 面成立；
+- 取得 admin/staff 会话后 admin proxy 转发到 app 后端 ⇒ revize 面重开。
+
+## 线索
+app proxy customer-authentication 分支差异（无 cookie 直达上游 vs 持未登录 cookie 被 sso_redirect 拦）可外推到其它已注册 app proxy（如 /apps/secomapp_freegifts_get_order 匿名读车）复测。

