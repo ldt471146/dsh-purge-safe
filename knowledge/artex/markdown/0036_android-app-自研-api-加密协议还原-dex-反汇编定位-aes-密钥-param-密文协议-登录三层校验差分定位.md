@@ -7,7 +7,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在本靶标实测全链路成立：① 自写反汇编器解出 target23.example.com.boxbox.l.h4 的 Key=666cZgxFh9OQpbeL / IV=0851649102654985；② 用该密钥离线解密真机 pcap 全部 7 条密文成功；③ 自写客户端 dgha_api.py 对 http://example.com:34672/api 在线验证——服务端正确解密 param 并返回业务数据（user/getUserInfo 读到 618189 完整档案含 machineCode，user/recharge/getList 越权读到 userId=503702 充值流水，user/task/v320/getList 读到其 balance 7106.20）；④ 差分实验判定口令正确（8011/8016 vs 对照"账户密码错误"）。落库：vuln 61、HTTP 证据 34/35、链步骤 seq 117-122、攻击文件 dgha_api.py/dexlib.py/dex_disasm.py。
+- **verified_note**: 在本靶标实测全链路成立：① 自写反汇编器解出 com.cn.boxbox.l.h4 的 Key=666cZgxFh9OQpbeL / IV=0851649102654985；② 用该密钥离线解密真机 pcap 全部 7 条密文成功；③ 自写客户端 dgha_api.py 对 http://example.com:34672/api 在线验证——服务端正确解密 param 并返回业务数据（user/getUserInfo 读到 618189 完整档案含 machineCode，user/recharge/getList 越权读到 userId=503702 充值流水，user/task/v320/getList 读到其 balance 7106.20）；④ 差分实验判定口令正确（8011/8016 vs 对照"账户密码错误"）。落库：vuln 61、HTTP 证据 34/35、链步骤 seq 117-122、攻击文件 dgha_api.py/dexlib.py/dex_disasm.py。
 - **path**: pocs/android-app-自研-api-加密协议还原-dex-反汇编定位-aes-密钥-param-密文协议-登录三层校验差分定位/poc.py
 - **tags**: android,dex,reverse,aes,protocol,app-api,param-encryption
 - **created_at**: 2026-09-28T09:29:00.361Z
@@ -66,7 +66,7 @@ new-instance  v6, javax.crypto.spec.IvParameterSpec
 invoke-direct {v6, v7}, IvParameterSpec-><init>(byte[])
 invoke-virtual {v3, v1, v5, v6}, javax.crypto.Cipher->init   # v1 = ENCRYPT_MODE
 ```
-实例：`target23.example.com.boxbox.l.h4` 的字段 `b`/`c` 即 Key/IV。
+实例：`com.cn.boxbox.l.h4` 的字段 `b`/`c` 即 Key/IV。
 
 ## 4. 用真机抓包做**零请求**验证
 拿到 key/iv 后先解密已有 pcap 的全部密文（自写 TCP 流重组），明文能读出可读 JSON 才算解对；注意抓包主机上的失败流（RST、服务端 payload=0）**其客户端密文依然有效**，可用于验证。

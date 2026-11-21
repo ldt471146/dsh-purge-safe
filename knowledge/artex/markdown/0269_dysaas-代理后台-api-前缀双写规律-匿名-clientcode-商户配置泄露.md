@@ -10,7 +10,7 @@
 - **verified**: 1
 - **verified_note**: 2026-10-08 复核与修正（exploit 角色）：
 ① **源站 203.0.113.86 已对我方全部出口 L4 黑洞**（443/80/9960/22 TCP 与 TLS 握手全超时，直连出口 203.0.113.47 与代理出口 203.0.113.53 都一样）——本条 POC 记的「源站 203.0.113.86:443」现在打不通。
-② 恢复通道：example.com → CNAME target292.example.com，是极星云 CDN 轮询解析；穷举 A/AAAA 得 9 个边缘 IP，其中 **203.0.113.48:443 与 203.0.113.93:443 仍放行**，固定 SNI+Host=example.com 即可复活。同一批边缘也反代 example.com（/xxa 网关）。
+② 恢复通道：example.com → CNAME letebeto.ccname.org，是极星云 CDN 轮询解析；穷举 A/AAAA 得 9 个边缘 IP，其中 **203.0.113.48:443 与 203.0.113.93:443 仍放行**，固定 SNI+Host=example.com 即可复活。同一批边缘也反代 example.com（/xxa 网关）。
 ③ 匿名 clientCode 实测仍为 200，且用 Accept: application/vnd.dysaas.v1+json 拿到代理后台侧数据（id=70 / 6T体育 / userPrefix=ffty / operator=xinron / clientFolder=fftya041 / agentDomain 10 个代理域名）。不加该 Accept 头会路由到平台侧、返回另一套 clientCode。
 ④ **口令加密修正**：代理后台入口 bundle /js/app.37e6de38.js 里唯一加密函数是 CryptoJS.AES.encrypt(Utf8.parse(t), Utf8.parse('pigxpigxpigxpigx'), {iv: Utf8.parse('pigxpigxpigxpigx'), mode: CBC, padding: Pkcs7}) + Base64.stringify(ciphertext)，即 AES-CBC + **Pkcs7** + key=iv=pigxpigxpigxpigx；encrypt("Sr960823") = **2w1KjdndZSyRb8h0Mt3GTQ==**（原记录的 Ud7KEC4K4Kk6x47kBZa3BA== 是零填充的结果，不是本算法输出）。
 ⑤ 代理后台 Authorization 用**裸 token（无 Bearer 前缀）**；裸 token 打受保护接口返回 200 {"code":16003}（token 无效），带 Bearer 则 401。

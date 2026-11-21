@@ -6,7 +6,7 @@
 - **language**: http
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 target38.example.com（New API example.com）实测验证：带泄露令牌 sk-hMdKUabqMiRM247Y2b23B02e8f484a9198D27cA2D66eAe4d → HTTP 403 {"error":{"message":"User has been banned"}}；同端点不带 Authorization → HTTP 401 {"error":{"message":"Invalid token"}}。据此判定该令牌真实存在但所属账号已封禁、不可用。
+- **verified_note**: 在 api.xqtd520qidong.com（New API example.com）实测验证：带泄露令牌 sk-hMdKUabqMiRM247Y2b23B02e8f484a9198D27cA2D66eAe4d → HTTP 403 {"error":{"message":"User has been banned"}}；同端点不带 Authorization → HTTP 401 {"error":{"message":"Invalid token"}}。据此判定该令牌真实存在但所属账号已封禁、不可用。
 - **path**: pocs/new-api-one-api-网关令牌有效性判别法-invalid-token-vs-user-has-been-banned/newapi-token-validity-probe.http
 - **tags**: new-api,one-api,令牌判别,代码泄露,凭据,零爆破
 - **created_at**: 2026-09-28T15:43:22.216Z

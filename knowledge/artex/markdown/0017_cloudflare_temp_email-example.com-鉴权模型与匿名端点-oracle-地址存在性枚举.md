@@ -10,7 +10,7 @@
 - **source**: self
 - **source_url**: https://github.com/dreamhunter2333/cloudflare_temp_email/blob/v1.1.0/worker/src/worker.ts
 - **verified**: 1
-- **verified_note**: 在 example.com（203.0.113.22，cloudflare_temp_email example.com）实测确认：/api/* 前缀级 401 一致性、白名单仅 /api/new_address 与 /api/address_login、address_login 401/404 oracle 可用并成功枚举出 user@example.com / user@example.com / user@example.com，new_address 回 D1_ERROR no such column: password 且地址经 oracle 复核确实落库。鉴权侧证伪项：JWT_SECRET 字典 169 候选与 ADMIN_PASSWORDS 字典 89 候选均未命中，/telegram/* 未部署 bot，/user_api 注册禁用且 OAuth2 未配置。
+- **verified_note**: 在 example.com（203.0.113.22，cloudflare_temp_email example.com）实测确认：/api/* 前缀级 401 一致性、白名单仅 /api/new_address 与 /api/address_login、address_login 401/404 oracle 可用并成功枚举出 support@xxworld.org / support@nananobanana.com / support@miaomiaocode.com，new_address 回 D1_ERROR no such column: password 且地址经 oracle 复核确实落库。鉴权侧证伪项：JWT_SECRET 字典 169 候选与 ADMIN_PASSWORDS 字典 89 候选均未命中，/telegram/* 未部署 bot，/user_api 注册禁用且 OAuth2 未配置。
 - **tags**: cloudflare_temp_email,临时邮箱,未授权,用户枚举,版本差异分析
 - **created_at**: 2026-09-27T20:04:26.562Z
 - **found_by**: exploit

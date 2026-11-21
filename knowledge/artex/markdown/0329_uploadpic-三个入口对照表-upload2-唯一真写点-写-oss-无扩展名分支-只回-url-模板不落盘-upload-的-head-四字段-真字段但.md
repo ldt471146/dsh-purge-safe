@@ -34,7 +34,7 @@ LHZS UpLoadPic 应用三个入口的字段与真实行为对照表：upload2 是
 
 ### ① `POST /UpLoadPic/upload2` —— ★ 唯一真写点（未认证）
 - **唯一有效字段：multipart 里的 `file`（小写）**；`content` / `Token`（大写）/ `upload` / `image` **全部返回 `{"linkurl":""}`**
-- 成功响应：`200` + `{"linkurl":"https://target343.example.com/pic/<时间戳>.<客户端扩展名>/midPic"}`
+- 成功响应：`200` + `{"linkurl":"https://lhzs-tk2.oss-cn-beijing.aliyuncs.com/pic/<时间戳>.<客户端扩展名>/midPic"}`
 - **扩展名完全由客户端 filename 决定（无白名单）**：`.png/.jpg/.jsp/.html/.svg` 全保留；`zz.jsp;.png` 取第一个后缀；`zz.jsp.png` 取最后后缀；`../../`、`C:\`、`%2e%2e%2f` 被规范化
 - **对象公网可读**：去掉 `/midPic` 直接 GET 原始对象 → 200，字节与上传一致；`.html` → `Content-Type: text/html`（可渲染），`.jsp` → `image/jpeg`
 - **落点参数不可控**：`path/dir/folder/prefix/bucket/endpoint/filename/ext/type` 全加也无效

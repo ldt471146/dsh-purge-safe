@@ -8,11 +8,11 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-03 02:2x(+08) 在 task#612 实测：自写 python h2 客户端（h2grpc.py，ALPN=h2）直连 192.0.2.16:443，SNI=target485.example.com，POST /api/connect/pb.PingService/ping + content-type: application/grpc + 5 字节空帧。Host/authority=target485.example.com → HTTP 200，trailers grpc-status: 14 / grpc-message: server grpc is unavailable；换成 127.0.0.1 → 200，grpc-message: "host '127.0.0.1' not found"。两种 trailer 语义稳定二分。批量 64 个候选 Host：34/34 已知白名单域名全部 unavailable，17cx1-14/54mx1-7/5xdx1-3 共 30 个编造名全部 not-found，cf/cm/cq/sj/ss/target498.example.com 6 个短名 unavailable（原始矩阵 D:/ARTEX/data/tasks/612/i7685/hostoracle.out，证据 frame.bin）。九台边缘（.111/.114/.115/.116/.121/.123/.124/.125/.126）同响应，证明与单 IP 无关。对照：同一 Host 下 /api/console-auth/session 在 .164 回 404、在 .253 回 200 + Set-Cookie omnihelm_console_session，证明 .164 这个 BFF 只挂 /api/connect 不是 console 会话端点。
+- **verified_note**: 2026-11-03 02:2x(+08) 在 task#612 实测：自写 python h2 客户端（h2grpc.py，ALPN=h2）直连 23.147.164.114:443，SNI=www.dahurj999.top，POST /api/connect/pb.PingService/ping + content-type: application/grpc + 5 字节空帧。Host/authority=www.dahurj999.top → HTTP 200，trailers grpc-status: 14 / grpc-message: server grpc is unavailable；换成 127.0.0.1 → 200，grpc-message: "host '127.0.0.1' not found"。两种 trailer 语义稳定二分。批量 64 个候选 Host：34/34 已知白名单域名全部 unavailable，17cx1-14/54mx1-7/5xdx1-3 共 30 个编造名全部 not-found，cf/cm/cq/sj/ss/st.huiyuanswift.com 6 个短名 unavailable（原始矩阵 D:/ARTEX/data/tasks/612/i7685/hostoracle.out，证据 frame.bin）。九台边缘（.111/.114/.115/.116/.121/.123/.124/.125/.126）同响应，证明与单 IP 无关。对照：同一 Host 下 /api/console-auth/session 在 .164 回 404、在 .253 回 200 + Set-Cookie omnihelm_console_session，证明 .164 这个 BFF 只挂 /api/connect 不是 console 会话端点。
 - **path**: pocs/omnihelm-console-grpc-bff-host-oracle/poc.py
 - **tags**: info-leak, grpc, bff, host白名单, host-oracle, 未授权, 边缘, photon-edge, omnihelm, console, http2, trailers, grpc-status-14, 枚举, 无凭据
 - **created_at**: 2026-11-02T18:41:12.473Z
-- **engine**: https://target485.example.com（边缘 192.0.2.17/24）
+- **engine**: https://www.dahurj999.top（边缘 23.147.164.0/24）
 
 ## 描述
 
@@ -52,7 +52,7 @@
 # 依赖：pip install h2
 #
 # 用法：
-#   python hostoracle.py --edge 192.0.2.16 --sni target485.example.com \
+#   python hostoracle.py --edge 23.147.164.114 --sni www.dahurj999.top \
 #                        --hosts hosts.txt --out hostoracle.out
 #   hosts.txt 每行一个候选 Host；建议先放两行对照：真实主域名 + 一个编造名。
 

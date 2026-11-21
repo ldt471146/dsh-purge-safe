@@ -7,7 +7,7 @@
 - **versions**: PHPWind 7.x（CN-VA10-02 通报点名为 7.5.x 的 /api/class_base.php；7.3.2 属同分支且更早，机制同样成立 —— 待实测文件存在性）。8.x 该文件被重写为 S::escapePath 形态
 - **language**: bash
 - **source**: web
-- **source_url**: https://target273.example.com/43/cc/c33375a410572/page.htm
+- **source_url**: https://ecampus.fudan.edu.cn/43/cc/c33375a410572/page.htm
 - **verified_note**: 【情报角色零目标请求 —— 本条未在目标上发包验证】。源码级确证：pw75sp3/api/class_base.php L110-117 的 require_once 拼接待过滤 $mode，且 $mode 来自 $request['mode']（$_POST+$_GET）——逐行读出。**关键增量**：该洞不依赖 register_globals（PHP 5.4 起已移除），故在目标 PHP 5.5.38 上机制成立；这与知识库里 7.5 apps/ 那条（依赖 register_globals 而失效）本质不同。**未确证项**：目标 7.3.2 的 pw_api.php 是否存在（任务情报「api 全 404」指 api/ 目录直访，根目录 pw_api.php 需单独确认）。受 file_exists + 强制 .php 后缀限制，无法用 %00 截断，需站上已有可控 .php 配合，故列为备用链。
 - **path**: pocs/phpwind-7.x-pw_api.php-api-class_base.php-mode-任意文件包含-cn-va10-02-点名文件-不依赖-regist/pwapi-mode-lfi.sh
 - **tags**: phpwind,7.3.2,任意文件包含,LFI,pw_api,class_base,mode,CN-VA10-02,不依赖register_globals

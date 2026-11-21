@@ -50,8 +50,8 @@ from client_crypto_reverse import dh_encrypt, dh_decrypt, dh_sign, build_headers
                    "prerelease":"preaacciqkhtg26b","release":"probinpjms7rfm26"}
 
 环境域名表：
-  envMap = {'0':'target173.example.com','1':'target173.example.com','2':'target173.example.com',
-            '3':'target174.example.com','4':'target175.example.com','5':'target173.example.com'}
+  envMap = {'0':'test2.klm123.net','1':'test2.klm123.net','2':'test2.klm123.net',
+            '3':'mqiedu.com','4':'pre2.klm123.net','5':'test2.klm123.net'}
 
 加密实现：
   function S(t,e){ return b.AES.encrypt(t,e,{iv:e,mode:b.mode.CBC,padding:b.pad.Pkcs7}).toString() }
@@ -94,8 +94,8 @@ KEY_VERSION_MAP = {
     "dev": "1.0.4", "test": "1.0.4", "test2": "1.0.4", "training": "1.0.4",
     "prerelease": "1.2.2", "release": "1.2.2",
 }
-ENV_MAP = {"0": "target173.example.com", "1": "target173.example.com", "2": "target173.example.com",
-           "3": "target174.example.com", "4": "target175.example.com", "5": "target173.example.com"}
+ENV_MAP = {"0": "test2.klm123.net", "1": "test2.klm123.net", "2": "test2.klm123.net",
+           "3": "mqiedu.com", "4": "pre2.klm123.net", "5": "test2.klm123.net"}
 
 
 def dh_encrypt(obj, key: str) -> str:

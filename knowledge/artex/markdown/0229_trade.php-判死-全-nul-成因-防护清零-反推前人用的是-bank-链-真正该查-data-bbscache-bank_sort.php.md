@@ -7,14 +7,14 @@
 - **severity**: info
 - **language**: php
 - **source**: self
-- **verified_note**: 7.5 SP3 逐行确证（trade.php 前 110 行 + 全文 grep；全站 98 处 writeover 目标全集；writeover 实现 target105.example.com:231-241；8.7 根目录清单对照）。"全 NUL 由防护工具产生"属技术推断（PHPWind 侧已排除，外部工具无法从源码验证）；7.3.2 是否也有标准 trade.php 未直接验证，但 7.5 与 8.7 均有，外推概率极高。
+- **verified_note**: 7.5 SP3 逐行确证（trade.php 前 110 行 + 全文 grep；全站 98 处 writeover 目标全集；writeover 实现 common.php:231-241；8.7 根目录清单对照）。"全 NUL 由防护工具产生"属技术推断（PHPWind 侧已排除，外部工具无法从源码验证）；7.3.2 是否也有标准 trade.php 未直接验证，但 7.5 与 8.7 均有，外推概率极高。
 - **path**: pocs/trade.php-判死-全-nul-成因-防护清零-反推前人用的是-bank-链-真正该查-data-bbscache-bank_sort.php/poc.php
 - **tags**: phpwind,trade.php,全NUL,查杀清零,写码点,反推前人payload,bank_sort
 - **created_at**: 2026-10-06T12:14:29.401Z
 
 ## 描述
 
-trade.php 是 PHPWind 7.5 SP3 与 8.7 都有的标准文件（商品交易中心，pw_trade / pw_tradeorder），action 为 buy/order/pay/pcalipay，buy 需登录（target240.example.com:12）、order 需是买卖双方（:77）、pay 需是买家（:94），全文只操作数据库与两处固定路径 include，没有任何文件写入代码。全站 98 处 writeover(...*.php...) 的目标全是 data/ 下的缓存/配置/风格/分表文件，无一处写根目录 .php，因此没有代码在写 trade.php。关于"7428 字节全 0x00"：writeover 的实现（require/target105.example.com:231-241）是 fwrite + ftruncate(strlen($data))，空数据只会把文件截断成 0 字节，无法产生"保留大小、内容全 NUL"的结果——这是安全防护工具（宝塔木马查杀/安全狗/D盾等）对可疑 PHP 文件的典型处置特征。由此推出最有价值的结论：trade.php 的 NUL 状态是前人落马后被清零的痕迹，说明本站历史上存在过可写 web 目录的 RCE 点；结合前人注册的 ${@eval($a)} / ${@eval($_)} 用户名，可反推其使用的正是 hack/bank 的 savearray 链，真正的写入产物在 data/bbscache/bank_sort.php，应优先观察该文件。
+trade.php 是 PHPWind 7.5 SP3 与 8.7 都有的标准文件（商品交易中心，pw_trade / pw_tradeorder），action 为 buy/order/pay/pcalipay，buy 需登录（trade.php:12）、order 需是买卖双方（:77）、pay 需是买家（:94），全文只操作数据库与两处固定路径 include，没有任何文件写入代码。全站 98 处 writeover(...*.php...) 的目标全是 data/ 下的缓存/配置/风格/分表文件，无一处写根目录 .php，因此没有代码在写 trade.php。关于"7428 字节全 0x00"：writeover 的实现（require/common.php:231-241）是 fwrite + ftruncate(strlen($data))，空数据只会把文件截断成 0 字节，无法产生"保留大小、内容全 NUL"的结果——这是安全防护工具（宝塔木马查杀/安全狗/D盾等）对可疑 PHP 文件的典型处置特征。由此推出最有价值的结论：trade.php 的 NUL 状态是前人落马后被清零的痕迹，说明本站历史上存在过可写 web 目录的 RCE 点；结合前人注册的 ${@eval($a)} / ${@eval($_)} 用户名，可反推其使用的正是 hack/bank 的 savearray 链，真正的写入产物在 data/bbscache/bank_sort.php，应优先观察该文件。
 
 ## 用法
 
@@ -65,21 +65,21 @@ trade.php 是 PHPWind 7.5 SP3 与 8.7 都有的标准文件（商品交易中心
 //     member_sort/member_tmp/forum_sort/article_sort/article_tmp/team_sort/favor_sort/admin_sort_*/dblog/ip_cache/
 //     commonforum/specialforum/newinfo_config/schwait_cache/set_cache/fcache_*/bank_sort/mode_o_mosort/
 //     wordsfb_progress/area_haveused_tpl/mode_index_forum_* 等）
-//   · data/forums/fid_N.php（admin/target117.example.com:188）
-//   · data/groupdb/group_N.php（admin/target117.example.com:408）
-//   · data/style/*.php（admin/target117.example.com:647）
-//   · data/sql_config.php（require/target149.example.com:82）
+//   · data/forums/fid_N.php（admin/cache.php:188）
+//   · data/groupdb/group_N.php（admin/cache.php:408）
+//   · data/style/*.php（admin/cache.php:647）
+//   · data/sql_config.php（require/updateset.php:82）
 //   ★ 根目录的 trade.php（以及任何根目录 .php）【不在任何一处写入目标里】
 //
 // 【三】为什么它会全 NUL —— PHPWind 产生不了
-// require/target105.example.com:231-241 writeover 实现：
+// require/common.php:231-241 writeover 实现：
 231: function writeover($filename,$data,$method='rb+',$iflock=1,$check=1,$chmod=1){
 234: 	touch($filename);
 235: 	$handle = fopen($filename,$method);           // 默认 'rb+'
 237: 	fwrite($handle,$data);
 238: 	$method=='rb+' && ftruncate($handle,strlen($data));   // ★ 截断到 strlen($data)
 240: 	$chmod && @chmod($filename,0777);
-// → 全站唯一的"清空"写法是 require/target210.example.com:164  writeover(D_P.'data/bbscache/schwait_cache.php','');
+// → 全站唯一的"清空"写法是 require/normalsearch.php:164  writeover(D_P.'data/bbscache/schwait_cache.php','');
 //   它的效果是 fwrite('') + ftruncate($handle,0) → 【文件变成 0 字节】，不是"保留大小填 NUL"。
 // → 因此"7428 字节全 0x00"不可能由 PHPWind 的 writeover 产生。
 //

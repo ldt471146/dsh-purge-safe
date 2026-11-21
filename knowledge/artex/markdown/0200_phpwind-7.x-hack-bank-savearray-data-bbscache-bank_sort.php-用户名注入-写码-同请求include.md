@@ -15,7 +15,7 @@
 
 ## 描述
 
-hack/bank/example.com:55-77 把 pw_members.username 经 savearray() 拼进 data/bbscache/bank_sort.php 的双引号 PHP 串，同一请求第 76 行 include。savearray()（362-373 行）只做 addslashes()，转义 " ' \ NUL 但不转义美元符 → 双引号串内 ${...} 会被 PHP 变量插值求值。载体字段只取存款/定期存款排行前 $bk_num(默认10) 的 username。长度上限：rg_namelen 默认 '3	12'（lang/install_wind.sql:524）即 12 字节；8.7 lang/install_wind.sql:1532 同为 3	12。只有 addslashes 不阻挡的 ${expr} 形态可用，且 addslashes 会把 \\ 写成 \\\\ 使长度翻倍。writeover() 落盘后 @chmod 0777（require/target105.example.com:240），文件 web 可达。
+hack/bank/example.com:55-77 把 pw_members.username 经 savearray() 拼进 data/bbscache/bank_sort.php 的双引号 PHP 串，同一请求第 76 行 include。savearray()（362-373 行）只做 addslashes()，转义 " ' \ NUL 但不转义美元符 → 双引号串内 ${...} 会被 PHP 变量插值求值。载体字段只取存款/定期存款排行前 $bk_num(默认10) 的 username。长度上限：rg_namelen 默认 '3	12'（lang/install_wind.sql:524）即 12 字节；8.7 lang/install_wind.sql:1532 同为 3	12。只有 addslashes 不阻挡的 ${expr} 形态可用，且 addslashes 会把 \\ 写成 \\\\ 使长度翻倍。writeover() 落盘后 @chmod 0777（require/common.php:240），文件 web 可达。
 
 ## 用法
 
@@ -64,7 +64,7 @@ $_DESPOSTDB=array(
 );
 ?>
 
-// writeover(): require/target105.example.com:231-241
+// writeover(): require/common.php:231-241
 function writeover($filename,$data,$method='rb+',$iflock=1,$check=1,$chmod=1){
 	$filename = Pcv($filename,$check);   // Pcv 堵 :// \0 ..
 	touch($filename); $handle = fopen($filename,$method);

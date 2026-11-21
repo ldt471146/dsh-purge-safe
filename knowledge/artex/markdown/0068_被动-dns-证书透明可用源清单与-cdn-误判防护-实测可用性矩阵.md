@@ -6,7 +6,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt6403-com 靶标实测：crt.sh 补全 9 个品牌域 93 个子域名；hostsearch 拿到 85 条 子域→IP 映射并识别出 203.0.113.122 / 203.0.113.127 / 203.0.113.5 等新 IP；rapiddns sameip 反查把 203.0.113.5 定性为阿里云 Kunlun CDN 边缘、把 203.0.113.122/203.0.113.127 定性为共享托管（各含 100 个无关站点）；OTX / mnemonic / rapiddns-subdomain / viewdns 四个源在本出口不可用或假零命中。
+- **verified_note**: 在 pockgo-com 靶标实测：crt.sh 补全 9 个品牌域 93 个子域名；hostsearch 拿到 85 条 子域→IP 映射并识别出 203.0.113.122 / 203.0.113.127 / 203.0.113.5 等新 IP；rapiddns sameip 反查把 203.0.113.5 定性为阿里云 Kunlun CDN 边缘、把 203.0.113.122/203.0.113.127 定性为共享托管（各含 100 个无关站点）；OTX / mnemonic / rapiddns-subdomain / viewdns 四个源在本出口不可用或假零命中。
 - **path**: pocs/被动-dns-证书透明可用源清单与-cdn-误判防护-实测可用性矩阵/passive-dns-source-matrix.md
 - **tags**: 被动DNS,证书透明,源站,CDN误判防护,信息收集
 - **created_at**: 2026-09-28T15:43:22.244Z
@@ -45,13 +45,13 @@
 - otx.alienvault.com/api/v1/indicators/domain/<d>/passive_dns —— 连接失败，pDNS 历史拿不到。
 - api.mnemonic.no/pdns/v3/<d> —— 返回 0 记录（但返回 200，会误导成"没有历史"）。
 - rapiddns.io/subdomain/<d>?full=1 —— 返回 200 但解析不出行，不可依赖。
-- target43.example.com/iphistory —— 抓取失败（需要人机/JS）。
+- viewdns.info/iphistory —— 抓取失败（需要人机/JS）。
 - grep.app/api/search、searchcode API —— 见"公开代码托管"条目，均不可脚本化。
 - whois 反查 IP 归属（hackertarget whois）—— 需要 API key。
 
 【误判防护（重要）】
 把"IP 是共享托管/CDN"当成"运营方源站"是本方向最容易犯的错。判据：
-- 同 IP 反查出的 hostname 里出现 `.w.kunlunXX.com` / `.target44.example.com` / `.w.cdngslb.com` 后缀
+- 同 IP 反查出的 hostname 里出现 `.w.kunlunXX.com` / `.w.alikunlun.com` / `.w.cdngslb.com` 后缀
   ⇒ 该 IP 是阿里云 CDN 边缘节点，不是源站。
 - 同一 IP 反查出**上百个彼此无关的站点**（不同行业、不同语种）⇒ 共享托管，不能据此认定是目标的机器。
 - PTR 为 ec2-*.compute.amazonaws.com / 云厂商默认 PTR ⇒ 只说明是公有云实例。

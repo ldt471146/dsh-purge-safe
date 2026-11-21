@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt6403-com 靶标 https://example.com 实测 7 组（VPS 出口 203.0.113.55，全部只读 GET，email 用 RFC 保留测试域 test@example.com）：不带头/空口令/无换行/畸形 base64 → 400「游客邮箱不能为空」；正确格式头（不存在的邮箱 + 任意非空口令）→ 200 success + 空列表 total=0。据此判定空口令与畸形头被拒、未发现越权；未使用任何真实用户数据，邮箱存在性枚举一事如实记为未验证。
+- **verified_note**: 在 pockgo-com 靶标 https://example.com 实测 7 组（VPS 出口 203.0.113.55，全部只读 GET，email 用 RFC 保留测试域 test@example.com）：不带头/空口令/无换行/畸形 base64 → 400「游客邮箱不能为空」；正确格式头（不存在的邮箱 + 任意非空口令）→ 200 success + 空列表 total=0。据此判定空口令与畸形头被拒、未发现越权；未使用任何真实用户数据，邮箱存在性枚举一事如实记为未验证。
 - **path**: pocs/商城游客订单自认证头机制-authorization-guest-base64url-email-n-order_password-含空口令-畸形头边界实测/poc.py
 - **tags**: 商城,游客订单,自认证头,Authorization,base64,越权验证,待验证
 - **created_at**: 2026-09-28T14:23:09.184Z

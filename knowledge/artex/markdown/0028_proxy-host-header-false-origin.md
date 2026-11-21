@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 实测复现：经 127.0.0.1:7892 代理对 5 台 IP:8080 带 Host: target10.example.com → 5/5 返回 200/9132 登录页（响应头含 cf-ray/Server: cloudflare）；同 IP 同 Host 在 VPS 无代理直连 → 全部 404，且 4 种 Host 响应字节完全一致（87 字节）→ 证明前者是代理按 Host 分流所致。据此撤回了一条"源站定位成功"的错误结论（vuln 38 已更正）。
+- **verified_note**: 实测复现：经 127.0.0.1:7892 代理对 5 台 IP:8080 带 Host: adminapi.yzm123456.cc → 5/5 返回 200/9132 登录页（响应头含 cf-ray/Server: cloudflare）；同 IP 同 Host 在 VPS 无代理直连 → 全部 404，且 4 种 Host 响应字节完全一致（87 字节）→ 证明前者是代理按 Host 分流所致。据此撤回了一条"源站定位成功"的错误结论（vuln 38 已更正）。
 - **path**: pocs/proxy-host-header-false-origin/poc.sh
 - **tags**: 方法论,源站定位,Host头,代理陷阱,Cloudflare,对照实验
 - **created_at**: 2026-09-28T07:32:59.257Z

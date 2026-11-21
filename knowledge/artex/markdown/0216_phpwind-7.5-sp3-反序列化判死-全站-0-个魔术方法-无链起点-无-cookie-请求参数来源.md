@@ -42,26 +42,26 @@ PHPWind 7.5 SP3 反序列化全量审计判死。核心判据：全站 grep 'fun
 //   → 【0 命中】
 //   grep 'function __(getKeyPrefix|construct)' 之类：
 //   · __construct 共 9 处（uc_client/model/{user,notify,credit,app}.php:9、uc_client/control/{user,credit}.php、
-//     lang/step/target220.example.com:17、uc_client/class_core.php:31、lib/target221.example.com:16、
-//     require/target222.example.com:16/229、lib/target223.example.com:18）
-//   · lib/target224.example.com:190 的 __getKeyPrefix 是【普通方法】，不是 __get 魔术方法
+//     lang/step/stopicupdator.php:17、uc_client/class_core.php:31、lib/xml.class.php:16、
+//     require/postexample.com:16/229、lib/datanalyse.class.php:18）
+//   · lib/memcache.class.php:190 的 __getKeyPrefix 是【普通方法】，不是 __get 魔术方法
 //   ★ 关键：unserialize() 只触发 __wakeup()，【不调用 __construct】。全站没有 __wakeup，
 //     也没有任何其它反序列化相关魔术方法 → unserialize 一个对象字符串只会构造出普通对象，不会执行任何用户代码。
 //
 // 【二】unserialize( 全量（329 处命中，抽样全核）——数据来源分类
 //   A. 数据库字段（绝大多数）：
-//      pw_config.db_value（admin/target117.example.com:563、admin/target225.example.com:54、admin/rebang.php:9、lang/step/target226.example.com:41 等）
+//      pw_config.db_value（admin/cache.php:563、admin/seoset.php:54、admin/rebang.php:9、lang/step/nav.php:41 等）
 //      pw_forums.forumset / creditset（example.com:362-364、m/wap_global.php:22/44、apps/stopic/example.com:31-33）
-//      pw_threads.aid（target194.example.com:1491/1506、admin/target227.example.com:201/220/435、require/target191.example.com:296、apps/diary/example.com:181/236/545/600）
-//      pw_tools.conditions（hack/toolcenter/example.com:150/279/428、require/target228.example.com:13）
+//      pw_threads.aid（forumcp.php:1491/1506、admin/superdel.php:201/220/435、require/template.php:296、apps/diary/example.com:181/236/545/600）
+//      pw_tools.conditions（hack/toolcenter/example.com:150/279/428、require/tool.php:13）
 //      pw_tradeinfo / pw_upgrade / pw_rightset / pw_advert.config 等
-//   B. 缓存文件内容：admin/target229.example.com:841-847（wordsfb_progress.php）、lib/target139.example.com:575（wordsfb.php）
+//   B. 缓存文件内容：admin/setbwd.php:841-847（wordsfb_progress.php）、lib/filterutil.class.php:575（wordsfb.php）
 //   C. 远程响应（需 SSRF/中间人，且多为后台功能）：
-//      admin/target150.example.com:181/211/248（app.phpwind.net）、lib/target230.example.com:436、
-//      uc_client/model/target150.example.com:132、uc_client/model/target231.example.com:77/80/101
+//      admin/app.php:181/211/248（app.phpwind.net）、lib/appclient.class.php:436、
+//      uc_client/model/app.php:132、uc_client/model/notify.php:77/80/101
 //   D. API 请求体：api/class_base.php:98 unserialize($request['params'])  ← API 入口在目标上 404（已知情报）
 //   ★ 【没有任何一处来源是 $_COOKIE】——cookie 全程只走 StrCode 的异或解密，不进 unserialize
-//   ★ 也没有一处来源是 $_GET / $_POST 直接透传（唯一沾边的是 admin/target232.example.com:11
+//   ★ 也没有一处来源是 $_GET / $_POST 直接透传（唯一沾边的是 admin/pushdata.php:11
 //     unserialize(base64_decode($query))，但那是后台且 $query 来自 DB）
 //
 // 【三】公开情报的版本错位（重要）

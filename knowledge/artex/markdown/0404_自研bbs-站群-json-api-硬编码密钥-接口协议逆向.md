@@ -22,7 +22,7 @@
 
 ```
 python3 bbs_api_probe.py example.com 443 1
-# 该密钥 k=rjnjgkalsdi12 在同族站点通用（target423.example.com / target424.example.com / target425.example.com 全部生效）
+# 该密钥 k=rjnjgkalsdi12 在同族站点通用（lt-1.388099a0.top / lt-MMKKrGhw.1133332a0.top / 122230com-PlAmi.122230a3.top 全部生效）
 ```
 
 ## 正文
@@ -99,7 +99,7 @@ def post(action, extra=""):
         d += x
     s.close()
     m = re.search(rb"\{.*\}", d, re.S)
-    return target22.example.com(0).decode("utf-8", "ignore") if m else ""
+    return m.group(0).decode("utf-8", "ignore") if m else ""
 
 for a in ["bbslogin", "bbsreg", "bbsgetinfo", "bbslist"]:
     print(f"  p={a:<12} -> {post(a)[:130]}")

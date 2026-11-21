@@ -9,7 +9,7 @@
 - **source**: manual
 - **source_url**: https://1panel.cn/blog/security-advisory-1p-2025-12-08.html
 - **verified**: 1
-- **verified_note**: 在 tgt6403-com 靶标 http://203.0.113.117:9527 上完整走通判据并给出定论：目标未认证可得 swagger basePath=/api/v1；对 17 个官方 tag（v1.10.12/16/20/24/28/29/30/31/32-lts + v2.0.0/1/4/11/13/14/16/17）的 router 源码全集做归一化集合差集，example.com「目标有/tag无」=11（全为协议差异），v1.10.29 起陡增 35（多出 24 条 MCP/WS 路由，目标一条皆无），v2 全线需要 /api/v2 前缀被排除 ⇒ 目标 = v1.10.28-LTS；与官方公告「1Panel V1 版本 <=v1.10.32 LTS 受影响」自洽。此前「2.0.1–2.0.13」的错误结论由指挥者采纳纠正。
+- **verified_note**: 在 pockgo-com 靶标 http://203.0.113.117:9527 上完整走通判据并给出定论：目标未认证可得 swagger basePath=/api/v1；对 17 个官方 tag（v1.10.12/16/20/24/28/29/30/31/32-lts + v2.0.0/1/4/11/13/14/16/17）的 router 源码全集做归一化集合差集，example.com「目标有/tag无」=11（全为协议差异），v1.10.29 起陡增 35（多出 24 条 MCP/WS 路由，目标一条皆无），v2 全线需要 /api/v2 前缀被排除 ⇒ 目标 = v1.10.28-LTS；与官方公告「1Panel V1 版本 <=v1.10.32 LTS 受影响」自洽。此前「2.0.1–2.0.13」的错误结论由指挥者采纳纠正。
 - **path**: pocs/教训-1panel-版本区间误判避坑指南-ghsa-first_patched_version-漏掉-lts-分支-正确判据-swagger-basepath/1panel-version-judgement-lessons.md
 - **tags**: 1panel,版本判断,教训,swagger basePath,路由集合差集,LTS分支,GHSA陷阱
 - **created_at**: 2026-09-28T13:36:11.312Z
@@ -24,7 +24,7 @@
 ```
 判 1Panel 版本时按顺序做：
 1) 定产品线：`curl -s http://TARGET:PORT/1panel/swagger/doc.json | python -c "import json,sys;print(json.load(sys.stdin)['basePath'])"` → `/api/v1` = V1 线，`/api/v2` = V2 线。抓不到就用源码事实兜底：官方 V2 `core/init/router/router.go` 里 `docs.SwaggerInfo.BasePath = "/api/v2"`。
-2) 定具体版本（离线）：抓各 tag 的 `*/router/*.go`（v1: `backend/router/`；v2: `agent/router/` + `core/router/`），递归拼 `target32.example.com()` 前缀得到各 tag 的完整路由集合，与目标可得路由集合做差集，取「目标有/tag无」最小的那一档。
+2) 定具体版本（离线）：抓各 tag 的 `*/router/*.go`（v1: `backend/router/`；v2: `agent/router/` + `core/router/`），递归拼 `Router.Group()` 前缀得到各 tag 的完整路由集合，与目标可得路由集合做差集，取「目标有/tag无」最小的那一档。
 3) 交叉验证：官方安全公告里受影响版本是**按分支分别列出**的（V1 <=v1.10.32 LTS / V2 <=v2.0.13），不看公告只看 GHSA 会漏掉整条 LTS 线。
 4) 枚举前先测安全入口拦截页的固定长度做基线，否则会把「被拦截」误判成「未授权可达」。
 ```
@@ -53,7 +53,7 @@
    - 注意 V2 的 `/1panel/swagger/*any` 被 `middleware.SessionAuth()` 保护，V1 则挂在安全入口之后，**抓不到时不要下结论，改用判据 2**。
 2. **官方各 tag 的 router 源码集合差集（离线、零目标负载、最可靠）**：
    - 把目标可得的路由集合（swagger 的 `paths`，或枚举结果）归一化（`{x}` → `:x`，去掉 `basePath`）；
-   - 抓各 tag 的 `*/router/*.go` 全集（v1 在 `backend/router/`，v2 在 `agent/router/` + `core/router/`），按 `target32.example.com("前缀")` 递归拼出完整路径集合；
+   - 抓各 tag 的 `*/router/*.go` 全集（v1 在 `backend/router/`，v2 在 `agent/router/` + `core/router/`），按 `Router.Group("前缀")` 递归拼出完整路径集合；
    - 对每个 tag 计算「目标有 / 该 tag 无」的数量：**该数量最小且只剩个位数（通常是协议/方法标注差异）的那一档，就是目标版本区间下界；再上一档陡增的那批路由，就是目标之后新增的功能。**
    - 本案例判定数据（目标 415 条路由）：
      - `v1.10.24-lts`：目标有/tag无 = 21（目标已有 `/ai/ollama/model` 系列 ⇒ 版本 ≥ 1.10.25）

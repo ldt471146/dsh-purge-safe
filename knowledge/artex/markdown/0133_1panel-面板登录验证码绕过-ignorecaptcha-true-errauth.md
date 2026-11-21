@@ -47,7 +47,7 @@ H = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0 Safar
 def login(name, password, ignore_captcha=True):
     body = {'Name': name, 'Password': password, 'AuthMethod': 'session', 'Language': 'zh',
             'IgnoreCaptcha': ignore_captcha, 'Captcha': '', 'CaptchaID': ''}
-    r = target9.example.com(B + '/api/v1/auth/login', headers=H, data=json.dumps(body), timeout=20)
+    r = requests.post(B + '/api/v1/auth/login', headers=H, data=json.dumps(body), timeout=20)
     return r.status_code, r.json()
 
 

@@ -7,7 +7,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 example 演练内网（经 example.com 冰蝎马 + PHP socket 隧道）全程实测：op=chk 扫完 203.0.113.52/24 全 254 IP（133s）得 7 台存活；LOAD_FILE 读出 ifcfg-eth0/eth1、hosts.allow、target103.example.com 等网段铁证；目标侧 PHP 完成 fsockopen banner 抓取、PMAP_DUMP、mysql_connect 认证、NFSv4 COMPOUND。
+- **verified_note**: 在 example 演练内网（经 example.com 冰蝎马 + PHP socket 隧道）全程实测：op=chk 扫完 203.0.113.52/24 全 254 IP（133s）得 7 台存活；LOAD_FILE 读出 ifcfg-eth0/eth1、hosts.allow、mysql.user.host 等网段铁证；目标侧 PHP 完成 fsockopen banner 抓取、PMAP_DUMP、mysql_connect 认证、NFSv4 COMPOUND。
 - **path**: pocs/单请求型隧道下的内网渗透方法论-op-chk-主机发现-目标侧-php-绕过多轮协议限制/poc.py
 - **tags**: 内网渗透,隧道,WebShell,op=chk,NFS,RPC,open_basedir绕过,主机发现,静默失败,eval马,冰蝎
 - **created_at**: 2026-09-30T15:27:53.125Z

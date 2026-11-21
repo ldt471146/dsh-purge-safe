@@ -9,7 +9,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.51:5566（未授权开放 Squid，出口即该机）实测完整链路：① 代理可用 curl -x http://203.0.113.51:5566 http://target81.example.com/ip → 200 返回 203.0.113.51；② 端口白名单只放 80/443（其余 403 ERR_ACCESS_DENIED）；③ 经 CONNECT 到 203.0.113.42:443/203.0.113.43:443 时裸 IP SNI 全部 TLSV1_UNRECOGNIZED_NAME（证明 nginx 有 SNI 路由且无默认证书），用自定义 SNI 后 130 条域名枚举中 6 条命中（target82.example.com / target38.example.com → New API rc.22；target83.example.com → 自研中转站 21114B）；④ 关键对照：同一 SNI 下 内网(经 Squid→203.0.113.42:443) 与 公网直连(203.0.113.51:443) 的 status 与 body sha256 **完全一致**（三个域名全等价）⇒ 172.x 网关就是宿主机自身 nginx，**无任何内网独占服务**，不构成内网突破；⑤ 80 端口侧 148 条 Host 头枚举全部返回同一条 130B nginx 404（无 vhost）；172.17.0.0/24 与 172.18.0.0/24 全段扫描除 .1 外全部无服务（Squid 503）；172.19/172.20/172.26 段不可达。最终判定：该开放代理可换出口，但**不可用于进入隔离内网**，不计边界突破分。
+- **verified_note**: 在 203.0.113.51:5566（未授权开放 Squid，出口即该机）实测完整链路：① 代理可用 curl -x http://203.0.113.51:5566 http://ifconfig.me/ip → 200 返回 203.0.113.51；② 端口白名单只放 80/443（其余 403 ERR_ACCESS_DENIED）；③ 经 CONNECT 到 203.0.113.42:443/203.0.113.43:443 时裸 IP SNI 全部 TLSV1_UNRECOGNIZED_NAME（证明 nginx 有 SNI 路由且无默认证书），用自定义 SNI 后 130 条域名枚举中 6 条命中（newapi.aiopus.org / api.xqtd520qidong.com → New API rc.22；aiapi.aiopus.org → 自研中转站 21114B）；④ 关键对照：同一 SNI 下 内网(经 Squid→203.0.113.42:443) 与 公网直连(203.0.113.51:443) 的 status 与 body sha256 **完全一致**（三个域名全等价）⇒ 172.x 网关就是宿主机自身 nginx，**无任何内网独占服务**，不构成内网突破；⑤ 80 端口侧 148 条 Host 头枚举全部返回同一条 130B nginx 404（无 vhost）；172.17.0.0/24 与 172.18.0.0/24 全段扫描除 .1 外全部无服务（Squid 503）；172.19/172.20/172.26 段不可达。最终判定：该开放代理可换出口，但**不可用于进入隔离内网**，不计边界突破分。
 - **path**: pocs/开放代理-穿内网-真伪判定法-内网-vs-公网同-sni-对照-body-hash-附-connect-自定义sni-手法/poc.py
 - **tags**: squid,开放代理,内网突破,boundary,SNI,vhost,对照实验,判据,CONNECT
 - **created_at**: 2026-09-30T01:28:31.389Z
@@ -21,7 +21,7 @@
 ## 用法
 
 ```
-1) 代理可用性：curl -x http://PROXY:5566 http://target81.example.com/ip（回显 == 目标 IP 即匿名可用）。
+1) 代理可用性：curl -x http://PROXY:5566 http://ifconfig.me/ip（回显 == 目标 IP 即匿名可用）。
 2) 端口白名单探测：80 与 443 通常放行，其余返回 Squid 403 ERR_ACCESS_DENIED；503 ERR_CONNECT_FAIL = 放行但目标无服务。
 3) 裸 IP 访问 https 会得到 TLSV1_UNRECOGNIZED_NAME ⇒ 说明有 SNI 路由，必须带域名握手（见 content 里的 conn_sni()）。
 4) vhost 枚举：80 端口用 Host 头（基线 = nginx 默认 404 长度，本例 130B）；443 端口用 CONNECT+自定义 SNI（SSLError = 无该 vhost，非 404 = 命中）。
@@ -72,9 +72,9 @@ def is_real_intranet_pivot(sni, internal_ip="203.0.113.42", public_ip="TARGET_PU
 # same=False -> 存在差异，继续挖差异点
 
 # 本例实测（203.0.113.51）：
-#   target82.example.com        : 内网 200/1166 sha 65d8428308fd41cf == 公网 200/1166 sha 65d8428308fd41cf
-#   target38.example.com    : 同上（同一 New API 实例）
-#   target83.example.com         : 内网 200/21114 sha 56c5e28a85ae88fa == 公网 200/21114 sha 56c5e28a85ae88fa
+#   newapi.aiopus.org        : 内网 200/1166 sha 65d8428308fd41cf == 公网 200/1166 sha 65d8428308fd41cf
+#   api.xqtd520qidong.com    : 同上（同一 New API 实例）
+#   aiapi.aiopus.org         : 内网 200/21114 sha 56c5e28a85ae88fa == 公网 200/21114 sha 56c5e28a85ae88fa
 #   ⇒ 三例全等价 ⇒ 判定“无内网独占面”。
 
 ```

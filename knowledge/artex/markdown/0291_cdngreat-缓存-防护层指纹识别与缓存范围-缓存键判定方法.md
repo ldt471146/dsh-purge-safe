@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 https://example.com（回源 203.0.113.49，2026-10-11）实测确认全部指纹：cl-cache-status: HIT 出现在 /url.js 与 /favicon.png、伴随 cache-control: max-age=2592000；/home 与 /xxa/*.json 无该头；Host: target303.example.com 触发 HTTP/1.1 800 页并反射 Host；CL+TE 冲突触发 400 页含 "DDoS protection by  CDNGreat"；26 个子域 Host 全部被 800 拦截，仅 m./www. 命中 200。
+- **verified_note**: 在 https://example.com（回源 203.0.113.49，2026-10-11）实测确认全部指纹：cl-cache-status: HIT 出现在 /url.js 与 /favicon.png、伴随 cache-control: max-age=2592000；/home 与 /xxa/*.json 无该头；Host: poc-canary.evil.com 触发 HTTP/1.1 800 页并反射 Host；CL+TE 冲突触发 400 页含 "DDoS protection by  CDNGreat"；26 个子域 Host 全部被 800 拦截，仅 m./www. 命中 200。
 - **path**: pocs/cdngreat-缓存-防护层指纹识别与缓存范围-缓存键判定方法/cdngreat_fingerprint.md
 - **tags**: cdngreat,cache,fingerprint,waf,host-header,cl-cache-status
 - **created_at**: 2026-10-10T17:12:58.945Z
@@ -35,7 +35,7 @@
 3. 响应头 `Vary: Accept-Encoding, Accept-Encoding`（重复声明，且 gzip 桶的响应只回一个 Vary —— 实现不规范）
 4. 校验失败时返回**非标准状态码 `800`**，页内自带：
    `<p>访问代码: 800</p><p>访问编号: <uuid></p><p>访问方法: GET </p><p>访问网址: https://{Host}{path} </p><p>游客地址: {出口IP} </p><p>访问时间: ... </p><p>域名不存在</p>`
-5. 报文级校验失败返回 400，页内 `<title>target302.example.com</title>` 与 `<p>DDoS protection by  CDNGreat</p>`
+5. 报文级校验失败返回 400，页内 `<title>cdngreat.com</title>` 与 `<p>DDoS protection by  CDNGreat</p>`
 6. Host 不在白名单时**直接由缓存层响应、不回源**（这也是枚举虚拟主机的快捷手段）
 
 ## 二、判定命令

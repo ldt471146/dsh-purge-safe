@@ -7,7 +7,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在靶标 tgt7737-org（上游渠道快照）上实测：curl -s -x http://127.0.0.1:7892 https://example.com/user/balance -H "Authorization: Bearer sk-19ec..." → 200，is_available=true，CNY total_balance=160.47 / granted=0.00 / topped_up=160.47；https://example.com/api/v1/key → 200 且 is_free_tier=true；https://example.com/v1/models → 200；https://example.com/v1/models → 200；https://example.com/zen/v1/models → 200（模型名带 -free）。对照组：无 Authorization → 401 "Authentication Fails (governor)"、无效 key → 401 "Your api key: ****dead is invalid"，证明读数真实。全程 0 次计费调用。
+- **verified_note**: 在靶标 aigemini-org（上游渠道快照）上实测：curl -s -x http://127.0.0.1:7892 https://example.com/user/balance -H "Authorization: Bearer sk-19ec..." → 200，is_available=true，CNY total_balance=160.47 / granted=0.00 / topped_up=160.47；https://example.com/api/v1/key → 200 且 is_free_tier=true；https://example.com/v1/models → 200；https://example.com/v1/models → 200；https://example.com/zen/v1/models → 200（模型名带 -free）。对照组：无 Authorization → 401 "Authentication Fails (governor)"、无效 key → 401 "Your api key: ****dead is invalid"，证明读数真实。全程 0 次计费调用。
 - **path**: pocs/llm-api-key-零消费只读验活-deepseek-余额-openrouter-分层-通用-models/llm_key_readonly_probe.py
 - **tags**: llm,apikey,balance,readonly,zero-cost
 - **created_at**: 2026-09-28T04:34:04.901Z

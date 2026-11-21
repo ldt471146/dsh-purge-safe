@@ -7,11 +7,11 @@
 - **severity**: low
 - **source**: self
 - **verified**: 1
-- **verified_note**: target485.example.com：curl --path-as-is 与 python 裸 socket 双工具、50+ 变体 × http/https 全部停在 adminAuth 之外（401 58B UNAUTHORIZED / 50B INVALID_TOKEN / 18B gin 404 / SPA 200 HTML），0 例 200 JSON 或 403 Admin access required；%00 回 nginx 400 页，证明源站 nginx 透传原始路径、Photon-Edge 不改写。
+- **verified_note**: www.dahurj999.top：curl --path-as-is 与 python 裸 socket 双工具、50+ 变体 × http/https 全部停在 adminAuth 之外（401 58B UNAUTHORIZED / 50B INVALID_TOKEN / 18B gin 404 / SPA 200 HTML），0 例 200 JSON 或 403 Admin access required；%00 回 nginx 400 页，证明源站 nginx 透传原始路径、Photon-Edge 不改写。
 - **path**: pocs/sub2api-photonedge-nginx-path-normalization-no-auth-bypass/poc.txt
 - **tags**: sub2api,photon-edge,nginx,gin,path-normalization,auth-bypass,negative,server-timing
 - **created_at**: 2026-11-02T05:42:35.696Z
-- **engine**: https://target485.example.com
+- **engine**: https://www.dahurj999.top
 
 ## 描述
 

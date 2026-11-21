@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 example.com（webman + Pear Admin 后台）实测 12 组对照：`table/select`→403 开关；`table/SELECT`→**仍 403 开关**（开关只看控制器段）；`TABLE/select`、`TABLE/SELECT`、`TABLE/index`、`PLUGIN/INDEX`→200 `<script>top.location.href='/app/admin';</script>`（开关被绕，落 AccessControl 401 分支，该脚本出自 plugin/admin/app/middleware/target356.example.com:58）；`account/info`（非开关管辖）同为 401 脚本可作判据；`TABLE/zznotexistact`→not found（绕过后不存在的动作仍失败）；**反例**：`/app/admin/api/im/group/LIST`、`/app/admin/api/IM/group/list`（4 段式）→not found，`/app/admin/dev/FORM-BUILD`→仍 403 开关 ⇒ 绕过只对 2 段式成立。无需任何凭证即可复现。落库靶标 vuln_id=11、HTTP 证据 id=8、chain seq=25/29。
+- **verified_note**: 在 example.com（webman + Pear Admin 后台）实测 12 组对照：`table/select`→403 开关；`table/SELECT`→**仍 403 开关**（开关只看控制器段）；`TABLE/select`、`TABLE/SELECT`、`TABLE/index`、`PLUGIN/INDEX`→200 `<script>top.location.href='/app/admin';</script>`（开关被绕，落 AccessControl 401 分支，该脚本出自 plugin/admin/app/middleware/AccessControl.php:58）；`account/info`（非开关管辖）同为 401 脚本可作判据；`TABLE/zznotexistact`→not found（绕过后不存在的动作仍失败）；**反例**：`/app/admin/api/im/group/LIST`、`/app/admin/api/IM/group/list`（4 段式）→not found，`/app/admin/dev/FORM-BUILD`→仍 403 开关 ⇒ 绕过只对 2 段式成立。无需任何凭证即可复现。落库靶标 vuln_id=11、HTTP 证据 id=8、chain seq=25/29。
 - **path**: pocs/webman-路由大小写不敏感-绕过按路径精确匹配的-功能关闭-开关-可救回代码生成器写文件-monitor-热重载-rce/poc.sh
 - **tags**: webman,workerman,路由,大小写绕过,WAF绕过,功能开关,代码生成器,file_put_contents,热重载,RCE
 - **created_at**: 2026-10-12T10:42:25.104Z

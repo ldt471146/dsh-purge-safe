@@ -35,7 +35,7 @@ PHPWind 7.x POST 全被拒的根因：PostCheck() 的 Referer host 必须等于 
 请求特征：用 IP 直连 + `Host: <域名>`，Referer 写成 IP（`https://<IP>/post.php?fid=2&action=new`）
 结果：响应 200 / 2320B，正文 `非法操作,请返回`（前台）或 `非法操作，请返回重试!`（后台）
 
-■ 源码根因（PHPWind 7.3.2，本机源码 C:\Users\user\Desktop\tgt9943\runs\pw-admin-sinks\utf8\）
+■ 源码根因（PHPWind 7.3.2，本机源码 C:\Users\user\Desktop\白小姐\runs\pw-admin-sinks\utf8\）
 global.php L775-789：
 ```php
 function PostCheck($verify = 1,$gdcheck = 0,$qcheck = 0,$refer = 1) {

@@ -81,5 +81,5 @@ req = ("POST /LHService/ZiLiao HTTP/1.1\r\nHost: <IP>\r\n"
 
 ## 局限
 - 只对**老式 `Integer.parseInt(getParameter(...))` 型 servlet** 有效。
-- 若参数名不在候选集里（或服务端读的是**配置文件/Properties**而非请求参数，如本靶标 `target335.example.com:24`——34,491+4,406 个名全试仍 `NumberFormatException: null`，属"配置资源缺失"故障），则无效。
+- 若参数名不在候选集里（或服务端读的是**配置文件/Properties**而非请求参数，如本靶标 `example.com.Manager.ConfigServlet:24`——34,491+4,406 个名全试仍 `NumberFormatException: null`，属"配置资源缺失"故障），则无效。
 ```

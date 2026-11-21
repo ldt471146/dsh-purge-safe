@@ -22,7 +22,7 @@
 ## 用法
 
 ```
-python rn_apk_download_extract.py —— 需把 <REDACTED>、<download-host>、<name>、<punycode-domain> 替换为实测值：本例分发域 target179.example.com、下载 host example.com、包名 example.com、主 CDN punycode 后缀 target180.example.com。输出 app.apk / full_paths.txt / urls.txt。
+python rn_apk_download_extract.py —— 需把 <REDACTED>、<download-host>、<name>、<punycode-domain> 替换为实测值：本例分发域 app.rrr-hhh-lll666.top、下载 host example.com、包名 example.com、主 CDN punycode 后缀 tx44.xn-r8s65df7admf92a.com。输出 app.apk / full_paths.txt / urls.txt。
 ```
 
 ## 正文
@@ -50,9 +50,9 @@ S.headers.update({"User-Agent": "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537
 
 # ---- 1) 跳转 JS ----
 root = S.get("https://app.<REDACTED>.top/", timeout=20).text
-mmdd = f"{target181.example.com().month}{target181.example.com().day}"   # 无前导零
+mmdd = f"{datetime.date.today().month}{datetime.date.today().day}"   # 无前导零
 suffix = re.search(r'atob\("([^"]+)"\)', root)
-print("getRL MMDD =", mmdd, "| CDN 后缀 =", base64.b64decode(target182.example.com(1)).decode() if suffix else None)
+print("getRL MMDD =", mmdd, "| CDN 后缀 =", base64.b64decode(suffix.group(1)).decode() if suffix else None)
 
 # ---- 2) 备 CDN 二次跳转（主 CDN 常被封，DNS gaierror）----
 host_b64 = base64.b64encode(b"app.<REDACTED>.top/").decode()
@@ -61,7 +61,7 @@ for cdn in ("jumpcdn.net", "tx44.<punycode-domain>.com"):
         js = S.get(f"https://gn{mmdd}.{cdn}/api.JS?1,{host_b64}", timeout=20).text
         m = re.search(r"atob\('([^']+)'\)", js)
         if m:
-            u = base64.b64decode(target22.example.com(1)).decode().replace("|", ".")
+            u = base64.b64decode(m.group(1)).decode().replace("|", ".")
             print("真实下载域/路径:", u)
     except Exception as e:
         print(cdn, "FAIL", type(e).__name__)
@@ -83,6 +83,6 @@ open("urls.txt", "w").write("\n".join(urls))
 print("接口:", len(paths), "URL:", len(urls), "key/iv 候选:", sorted(set(secrets)))
 # 硬编码 AES 模块通常形如 m.exports={Decrypt:...,Encrypt:...,key:'xxx',iv:'yyy'}
 for m in re.finditer(r"key\s*:\s*'([A-Za-z0-9+/=_\-]{16})'\s*,\s*iv\s*:\s*'([^']{8,32})'", b):
-    print("AES key/iv:", target22.example.com(1), target22.example.com(2))
+    print("AES key/iv:", m.group(1), m.group(2))
 
 ```

@@ -4,7 +4,7 @@
 
 <h1 align="center">⚔️ DeepSeek Harness 网络安全红队工具（dsh-purge-safe）</h1>
 
-<p align="center"><strong>Version 2.1.1</strong></p>
+<p align="center"><strong>Version 2.2.0</strong></p>
 
 <p align="center">
   <em>满血版本 + Super Agent 适配 · DSH 0.2.2-rc.3 · 优化提示词，降低拒绝率，提升稳定性。</em>
@@ -46,6 +46,13 @@
 ---
 
 ## 更新内容
+
+**2.2.0 — ARTEX 0.4.5 + 版本可选更新**
+
+- 随包 **ARTEX 知识库 0.4.5**：服务端 575 条与随包 0.4.4 按 code 并集（**包内 720 条**，并入已有安装后 829 条），空正文全部回填，**合并时整库重建 FTS 索引**（以前索引里只有几十条）。
+- 0.4.5 的 **525 个 POC 目录**并进 `knowledge/artex/pocs`（随包 679 个），索引 CSV 重新生成。
+- **技能同步 0.4.5**：57 个单文件技能 + **627 个目录式技能包**（合计 684 个），新增 `hunter-recon`、`scopesentry`、`chains-*`、`memshell-fallback`、`tunnel-selection` 与 `_domains` 里那批领域包。
+- **版本可选自更新**：控制台顶栏点版本号 → 列远端标签/分支 → 选任意版本安装；`redteam_plugin_update` 工具给模型同一条路。安装只覆盖插件目录、整树备份到 `$DSH_HOME/dsh-purge-safe/pre-update-*`，不重启宿主、不重打宿主补丁；原来的 `SEALED`「更新已关闭」桩已经拆掉。
 
 **2.1.1 — 技能与知识库整装**
 

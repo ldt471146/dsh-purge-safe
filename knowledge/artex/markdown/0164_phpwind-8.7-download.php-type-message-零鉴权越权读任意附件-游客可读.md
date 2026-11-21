@@ -48,11 +48,11 @@ phpwind 8.7 download 接口的 $type 参数可切换下载器，message/active �
 `execute()` 仅判 `empty($attach)` 与 `geturl()`，**不判登录、不判所有者、不判版块、不判积分**。
 
 ## 源码位置（phpwind 8.7）
-- `actions/job/target162.example.com:156-167` `getDownloadFactory($type)` 分发
-- `actions/job/target162.example.com:188-214` `messageDownload`（0 校验）
-- `actions/job/target162.example.com:216-242` `activeDownload`（0 校验）
-- `actions/job/target162.example.com:460-485` `threadDownload::check()`（8 校验）
-- `actions/job/target162.example.com:487-514` `threadDownload::_checkForum()`
+- `actions/job/download.php:156-167` `getDownloadFactory($type)` 分发
+- `actions/job/download.php:188-214` `messageDownload`（0 校验）
+- `actions/job/download.php:216-242` `activeDownload`（0 校验）
+- `actions/job/download.php:460-485` `threadDownload::check()`（8 校验）
+- `actions/job/download.php:487-514` `threadDownload::_checkForum()`
 
 ## POC（游客即可，无需任何 Cookie）
 ```http

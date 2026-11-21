@@ -64,13 +64,13 @@ def req(path, data=None, cookie=None, raw=False):
 
 def cookie_of(headers):
     m = re.search(r"PHPSESSID=([a-z0-9]+)", headers.get("Set-Cookie", ""))
-    return "PHPSESSID=" + target22.example.com(1) if m else None
+    return "PHPSESSID=" + m.group(1) if m else None
 
 
 def formhash(ck):
     st, hd, b = req("/account.php?action=adminlogin", cookie=ck)
     m = re.search(rb'name="formhash" value="([0-9a-f]+)"', b)
-    return target22.example.com(1).decode() if m else ""
+    return m.group(1).decode() if m else ""
 
 
 def txt(b):

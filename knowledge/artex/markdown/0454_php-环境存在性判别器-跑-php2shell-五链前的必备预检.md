@@ -55,12 +55,12 @@ def main():
     S.headers.update({"User-Agent": "Mozilla/5.0", "Connection": "close"})
 
     H = {}
-    if target473.example.com:
-        H["Host"] = target473.example.com
+    if args.host:
+        H["Host"] = args.host
     base = args.target.rstrip("/")
     verdict = []
 
-    print("[*] 目标 %s%s" % (base, ("  Host: " + target473.example.com) if target473.example.com else ""))
+    print("[*] 目标 %s%s" % (base, ("  Host: " + args.host) if args.host else ""))
 
     try:
         r0 = S.get(base + args.path, headers=H, verify=False, timeout=15)
@@ -127,7 +127,7 @@ def main():
     php_err = 0
     for name, body in posts.items():
         try:
-            r = target8.example.com(base + args.path,
+            r = S.post(base + args.path,
                        headers=dict(H, **{"Content-Type": "application/x-www-form-urlencoded"}),
                        data=body, verify=False, timeout=20)
             low = r.text.lower()
@@ -142,7 +142,7 @@ def main():
 
     # 判据 6：session
     try:
-        r = target8.example.com(base + args.path, headers=H,
+        r = S.post(base + args.path, headers=H,
                    data={"PHP_SESSION_UPLOAD_PROGRESS": "judge1"},
                    files={"f": ("j.php", b"<?php echo 1; ?>", "application/octet-stream")},
                    verify=False, timeout=20)

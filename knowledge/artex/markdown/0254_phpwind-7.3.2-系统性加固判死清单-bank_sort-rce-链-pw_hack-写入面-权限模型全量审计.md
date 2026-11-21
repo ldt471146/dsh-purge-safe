@@ -18,10 +18,10 @@
 
 这是一份"哪些路能走、哪些路被什么机制堵死"的全量审计结论，用于同平台其它靶标直接复用，避免重复劳动。所有"判死"项都在真实目标（203.0.113.126 上三套 PHPWind 7.3.2：example.com / example.com / example.com）上做过源码级或实测级确认。
 【核心可用链】bank_sort RCE：`hack/bank/example.com:55` 条件 `!$bk_per || $timestamp - pwFilemtime(D_P."data/bbscache/bank_sort.php") > $bk_per*3600` ⇒ `savearray()`（:362-373，双引号串 + 仅 addslashes ⇒ `${}` 不被转义）把 `get_date()` 输出写进 `bank_sort.php`，L76 **同请求 include** ⇒ 代码执行。payload 可用后台 `settings&admintype=basic` 的 `config[datefm]` 装填（无长度限制，反斜杠转义 gmdate 格式字符后原样输出）。
-【关键语义】`pwFilemtime()`（require/target105.example.com:1057）= `file_exists($file) ? intval(filemtime($file)+$db_cvtime*60) : 0` ⇒ **文件不存在时返回 0** ⇒ 删掉 `bank_sort.php` 必然触发重写（`$timestamp`≈1.79e9 ≫ `$bk_per*3600`，与 `$bk_per` 多大无关）；但全量 `P_unlink` 扫描无一处能指向它（路径全带固定前缀/后缀或来自 readdir）。
-【pw_hack 写入面 14 处】只有 2 类能写 `bk_per`：`hack/bank/example.com:58`（`"bk_$key"`，`$key` 可控 ⇒ `config[per]=0` 即写 `bk_per=0`，随后**立即 `updatecache_bk()`**，是唯一"即时触发"路径）与 `hack/blog/example.com:30`/`hack/medal/example.com:28`（`foreach($config as $key=>$value)` ⇒ **hk_name 无前缀**，理论上可写 `bk_per`）。**但三者同属 `example.com:26` 的 `$rightset['hackcenter']` 单一门禁**。其余：`mode/area/*` 键名硬编码、`apps/*` 与 `mode/o/admin/global.php` 前缀 `o_`、`admin/sitemap.php` 前缀 `sm_`、`admin/customnav.php` 硬编码 `area_navshow`、`lib/target277.example.com:100` 前缀 `KEY`/`ID`、`mode/area/require/target148.example.com:28` 硬编码 `area_static_next`。
+【关键语义】`pwFilemtime()`（require/common.php:1057）= `file_exists($file) ? intval(filemtime($file)+$db_cvtime*60) : 0` ⇒ **文件不存在时返回 0** ⇒ 删掉 `bank_sort.php` 必然触发重写（`$timestamp`≈1.79e9 ≫ `$bk_per*3600`，与 `$bk_per` 多大无关）；但全量 `P_unlink` 扫描无一处能指向它（路径全带固定前缀/后缀或来自 readdir）。
+【pw_hack 写入面 14 处】只有 2 类能写 `bk_per`：`hack/bank/example.com:58`（`"bk_$key"`，`$key` 可控 ⇒ `config[per]=0` 即写 `bk_per=0`，随后**立即 `updatecache_bk()`**，是唯一"即时触发"路径）与 `hack/blog/example.com:30`/`hack/medal/example.com:28`（`foreach($config as $key=>$value)` ⇒ **hk_name 无前缀**，理论上可写 `bk_per`）。**但三者同属 `example.com:26` 的 `$rightset['hackcenter']` 单一门禁**。其余：`mode/area/*` 键名硬编码、`apps/*` 与 `mode/o/admin/global.php` 前缀 `o_`、`admin/sitemap.php` 前缀 `sm_`、`admin/customnav.php` 硬编码 `area_navshow`、`lib/navmenu.class.php:100` 前缀 `KEY`/`ID`、`mode/area/require/core.php:28` 硬编码 `area_static_next`。
 【权限模型】`admin/example.com:226-279 checkpass()`：用户名命中 `data/sql_config.php` 的 `$manager` + 密码 + `admincheck` ⇒ `If_manager=1` 且 `$rightset` **全 1**（含 `hackcenter`）；否则 `$rightset = unserialize(pw_adminset[gid=groupid])`。而 `$manager` 只能由 `admin/manager.php` 写，它需要 `If_manager=1` ⇒ **自举死循环**。
-【全量判死项】① `key_cv()`（admin/target117.example.com:1124）只保留 `[\d\w_]` ⇒ 经 `updatecache_bk()`/`updatecache_conf()` 的缓存生成器注入 PHP 全灭；② `Pcv()`（target105.example.com:372）拦 `..`，`writeover()` 内部第一行就调用它；③ `admin/target188.example.com:136-155` 的 `action=editcss`（唯一写 `data/style/*_css.htm` 的代码）**整块被注释** ⇒ `admin/target117.example.com:644` 的 `eval("\$style_css = \"$style_css\";")` 拿不到可控数据（19 个字段全过 `pw_var_export`）；④ `admin/target218.example.com:318` 的 `manager_right` 检查在 `$db->update`（456 行）**之前**且 `adminmsg()` 终止执行 ⇒ 改 groupid=3 的管理员密码判死（实测：POST 后正文「只有创始人才能管理和编辑管理员帐号」，且前台用新密码登录返回「密码错误」）；⑤ `admin/target278.example.com:138` 删除条件 `strpos($filename,'mode_'.$m)` ⇒ 删不到 `bank_sort.php`；⑥ `admin/target279.example.com:10` 是裸 SQL 拼接（`"$action TABLE $table EXTENDED"`）但 MySQL 单语句限制；⑦ `admin/bakup.php` 的 `bakindata()` 按行以 `;` 结尾即执行 ⇒ 支持多语句、是**唯一**能执行任意 SQL 的入口，但 `$rightset['bakout']`/`['bakin']` 常为 0（注意权限键是 `bakout`/`bakin` 而非 `bakup`）；⑧ 主站 CC 防护（`$db_cc`）对 10 秒间隔的连发即拒（curl 返回 000）。
+【全量判死项】① `key_cv()`（admin/cache.php:1124）只保留 `[\d\w_]` ⇒ 经 `updatecache_bk()`/`updatecache_conf()` 的缓存生成器注入 PHP 全灭；② `Pcv()`（common.php:372）拦 `..`，`writeover()` 内部第一行就调用它；③ `admin/setstyles.php:136-155` 的 `action=editcss`（唯一写 `data/style/*_css.htm` 的代码）**整块被注释** ⇒ `admin/cache.php:644` 的 `eval("\$style_css = \"$style_css\";")` 拿不到可控数据（19 个字段全过 `pw_var_export`）；④ `admin/setuser.php:318` 的 `manager_right` 检查在 `$db->update`（456 行）**之前**且 `adminmsg()` 终止执行 ⇒ 改 groupid=3 的管理员密码判死（实测：POST 后正文「只有创始人才能管理和编辑管理员帐号」，且前台用新密码登录返回「密码错误」）；⑤ `admin/modeset.php:138` 删除条件 `strpos($filename,'mode_'.$m)` ⇒ 删不到 `bank_sort.php`；⑥ `admin/repair.php:10` 是裸 SQL 拼接（`"$action TABLE $table EXTENDED"`）但 MySQL 单语句限制；⑦ `admin/bakup.php` 的 `bakindata()` 按行以 `;` 结尾即执行 ⇒ 支持多语句、是**唯一**能执行任意 SQL 的入口，但 `$rightset['bakout']`/`['bakin']` 常为 0（注意权限键是 `bakout`/`bakin` 而非 `bakup`）；⑧ 主站 CC 防护（`$db_cc`）对 10 秒间隔的连发即拒（curl 返回 000）。
 
 ## 用法
 
@@ -65,9 +65,9 @@
 # - admin/example.com:82  include_once(D_P.'data/sql_config.php');  ⇒ $manager / $manager_pwd 明文所在（拿不到=读不了）
 # - admin/example.com:181 !defined('If_manager') && define('If_manager',0);
 # - admin/example.com:293-324 adminmsg() 末尾 afooter()（会终止执行，实测确认）
-# - require/target105.example.com:231-241 writeover() 内含 touch()（单参数，只更新为当前时间）+ chmod 0777
-# - require/target105.example.com:1057  pwFilemtime() 不存在文件返回 0  ← 删文件的威力所在
-# - admin/cache.php:5-45   updatecache() 全量重建（含 updatecache_bk()），入口 admin/target280.example.com:12 `$_POST['action']=='cache'`
-# - admin/target117.example.com:771-781 updatecache_bk() 读 pw_hack WHERE hk_name LIKE 'bk_%' 写 data/bbscache/bk_config.php
+# - require/common.php:231-241 writeover() 内含 touch()（单参数，只更新为当前时间）+ chmod 0777
+# - require/common.php:1057  pwFilemtime() 不存在文件返回 0  ← 删文件的威力所在
+# - admin/cache.php:5-45   updatecache() 全量重建（含 updatecache_bk()），入口 admin/updatecache.php:12 `$_POST['action']=='cache'`
+# - admin/cache.php:771-781 updatecache_bk() 读 pw_hack WHERE hk_name LIKE 'bk_%' 写 data/bbscache/bk_config.php
 
 ```

@@ -7,7 +7,7 @@
 - **language**: php
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-08 在 example.com + example.com（PHPWind 7.3.2 GBK / nginx / 宝塔）实测：002 上 `POST adminjob=setstyles body action=add&step=2&setting[0]=zq9x&setting[1]=wind` → 200|14759「添加风格完成」(INSERT+updatecache_sy 均执行)，随后 `GET /data/bbscache/wind_zq9x.css` → **404|548**（静态判据）；001 上合法后台 marker POST（`mk=PWMARK9XF1`，回显 200|14759「非法请求」= PostLog 之后才 PostCheck）后完整下载 `/data/bbscache/admin_record.php`（200|27524443）→ **marker 0 命中**，末条时间戳 1785304153(2026-07) 未变。对照：`/data/style/wind_css.htm` → 200|14279 且带 `Last-Modified: Fri, 18 Jun 2021 04:40:46 GMT`（静态判据可用）；`/data/style/zq9x.php` → 403|548、`/data/style/zq9x.php/` → 404|548（两者都不能当存在性判据）。源码依据取自本地 PHPWind 7.5SP3（require/target105.example.com:221/231/372/456/646、admin/target188.example.com:156/168/186、admin/target117.example.com:612-647、admin/example.com:103/197/537）。
+- **verified_note**: 2026-10-08 在 example.com + example.com（PHPWind 7.3.2 GBK / nginx / 宝塔）实测：002 上 `POST adminjob=setstyles body action=add&step=2&setting[0]=zq9x&setting[1]=wind` → 200|14759「添加风格完成」(INSERT+updatecache_sy 均执行)，随后 `GET /data/bbscache/wind_zq9x.css` → **404|548**（静态判据）；001 上合法后台 marker POST（`mk=PWMARK9XF1`，回显 200|14759「非法请求」= PostLog 之后才 PostCheck）后完整下载 `/data/bbscache/admin_record.php`（200|27524443）→ **marker 0 命中**，末条时间戳 1785304153(2026-07) 未变。对照：`/data/style/wind_css.htm` → 200|14279 且带 `Last-Modified: Fri, 18 Jun 2021 04:40:46 GMT`（静态判据可用）；`/data/style/zq9x.php` → 403|548、`/data/style/zq9x.php/` → 404|548（两者都不能当存在性判据）。源码依据取自本地 PHPWind 7.5SP3（require/common.php:221/231/372/456/646、admin/setstyles.php:156/168/186、admin/cache.php:612-647、admin/example.com:103/197/537）。
 - **path**: pocs/phpwind-7.3.2-7.5-后台写文件-getshell-三处写入端判死-pcv-封穿越-pw_var_export-转义数组键-setcss-非写入端/poc.php
 - **tags**: phpwind,后台getshell,判死,Pcv,路径穿越,setcss,PostLog,admin_record,pw_var_export,写文件判据,readonly
 - **created_at**: 2026-10-08T06:31:56.720Z
@@ -29,7 +29,7 @@ PHPWind 后台写文件 getshell 链的三处写入端（setstyles name/tplpath 
 # 结论：PHPWind「后台写文件 getshell」链在本机三处写入点全灭（源码级 + 实测双证）
 
 ## 一、源码级三条硬约束（7.5SP3 源码逐行，与目标 7.3.2 同源）
-1. **Pcv 封死路径穿越**（require/target105.example.com:372-380）：
+1. **Pcv 封死路径穿越**（require/common.php:372-380）：
    ```php
    function Pcv($filename,$ifcheck=1){
      $tmpname=strtolower($filename);
@@ -42,7 +42,7 @@ PHPWind 后台写文件 getshell 链的三处写入端（setstyles name/tplpath 
    `writeover(D_P."data/style/$name.php",...)`、`writeover(D_P."data/bbscache/".$tplpath."_".$stylepath.".css",...)` 里的
    `$name`/`$tplpath`/`$stylepath` **只要含 `..` 就直接 exit('Forbidden')**。所以 setstyles 的 name/tplpath 路径穿越**不是"能不能写"，而是源码层就不可达**（判据：请求会拿到 9 字节 `Forbidden` 而不是别的）。
 2. **pw_var_export 连数组键一起转义**（:456-471）：字符串分支 `str_replace(array("\\","'"),array("\\\\","\'"),$input)`；数组分支对 `$key` 也递归调用 `pw_var_export($key,...)` ⇒ 用 POST 数组键（`setting[3][x]=`）做 PHP 代码注入的常见套路**在 PHPWind 上不成立**。
-3. **action=setcss 是开关不是写入端**（admin/target188.example.com:156-166）：
+3. **action=setcss 是开关不是写入端**（admin/setstyles.php:156-166）：
    ```php
    } elseif ($_POST['action'] == 'setcss') {
      InitGP(array('showcss'));
@@ -53,7 +53,7 @@ PHPWind 后台写文件 getshell 链的三处写入端（setstyles name/tplpath 
    ```
    只改配置 + 可选触发 updatecache_sy()，**不写任何文件内容** ⇒ 不能把 payload 写进 `data/style/wind_css.htm`。
    （`action=editcss` 那段在 :136-155 被整段 `/* */` 注释，官方已关。）
-   ⇒ **`target117.example.com:642-644` 的 eval 链（readover `data/style/{tplpath}_css.htm` → `eval("\$style_css = \"$style_css\";")`）虽然是真的，但没有可控写入端喂它，链条不闭合。**
+   ⇒ **`cache.php:642-644` 的 eval 链（readover `data/style/{tplpath}_css.htm` → `eval("\$style_css = \"$style_css\";")`）虽然是真的，但没有可控写入端喂它，链条不闭合。**
 
 ## 二、两条实测（本项目 2026-10-08）
 | 判据 | 命令 | 结果 |

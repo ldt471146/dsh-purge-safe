@@ -14,7 +14,7 @@
 
 ## 描述
 
-require/target191.example.com:345 与 lib/target192.example.com:409 使用 preg_replace 的 /eis 修饰符，替换串为双引号字符串 "copyctrl('$read[colour]')" —— 变量被插值后作为 PHP 代码 eval。colour 来自 SELECT t.* FROM pw_threads，即 pw_threads.colour 列。触发还需版块设置 copyctrl（后台 target193.example.com:459 'copyctrl' 字段）为真。判据：7.5 SP3 的 pw_threads 建表语句（lang/install_wind.sql:3383-3423）无 colour 列，且全代码库只有读 colour、没有写 colour 的位置，故 7.5 上是死代码；8.7 仍保留同一行（8.7 require/target191.example.com:352），官方从未修写法本身。7.3.2 未验证。
+require/template.php:345 与 lib/staticpage.class.php:409 使用 preg_replace 的 /eis 修饰符，替换串为双引号字符串 "copyctrl('$read[colour]')" —— 变量被插值后作为 PHP 代码 eval。colour 来自 SELECT t.* FROM pw_threads，即 pw_threads.colour 列。触发还需版块设置 copyctrl（后台 setforum.php:459 'copyctrl' 字段）为真。判据：7.5 SP3 的 pw_threads 建表语句（lang/install_wind.sql:3383-3423）无 colour 列，且全代码库只有读 colour、没有写 colour 的位置，故 7.5 上是死代码；8.7 仍保留同一行（8.7 require/template.php:352），官方从未修写法本身。7.3.2 未验证。
 
 ## 用法
 
@@ -36,13 +36,13 @@ require/target191.example.com:345 与 lib/target192.example.com:409 使用 preg_
 ## 正文
 
 ```
-// require/target191.example.com:345 （htmread 内，帖子静态页生成路径）
+// require/template.php:345 （htmread 内，帖子静态页生成路径）
 $GLOBALS['foruminfo']['copyctrl'] && $read['content'] = preg_replace("/<br>/eis","copyctrl('$read[colour]')",$read['content']);
 
-// lib/target192.example.com:409 （版块静态页生成路径，同一写法）
+// lib/staticpage.class.php:409 （版块静态页生成路径，同一写法）
 $this->forum->foruminfo['copyctrl'] && $read['content'] = preg_replace("/<br>/eis","copyctrl('$read[colour]')",$read['content']);
 
-// 8.7 完全保留：require/target191.example.com:352、lib/target192.example.com:355
+// 8.7 完全保留：require/template.php:352、lib/staticpage.class.php:355
 // 说明官方 8.7 未修此写法。
 
 // 反证：pw_threads 建表语句（lang/install_wind.sql:3383-3423）逐列核对，无 colour 列：

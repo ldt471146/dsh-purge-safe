@@ -7,7 +7,7 @@
 - **versions**: PHPWind 7.x 全系（wooyun 报告明确写"影响 phpwind 7 和 phpwind 8"）；7.5 早期未修，7.5 SP3 及以后已加 pw_pcfield 白名单校验。含 7.3.2（早于修复点，待实测 action 存在性）
 - **language**: bash
 - **source**: web
-- **source_url**: http://target271.example.com/bug_detail.php?wybug_id=wooyun-2010-0417
+- **source_url**: http://wooyun.2xss.cc/bug_detail.php?wybug_id=wooyun-2010-0417
 - **verified_note**: 【情报角色零目标请求 —— 本条未在目标上发包验证】。全部结论为源码级确证：① 未修形态代码与 wooyun 原文逐字一致（maddogfyg-itangyou/pw_example.com L1927-1944，该仓库 example.sql 内含 "PHPWind v7.5" 属 7.5 早期）；② 7.5 SP3 同位置确已多一行 pw_pcfield 白名单校验（真补丁）；③ CheckVar/Char_cv 清洗清单与 halt 报错回显链均逐行读出。**唯一未确证项：目标 7.3.2 是否存在 pcdelimg action** —— 需执行端用 01-verify-pcdelimg.sh 的 2 个包判定。另：db_siteownerid 格式经源码确证为 substr(md5(...),0,32) 纯 hex 32 位（admin/app.php::generatestr L312-321），默认种子值 43ad6aed9e1523ba169f562221480891（data/pw_0924_*.sql L2516）可零成本先试。
 - **path**: pocs/phpwind-7.x-pw_ajax.php-action-pcdelimg-fieldname-布尔盲注-wooyun-2010-0417-影响-phpwi/pcdelimg-blind-sqli.sh
 - **tags**: phpwind,7.3.2,sql注入,盲注,pcdelimg,pw_ajax,后台入口,db_adminfile,apikey

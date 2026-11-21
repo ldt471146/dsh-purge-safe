@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 codex-tgt4796-com 靶标 http://203.0.113.51:5050（Flask + Werkzeug 3.1.8）实测：GET/POST/PUT/DELETE/PATCH /api/config 全部 401，而 OPTIONS /api/config → 200 + `Allow: HEAD, OPTIONS, GET`；据此未授权枚举出 13 个真实路由（含 POST-only 的 /api/admin/login、/api/r2/sync），并识别出 /api/config/<x> 为变量规则噪声（全部后缀命中）。另用模块 × 子路径交叉确认唯一白名单 GET 接口是 /api/redeem/lookup。对应 vuln 59 / evidence 44。
+- **verified_note**: 在 codex-miaomiaocode-com 靶标 http://203.0.113.51:5050（Flask + Werkzeug 3.1.8）实测：GET/POST/PUT/DELETE/PATCH /api/config 全部 401，而 OPTIONS /api/config → 200 + `Allow: HEAD, OPTIONS, GET`；据此未授权枚举出 13 个真实路由（含 POST-only 的 /api/admin/login、/api/r2/sync），并识别出 /api/config/<x> 为变量规则噪声（全部后缀命中）。另用模块 × 子路径交叉确认唯一白名单 GET 接口是 /api/redeem/lookup。对应 vuln 59 / evidence 44。
 - **path**: pocs/flask-before_request-鉴权跳过-options-未授权枚举后台路由表与方法-含变量规则噪声判据/flask_options_unauth_route_enum.md
 - **tags**: flask,werkzeug,OPTIONS,before_request,未授权,路由枚举,Allow头,变量规则,噪声
 - **created_at**: 2026-09-30T01:55:00.518Z
@@ -41,7 +41,7 @@ Flask/Quart 应用把鉴权写在 before_request 时，Werkzeug 自动 OPTIONS �
 
 据此可以在**没有任何凭证**的情况下枚举出完整后台 API 面（含只开放 POST 的接口），比 ffuf 硬扫更准（不会把 401 误判成"存在"、也不会漏掉没有 GET 的接口）。
 
-## 案例（实测，2026-09-30，codex-tgt4796-com / 203.0.113.51:5050）
+## 案例（实测，2026-09-30，codex-miaomiaocode-com / 203.0.113.51:5050）
 `GET/POST/PUT/DELETE/PATCH /api/config` → 全部 `401 {"error":"unauthorized","message":"需要登录管理后台"}`；
 `OPTIONS /api/config` → `200`，`Allow: HEAD, OPTIONS, GET`。
 枚举结果（未授权）：`/api/accounts`、`/api/characters`、`/api/codes`、`/api/config`、`/api/dashboard`、`/api/db`、`/api/health`、`/api/logs`、`/api/r2`、`/api/tasks`、`/api/version`（GET/HEAD）、**`/api/admin/login`（POST-only）**、**`/api/r2/sync`（POST-only）**、`/api/characters/search`（POST）、`/api/redeem/lookup`（GET）。

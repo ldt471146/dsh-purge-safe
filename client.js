@@ -3303,6 +3303,84 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 			return h("span", { className: "dshp-notice " + (notice.kind === "error" ? "is-bad" : "is-ok") }, notice.text);
 		}
 
+		/**
+		 * 清洗页那一行里的「切换版本」：只列版本号，不掺分支 / tag / sha。
+		 * 数据还是 /redteam/api 的 pluginVersions，只是把 head / 本地占位行都筛掉，
+		 * 用户看到的永远是 vYYYY 这种一眼能懂的东西。
+		 */
+		function VersionSwitcher() {
+			const [list, setList] = useState(null);
+			const [sel, setSel] = useState("");
+			const [busy, setBusy] = useState(false);
+			const [note, setNote] = useState(null);
+			const [pending, setPending] = useState(() => {
+				try { return window.localStorage.getItem("rt-update-pending") || ""; } catch (e) { return ""; }
+			});
+			const load = useCallback(() => {
+				let alive = true;
+				fetch("/redteam/api", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ op: "pluginVersions" })
+				}).then((r) => r.json().catch(() => null)).then((data) => {
+					if (!alive) return;
+					if (!data || data.ok !== true) { setList([]); return; }
+					const rows = (data.versions || []).filter((v) => v.kind !== "head" && v.downloadable !== false);
+					setList(rows);
+					/* 不预选：没挑之前「切换」是灰的，避免手滑把当前版本换掉 */
+					setSel((prev) => (rows.some((v) => v.ref === prev) ? prev : ""));
+					if (pending && data.runningVersion === pending) {
+						try { window.localStorage.removeItem("rt-update-pending"); } catch (e) { /* 隐私模式 */ }
+						setPending("");
+					}
+				}).catch(() => { if (alive) setList([]); });
+				return () => { alive = false; };
+			}, [pending]);
+			useEffect(() => load(), [load]);
+			const install = () => {
+				if (!sel || busy) return;
+				setBusy(true);
+				setNote(null);
+				fetch("/redteam/api", {
+					method: "POST",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ op: "pluginInstallVersion", ref: sel })
+				}).then((r) => r.json().catch(() => null)).then((data) => {
+					if (data && data.ok === true) {
+						if (data.unchanged === true) { setNote("已经是这个版本"); return; }
+						const next = data.version || sel;
+						try { window.localStorage.setItem("rt-update-pending", next); } catch (e) { /* 隐私模式 */ }
+						setPending(next);
+						setNote("已换到 v" + next + "，重启宿主后生效");
+						load();
+						return;
+					}
+					setNote((data && data.error) || "切换失败");
+				}).catch((e) => setNote("切换失败：" + String((e && e.message) || e))).finally(() => setBusy(false));
+			};
+			const muted = { fontSize: "12px", color: "var(--dshp-mute)" };
+			if (list !== null && list.length === 0) return null;
+			return h("div", { className: "dshp-ver-switch", style: { display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginTop: "2px" } },
+				h("span", { style: muted }, "切换版本"),
+				list === null
+					? h("span", { style: muted }, "读取中…")
+					: h("select", {
+						value: sel,
+						onChange: (e) => setSel(e.target.value),
+						"aria-label": "选择版本",
+						style: {
+							font: "inherit", fontSize: "12px", minHeight: "28px", padding: "0 6px", borderRadius: "7px",
+							border: "1px solid var(--dshp-line)", background: "var(--dshp-fill)", color: "var(--dshp-ink)",
+						},
+					}, [
+						h("option", { key: "__pick", value: "", disabled: true }, "选择版本"),
+						...list.map((v) => h("option", { key: v.ref, value: v.ref }, "v" + v.version + (v.current ? "（当前）" : ""))),
+					]),
+				h(Btn, { tiny: true, disabled: !sel || busy || list === null, onClick: install }, busy ? "切换中…" : "切换"),
+				note ? h("span", { style: muted }, note) : null,
+				pending ? h("i", { className: "dshp-now-mark" }, "v" + pending + " 待重启") : null);
+		}
+
 		function Btn(props) {
 			const { kind, tiny, children, className, type, ...rest } = props;
 			const cls = ["dshp-btn", kind ? "dshp-btn-" + kind : "dshp-btn-ghost", tiny ? "dshp-btn-tiny" : "", className || ""].filter(Boolean).join(" ");
@@ -3957,6 +4035,7 @@ body:not([data-ds-dark-theme]) .dshp-auth-ops button.primary{background:var(--ds
 						h("span", { className: "dshp-now-label" }, t("channel.local")),
 						h("b", { className: "dshp-now-ver" }, localVer ? "v" + localVer : "—"),
 					),
+					h(VersionSwitcher, null),
 				),
 				s ? h("div", { className: "dshp-metrics" },
 					h("div", { className: "dshp-metric" },
@@ -6854,6 +6933,22 @@ const productTheme = createProductTheme();
   border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:14px 16px;font-size:var(--ui-text-helper);line-height:var(--ui-leading-body);
   box-shadow:0 18px 48px rgba(0,0,0,.35);color:var(--dsw-alias-label-primary)}
 .rt-modal-box .rt-kv b{min-width:76px}
+/* 版本 tag 变成可点按钮 + 弹窗里的版本清单 */
+.rt-tag-btn{cursor:pointer;font:inherit;background:none}
+.rt-tag-btn:hover{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-brand-primary)}
+.rt-upd-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.rt-upd-head h3{margin:0 0 2px;font-size:var(--ui-text-section)}
+.rt-upd-list{display:flex;flex-direction:column;gap:5px;margin:8px 0 10px;max-height:46vh;overflow:auto}
+.rt-upd-row{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border:1px solid var(--dsw-alias-border-l1);
+  border-radius:7px;background:var(--dsw-alias-bg-layer-2);cursor:pointer;min-width:0}
+.rt-upd-row.on{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-bg-layer-1)}
+.rt-upd-row input{margin-top:2px;flex:none}
+.rt-upd-main{min-width:0;flex:1}
+.rt-upd-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:var(--ui-text-helper)}
+.rt-upd-ref{color:var(--dsw-alias-label-secondary)}
+.rt-upd-meta{color:var(--dsw-alias-label-secondary);font-size:var(--ui-text-helper);margin-top:1px;overflow-wrap:anywhere}
+.rt-upd-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+.rt-upd-hint{color:var(--dsw-alias-label-secondary);font-size:var(--ui-text-helper);flex:1 1 220px;min-width:0}
 .rt-kb-check{display:flex;align-items:center;gap:5px;font-size:var(--ui-text-helper);color:var(--dsw-alias-label-secondary);white-space:nowrap;cursor:pointer}
 .rt-kb{border:1px solid var(--dsw-alias-border-l1);border-radius:7px;margin:0 0 8px;overflow:hidden;
   background:var(--dsw-alias-bg-layer-2)}
@@ -21451,23 +21546,291 @@ function SkillsTab(props) {
     }
 
     /** Display only the installed package version through the local status route. */
+    /* 装完但没重启：把目标版本记在 localStorage，重载/换页后还能提醒一次 */
+    const PENDING_UPDATE_KEY = 'rt-update-pending'
+    function readPendingUpdate() {
+      try { return window.localStorage.getItem(PENDING_UPDATE_KEY) || '' } catch { return '' }
+    }
+    function writePendingUpdate(version) {
+      try { if (version) window.localStorage.setItem(PENDING_UPDATE_KEY, version) } catch { /* 隐私模式 */ }
+    }
+    function clearPendingUpdate() {
+      try { window.localStorage.removeItem(PENDING_UPDATE_KEY) } catch { /* 隐私模式 */ }
+    }
+
     function VersionBar(props) {
       const [version, setVersion] = React.useState('')
+      const [open, setOpen] = React.useState(false)
+      const [pending, setPending] = React.useState(() => readPendingUpdate())
       React.useEffect(() => {
         let alive = true
-        const controller = new AbortController()
-        const timer = window.setTimeout(() => controller.abort(), 6000)
-        fetch('/dsh-purge-safe/status', { method: 'GET', signal: controller.signal })
-          .then((response) => response.ok ? response.json() : null)
-          .then((status) => {
-            if (alive && status && status.ok === true && typeof status.plugin_version === 'string') {
-              setVersion(status.plugin_version.trim())
-            }
-          }, () => {})
-          .finally(() => window.clearTimeout(timer))
-        return () => { alive = false; controller.abort(); window.clearTimeout(timer) }
-      }, [])
-      return h('span', { className: 'rt-tag', title: '当前安装包 package.json 版本', 'aria-label': '当前插件版本' }, version ? 'v' + version : '—')
+        fetch('/redteam/api', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ op: 'pluginVersions' }),
+        }).then((response) => response.json().catch(() => null)).then((data) => {
+          if (!alive || !data || data.ok !== true) return
+          if (typeof data.current === 'string') setVersion(data.current)
+          /* 宿主进程里跑的版本追上了标记 → 真的重启过，标记撤掉 */
+          if (pending && data.runningVersion === pending) { clearPendingUpdate(); setPending('') }
+        }).catch(() => {})
+        return () => { alive = false }
+      }, [pending])
+      return React.createElement(React.Fragment, null,
+        h('button', {
+          type: 'button',
+          className: 'rt-tag rt-tag-btn',
+          title: '版本与更新：查看远端版本，选任意版本安装',
+          'aria-label': '版本与更新',
+          onClick: () => setOpen(true),
+        }, version ? 'v' + version : '—'),
+        pending
+          ? h('button', {
+              type: 'button',
+              className: 'rt-tag rt-tag-warn rt-tag-btn',
+              title: '文件已换到 v' + pending + '，重启宿主后生效；点一下丢掉这个标记',
+              onClick: () => { clearPendingUpdate(); setPending('') },
+            }, 'v' + pending + ' 待重启')
+          : null,
+        open ? h(PluginUpdateModal, { current: version, onClose: () => setOpen(false), onInstalled: (v) => setPending(v) }) : null)
+    }
+
+    /**
+     * 「版本与更新」弹窗：列出远端 tag / 分支，选一个直接装。
+     * 只覆盖插件目录，重启宿主后生效 —— 不在这里自动重启，避免把用户正在跑的任务掐掉。
+     */
+    function PluginUpdateModal(props) {
+      const [state, setState] = React.useState({ loading: true, versions: [] })
+      const [sel, setSel] = React.useState('')
+      const [busy, setBusy] = React.useState(false)
+      const [msg, setMsg] = React.useState(null)
+      const [nonce, setNonce] = React.useState(0)
+      const call = (body) => fetch('/redteam/api', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then((res) => res.json().catch(() => null))
+      React.useEffect(() => {
+        let alive = true
+        setState((prev) => ({ ...prev, loading: true }))
+        call({ op: 'pluginVersions' }).then((data) => {
+          if (!alive) return
+          if (!data || data.ok !== true) {
+            setState({ loading: false, versions: [], error: (data && data.error) || '读取版本清单失败' })
+            return
+          }
+          const list = Array.isArray(data.versions) ? data.versions : []
+          const picked = (list.find((item) => item.current) || list[0] || {}).ref || ''
+          setState({
+            loading: false,
+            versions: list,
+            current: data.current,
+            runningVersion: data.runningVersion,
+            pendingRestart: data.pendingRestart,
+            repo: data.repo,
+            error: data.error,
+          })
+          setSel(picked)
+        }).catch((error) => {
+          if (alive) setState({ loading: false, versions: [], error: '请求失败：' + (error && error.message ? error.message : String(error)) })
+        })
+        return () => { alive = false }
+      }, [nonce])
+
+      const install = () => {
+        if (!sel || busy) return
+        setBusy(true)
+        setMsg(null)
+        call({ op: 'pluginInstallVersion', ref: sel }).then((data) => {
+          setMsg(data || { ok: false, error: '服务端没有返回' })
+          if (data && data.ok === true && data.unchanged !== true) {
+            const next = data.version || sel
+            writePendingUpdate(next)
+            if (props.onInstalled) props.onInstalled(next)
+            setNonce((n) => n + 1)
+          }
+        }).catch((error) => {
+          setMsg({ ok: false, error: '安装失败：' + (error && error.message ? error.message : String(error)) })
+        }).finally(() => setBusy(false))
+      }
+
+      const close = props.onClose || (() => {})
+      const rows = state.loading
+        ? h('div', { className: 'rt-empty' }, '正在读取远端版本…')
+        : state.versions.length === 0
+          ? h('div', { className: 'rt-empty' }, state.error || '没有可用版本')
+          : state.versions.filter((item) => item.kind !== 'head').map((item) => h('label', {
+              key: item.ref,
+              className: 'rt-upd-row' + (sel === item.ref ? ' on' : ''),
+            },
+            h('input', {
+              type: 'radio',
+              name: 'rt-upd-ver',
+              checked: sel === item.ref,
+              disabled: item.downloadable === false,
+              onChange: () => setSel(item.ref),
+            }),
+            h('div', { className: 'rt-upd-main' },
+              h('div', { className: 'rt-upd-name' },
+                h('b', null, 'v' + (item.version || item.ref)),
+                item.current ? h('span', { className: 'rt-tag rt-tag-live' }, '当前') : null,
+                item.kind === 'local' ? h('span', { className: 'rt-tag' }, '本地') : null)))) 
+
+      return h('div', { className: 'rt-modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': '版本与更新', onClick: (e) => { if (e.target === e.currentTarget) close() } },
+        h('div', { className: 'rt-modal-box' },
+          h('div', { className: 'rt-upd-head' },
+            h('div', null,
+              h('h3', null, '版本与更新'),
+              h('p', { className: 'rt-settings-card-copy' },
+                (state.repo ? state.repo : '本地固定版本')
+                + (!state.pendingRestart && state.runningVersion ? ' · 运行中 v' + state.runningVersion : ''))),
+            h('button', { type: 'button', className: 'rt-btn', onClick: close, 'aria-label': '关闭' }, '关闭')),
+          state.pendingRestart ? h('div', { className: 'rt-err' }, '磁盘上已是 v' + (state.current || '') + '，但当前宿主还跑着 v' + (state.runningVersion || '') + '，重启宿主后生效。') : null,
+          msg ? h('div', { className: msg.err || msg.ok === false ? 'rt-err' : 'rt-foot' }, msg.error || msg.note || '完成') : null,
+          h('div', { className: 'rt-upd-list', role: 'radiogroup', 'aria-label': '可选版本' }, rows),
+          h('div', { className: 'rt-upd-foot' },
+            h('span', { className: 'rt-upd-hint' }, '安装只覆盖插件目录；不重启、不重打宿主补丁，旧文件会备份到 $DSH_HOME/dsh-purge-safe/pre-update-*'),
+            h('div', { className: 'rt-spacer' }),
+            h('button', { type: 'button', className: 'rt-btn', onClick: () => setNonce((n) => n + 1), disabled: state.loading || busy }, '刷新清单'),
+            h('button', { type: 'button', className: 'rt-btn rt-btn-primary', onClick: install, disabled: !sel || busy }, busy ? '安装中…' : '安装所选版本'))))
+    }
+
+    /**
+     * 宿主「设置 → 版本与更新」这一页。
+     *
+     * 为什么要有两份入口：控制台顶栏那个版本 tag 只有打开演练台才看得见，
+     * 用户要的是「不打开演练台，一眼就能看见版本和换版本的地方」。
+     * 这一页因此在宿主原生设置里占一个 section，逻辑与弹窗完全一样（同一个 host op）。
+     */
+    const UPD_STYLE = {
+      page: { display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0, maxWidth: '780px' },
+      card: {
+        display: 'flex', flexDirection: 'column', gap: '8px', minWidth: 0,
+        border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.28))',
+        borderRadius: '10px', padding: '14px 16px',
+        background: 'var(--dsw-alias-bg-layer-1, transparent)',
+      },
+      title: { margin: 0, fontSize: '15px', lineHeight: '22px', fontWeight: 600 },
+      sub: { margin: 0, fontSize: '12px', lineHeight: '18px', color: 'var(--dsw-alias-label-secondary, #6b7280)', overflowWrap: 'anywhere' },
+      row: {
+        display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '8px 10px', minWidth: 0,
+        border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.28))', borderRadius: '8px', cursor: 'pointer',
+      },
+      rowOn: { borderColor: 'var(--dsw-alias-brand-primary, #4f7cff)', background: 'var(--dsw-alias-bg-layer-2, rgba(79,124,255,.06))' },
+      rowName: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '13px', lineHeight: '20px' },
+      rowMeta: { fontSize: '12px', lineHeight: '18px', color: 'var(--dsw-alias-label-secondary, #6b7280)', overflowWrap: 'anywhere' },
+      pill: {
+        fontSize: '11px', lineHeight: '16px', padding: '0 6px', borderRadius: '999px',
+        border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.4))', color: 'var(--dsw-alias-label-secondary, #6b7280)',
+      },
+      pillLive: { color: 'var(--dsw-alias-brand-primary, #2f6bff)', borderColor: 'currentColor' },
+      foot: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' },
+      btn: {
+        font: 'inherit', fontSize: '13px', lineHeight: '20px', padding: '5px 12px', cursor: 'pointer',
+        borderRadius: '8px', border: '1px solid var(--dsw-alias-border-l1, rgba(128,128,128,.4))',
+        background: 'var(--dsw-alias-bg-layer-2, transparent)', color: 'inherit',
+      },
+      btnPrimary: { borderColor: 'transparent', background: 'var(--dsw-alias-brand-primary, #2f6bff)', color: '#fff' },
+      note: { fontSize: '12px', lineHeight: '18px', color: 'var(--dsw-alias-label-secondary, #6b7280)' },
+      warn: {
+        fontSize: '12px', lineHeight: '18px', padding: '6px 10px', borderRadius: '8px',
+        border: '1px solid var(--dsw-alias-warning-border, rgba(234,179,8,.5))',
+        background: 'var(--dsw-alias-warning-bg, rgba(234,179,8,.12))',
+      },
+      err: { fontSize: '12px', lineHeight: '18px', color: 'var(--dsw-alias-danger-primary, #d33)' },
+      ok: { fontSize: '12px', lineHeight: '18px', color: 'var(--dsw-alias-success-primary, #2e7d32)' },
+    }
+
+    function PluginVersionSection() {
+      const [state, setState] = React.useState({ loading: true, versions: [] })
+      const [sel, setSel] = React.useState('')
+      const [busy, setBusy] = React.useState(false)
+      const [msg, setMsg] = React.useState(null)
+      const [nonce, setNonce] = React.useState(0)
+      const [pending, setPending] = React.useState(() => readPendingUpdate())
+
+      React.useEffect(() => {
+        let alive = true
+        setState((prev) => ({ ...prev, loading: true }))
+        fetch('/redteam/api', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ op: 'pluginVersions' }),
+        }).then((res) => res.json().catch(() => null)).then((data) => {
+          if (!alive) return
+          if (!data || data.ok !== true) {
+            setState({ loading: false, versions: [], error: (data && data.error) || '读取版本清单失败' })
+            return
+          }
+          const list = Array.isArray(data.versions) ? data.versions : []
+          setState({
+            loading: false, versions: list, current: data.current, runningVersion: data.runningVersion,
+            repo: data.repo, error: data.error, fetchedAt: data.fetchedAt,
+          })
+          setSel((prevSel) => prevSel || ((list.find((item) => item.current && item.downloadable !== false) || list.find((item) => item.downloadable !== false) || {}).ref || ''))
+        }).catch((error) => {
+          if (alive) setState({ loading: false, versions: [], error: '请求失败：' + (error && error.message ? error.message : String(error)) })
+        })
+        return () => { alive = false }
+      }, [nonce])
+
+      React.useEffect(() => {
+        if (pending && state.runningVersion === pending) { clearPendingUpdate(); setPending('') }
+      }, [pending, state.runningVersion])
+
+      const install = () => {
+        if (!sel || busy) return
+        setBusy(true)
+        setMsg(null)
+        fetch('/redteam/api', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ op: 'pluginInstallVersion', ref: sel }),
+        }).then((res) => res.json().catch(() => null)).then((data) => {
+          setMsg(data || { ok: false, error: '服务端没有返回' })
+          if (data && data.ok === true && data.unchanged !== true) {
+            const next = data.version || sel
+            writePendingUpdate(next)
+            setPending(next)
+            setNonce((n) => n + 1)
+          }
+        }).catch((error) => {
+          setMsg({ ok: false, error: '安装失败：' + (error && error.message ? error.message : String(error)) })
+        }).finally(() => setBusy(false))
+      }
+
+      /* 只列版本号：分支 / 提交 / 时间这些工程细节对"我要换个版本"没有帮助，全部不显示 */
+      const versionRows = (state.versions || []).filter((item) => item.kind !== 'head')
+      const rows = state.loading
+        ? h('div', { style: UPD_STYLE.note }, '正在读取版本清单…')
+        : versionRows.length === 0
+          ? h('div', { style: UPD_STYLE.note }, state.error || '没有可用版本')
+          : versionRows.map((item) => h('label', {
+              key: item.ref,
+              style: sel === item.ref ? { ...UPD_STYLE.row, ...UPD_STYLE.rowOn } : UPD_STYLE.row,
+            },
+            h('input', { type: 'radio', name: 'dshp-upd-section', checked: sel === item.ref, disabled: item.downloadable === false, onChange: () => setSel(item.ref), style: { marginTop: '3px' } }),
+            h('div', { style: { minWidth: 0, flex: 1 } },
+              h('div', { style: UPD_STYLE.rowName },
+                h('b', null, 'v' + (item.version || item.ref)),
+                item.current ? h('span', { style: { ...UPD_STYLE.pill, ...UPD_STYLE.pillLive } }, '当前') : null,
+                item.kind === 'local' ? h('span', { style: UPD_STYLE.pill }, '本地') : null))))
+
+      return h('div', { style: UPD_STYLE.page },
+        h('div', { style: UPD_STYLE.card },
+          h('h3', { style: UPD_STYLE.title }, '版本与更新'),
+          h('p', { style: UPD_STYLE.sub },
+            (state.repo || '本地固定版本')
+            + (state.current ? ' · 磁盘 v' + state.current : '')
+            + (state.runningVersion ? ' · 运行中 v' + state.runningVersion : '')
+            + (state.fetchedAt ? ' · 清单时间 ' + new Date(state.fetchedAt).toLocaleString('zh-CN', { hour12: false }) : '')),
+          pending ? h('div', { style: UPD_STYLE.warn }, '已安装 v' + pending + '，重启宿主（systemctl restart dsh-web）或刷新服务后生效。') : null,
+          msg ? h('div', { style: msg.ok === false ? UPD_STYLE.err : UPD_STYLE.ok }, msg.error || msg.note || '完成') : null,
+          h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }, role: 'radiogroup', 'aria-label': '可选版本' }, rows),
+          h('div', { style: { ...UPD_STYLE.foot, marginTop: '10px' } },
+            h('button', { type: 'button', style: UPD_STYLE.btn, disabled: state.loading || busy, onClick: () => setNonce((n) => n + 1) }, '刷新清单'),
+            h('button', { type: 'button', style: { ...UPD_STYLE.btn, ...UPD_STYLE.btnPrimary }, disabled: !sel || busy, onClick: install }, busy ? '安装中…' : '安装所选版本'),
+            h('span', { style: UPD_STYLE.note }, '只覆盖插件目录，旧文件备份到 $DSH_HOME/dsh-purge-safe/pre-update-*；不自动重启、不重打宿主补丁。'))))
     }
 
     /* ---------------------------------------------------------- 常驻面板主体 */
@@ -22014,7 +22377,7 @@ function SkillsTab(props) {
             studioProjectCard,
             followChip,
             h('button', { className: 'rt-btn', title: '刷新名册、快照与当前页面数据', onClick: refreshAll }, '刷新'),
-            embedded ? null : h(VersionBar, null),
+            h(VersionBar, null),
             !embedded && isFullWindow() ? h('button', { className: 'rt-btn', title: '返回普通窗口界面', onClick: exitFull }, '返回窗口') : null,
             embedded ? null : h('button', { className: 'rt-btn', 'aria-pressed': fullscreen.expanded, title: fullscreen.expanded ? '退出全屏并返回窗口' : '在当前窗口全屏浏览', onClick: fullscreen.expanded ? exitFull : openFull }, fullscreen.expanded ? '退出全屏' : '全屏浏览'),
             (full || embedded) ? null : h('button', { className: 'rt-btn', title: '收起面板', onClick: () => setUI({ open: false }) }, '收起'))),
@@ -22087,7 +22450,7 @@ function SkillsTab(props) {
      * @param ctx - 客户端根上下文。
      */
     function applyDrillParts() {
-      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth };
+      return { CSS: CSS, Panel: Panel, setUI: setUI, useUI: useUI, isFullWindow: isFullWindow, setDockWidth: setDockWidth, PluginVersionSection: PluginVersionSection };
     }
 
     exports.inject = inject
@@ -23552,6 +23915,17 @@ function SkillsTab(props) {
 				id: "dsh-purge-safe-dock",
 				order: 50,
 			}, () => h(react.Fragment, null, h(WelcomeNotice), h(PurgeDock), h(HeroNewSessionMount), h(TabRowPurgeMount), h(EnvAdaptSendGate), h(AttentionToast))));
+			/* 设置 → 「版本与更新」：不打开演练台也能一眼看见版本与换版本入口 */
+			try {
+				ctx.slots.inject("settings.section", () => ctx.slots.register({
+					name: "settings.section",
+					id: "dsh-purge-version",
+					order: 60,
+					label: () => "版本与更新",
+				}, __dshPurgeDrill.PluginVersionSection));
+			} catch (e) {
+				try { console.warn("[dsh-purge-safe] settings section skipped:", e); } catch { /* ignore */ }
+			}
 			/* 侧栏角标已退役：胶囊本身就在画布上、还能拖到任意位置，
 			   再往官方侧栏塞一枚角标就是两个入口抢同一件事。提醒只留胶囊一个出口。 */
 			try {

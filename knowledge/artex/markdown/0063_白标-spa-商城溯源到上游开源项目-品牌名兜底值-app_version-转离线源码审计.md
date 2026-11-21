@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt6403-com 靶标实测：从 `/assets/useRegister-D7nKpYRq.js`、`useLogin-DGBQ_uJr.js` 的 `brand.site_name || "tgt2403"` 兜底值识别出上游项目，配合 `/api/v1/public/config` 的 app_version=example.com 锁定 tag；在演练 VPS 拉取 tarball（5377216 B）离线审计 1152 个 Go 文件，产出 3 条可验证假设，其中 2 条经 4 个只读请求在目标上证伪、1 条记 candidate。
+- **verified_note**: 在 pockgo-com 靶标实测：从 `/assets/useRegister-D7nKpYRq.js`、`useLogin-DGBQ_uJr.js` 的 `brand.site_name || "Dujiao-Next"` 兜底值识别出上游项目，配合 `/api/v1/public/config` 的 app_version=example.com 锁定 tag；在演练 VPS 拉取 tarball（5377216 B）离线审计 1152 个 Go 文件，产出 3 条可验证假设，其中 2 条经 4 个只读请求在目标上证伪、1 条记 candidate。
 - **path**: pocs/白标-spa-商城溯源到上游开源项目-品牌名兜底值-app_version-转离线源码审计/poc.sh
 - **tags**: 溯源,白标商城,开源项目识别,源码审计,版本锁定,默认密钥,零负载
 - **created_at**: 2026-09-28T14:44:39.731Z
@@ -30,7 +30,7 @@
 
 # 定位手法（按命中率排序）
 1. **品牌名兜底值**：`String(config?.brand?.site_name || "").trim() || "上游项目名"`
-   → 本例在 `assets/useRegister-*.js` / `useLogin-*.js` 里抓到 `..."":""?"tgt2403"`，直接暴露上游 = tgt2403（独角数卡 Next）。
+   → 本例在 `assets/useRegister-*.js` / `useLogin-*.js` 里抓到 `..."":""?"Dujiao-Next"`，直接暴露上游 = Dujiao-Next（独角数卡 Next）。
 2. **app_version**：公开配置接口（`/api/v1/public/config`、`/api/config`、`/config.json` 等）常回版本号 → 本例 `app_version="example.com"`，用于**锁定 tag**。
 3. **独有路由/字段名**：`guest_password`、`order_password`、`api-credential`、`reseller/site-config` 等罕用命名，直接丢进 GitHub 代码搜索。
 4. **静态资源里的文件头注释/许可证**：如 `Copyright (C) ... The Squid Software Foundation` 之类。
@@ -53,8 +53,8 @@ grep -rn "\.Use(\|Group(" internal/app/httpserver/routes_*.go
 #    d. 验证码生成是否用 crypto/rand、是否有限次
 ```
 
-# 本例战果（tgt6403-com / example.com）
-- 溯源成功：**tgt2403 example.com**（Go，tag commit 47cc6207c6796ccfda0526a3708be39e1b59eba3），1152 个 .go 文件离线审计。
+# 本例战果（pockgo-com / example.com）
+- 溯源成功：**Dujiao-Next example.com**（Go，tag commit 47cc6207c6796ccfda0526a3708be39e1b59eba3），1152 个 .go 文件离线审计。
 - 得到 3 条可验证假设：JWT 默认密钥（目标实测**证伪**）、Guest 头越权（源码+实测**双重证伪**：口令经 hashGuestCredential 参与 SQL 匹配）、send-verify-code 无限流（**candidate**）。
 - 关键收获是**止损**：把原本要在目标上盲试的 3 条线，用 0~4 个请求就定性。
 ```

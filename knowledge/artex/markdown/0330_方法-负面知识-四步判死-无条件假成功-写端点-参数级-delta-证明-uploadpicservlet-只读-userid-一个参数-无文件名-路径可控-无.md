@@ -6,7 +6,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在真实目标 http://203.0.113.37:8080/UpLoadPic/upload（example.com.Service.UploadPicServlet，Tomcat 8.5.78，直连无 nginx）上完整执行四步：① 无参 → 500 NumberFormatException（target351.example.com:542）；390 参数钥匙串 → 200「-更改成功」；② 写后读回（兄弟读节点 203.0.113.55 / example.com 的 userinfo）零变化（与 vuln 25 的跨节点复核一致）；③ **48 个候选参数（userid/id/uid/username/name/flag/type/head/base64/token/img/image/pic/photo/imgurl/url/filename/fileName/imgName/path/dir/folder/upid/fileid/tp/data/content/body/file/upload/headurl/tupian/banci/sort/start/size/width/height/quality/compress…）逐个替换为 base64 串或 "1"，只有 `userid` 会改变异常行为**（`userid=<base64>` → NumberFormatException）⇒ 该 servlet 只读 userid；④ 16 个候选落点（含 .jsp/.jsp.jpg/.jpg/.txt 四种扩展名 × 4 个目录）全部 404 ⇒ 无文件落地。四条齐中，判定 false-positive。证据文件 exploit58/e27_out.txt。
+- **verified_note**: 在真实目标 http://203.0.113.37:8080/UpLoadPic/upload（example.com.Service.UploadPicServlet，Tomcat 8.5.78，直连无 nginx）上完整执行四步：① 无参 → 500 NumberFormatException（Integer.java:542）；390 参数钥匙串 → 200「-更改成功」；② 写后读回（兄弟读节点 203.0.113.55 / example.com 的 userinfo）零变化（与 vuln 25 的跨节点复核一致）；③ **48 个候选参数（userid/id/uid/username/name/flag/type/head/base64/token/img/image/pic/photo/imgurl/url/filename/fileName/imgName/path/dir/folder/upid/fileid/tp/data/content/body/file/upload/headurl/tupian/banci/sort/start/size/width/height/quality/compress…）逐个替换为 base64 串或 "1"，只有 `userid` 会改变异常行为**（`userid=<base64>` → NumberFormatException）⇒ 该 servlet 只读 userid；④ 16 个候选落点（含 .jsp/.jsp.jpg/.jpg/.txt 四种扩展名 × 4 个目录）全部 404 ⇒ 无文件落地。四条齐中，判定 false-positive。证据文件 exploit58/e27_out.txt。
 - **tags**: false-positive,假成功,写端点判定,UploadPicServlet,jar,参数级证明,delta,negative-knowledge
 - **created_at**: 2026-10-11T14:38:23.846Z
 - **found_by**: exploit

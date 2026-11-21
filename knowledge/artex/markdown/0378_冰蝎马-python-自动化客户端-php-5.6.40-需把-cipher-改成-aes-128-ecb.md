@@ -9,7 +9,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 203.0.113.22 实测：https://target385.example.com/Public/www/main_r3_bkk0pmgc.php + pass=jbg2026 → run('echo "PROTO_OK";') 返回 PROTO_OK；随后用它完成了 116 全部源码取证（14 个 Action/Conf 文件）、MySQL 查询（admin 表/结构/计数）、文件列举与写入。cipher 适配坑与 '|' 截断坑均实际踩到并解决（含一次因代码里写 `||` 导致响应乱码的排障）。
+- **verified_note**: 203.0.113.22 实测：https://example.jbg.mysqbbthisgoodsfor33333user.top/Public/www/main_r3_bkk0pmgc.php + pass=jbg2026 → run('echo "PROTO_OK";') 返回 PROTO_OK；随后用它完成了 116 全部源码取证（14 个 Action/Conf 文件）、MySQL 查询（admin 表/结构/计数）、文件列举与写入。cipher 适配坑与 '|' 截断坑均实际踩到并解决（含一次因代码里写 `||` 导致响应乱码的排障）。
 - **path**: pocs/冰蝎马-python-自动化客户端-php-5.6.40-需把-cipher-改成-aes-128-ecb/behinder_py_client.py
 - **tags**: behinder,冰蝎,AES-128-ECB,PHP5.6,webshell,自动化,客户端
 - **created_at**: 2026-10-13T10:28:46.177Z

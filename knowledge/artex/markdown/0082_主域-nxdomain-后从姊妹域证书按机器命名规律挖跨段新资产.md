@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: tgt9942 靶标实战验证：example.com 已 NXDOMAIN（crt.sh 71 名全解析失败、rapiddns/hackertarget 返回 invalid host）；改用姊妹域 example.com/example.com/target56.example.com 拉证书共 122 个唯一子域，解析出 52 条 A 记录，按 IP 分组暴露 4 个机器集群落点，其中 203.0.113.75 与 203.0.113.29 属两个从未出现过的全新 C 段，且实测均命中同款"智讯网站群系统"（X-Powered-By: PHP/8.1.7 + x-is-origin: true）。
+- **verified_note**: 449918 靶标实战验证：example.com 已 NXDOMAIN（crt.sh 71 名全解析失败、rapiddns/hackertarget 返回 invalid host）；改用姊妹域 example.com/example.com/kj5799f.com 拉证书共 122 个唯一子域，解析出 52 条 A 记录，按 IP 分组暴露 4 个机器集群落点，其中 203.0.113.75 与 203.0.113.29 属两个从未出现过的全新 C 段，且实测均命中同款"智讯网站群系统"（X-Powered-By: PHP/8.1.7 + x-is-origin: true）。
 - **path**: pocs/主域-nxdomain-后从姊妹域证书按机器命名规律挖跨段新资产/crt-sibling-enum.py
 - **tags**: crt.sh,证书透明,子域枚举,站群,被动信息收集,跨段扩面
 - **created_at**: 2026-09-28T21:20:40.590Z
@@ -46,7 +46,7 @@
 """
 import json, subprocess, sys, collections
 
-DOMAINS = ["example.com", "example.com", "target56.example.com"]   # 姊妹域，替换成目标团伙的
+DOMAINS = ["example.com", "example.com", "kj5799f.com"]   # 姊妹域，替换成目标团伙的
 PROXY = "socks5-hostname 127.0.0.1:1086"                  # 出口代理（按需）
 
 def crt(domain):

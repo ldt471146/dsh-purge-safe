@@ -38,8 +38,8 @@ except Exception:
     pass
 
 DOMAINS = ["example.com","example.com","example.com","api3.example.com",
-           "example.com","www.example.com","example.com","www.example.com","target332.example.com",
-           "target333.example.com","target334.example.com","target322.example.com","target323.example.com"]
+           "example.com","www.example.com","example.com","www.example.com","6hmb.com",
+           "api4.xeffss.cn","xeffss.cn","pay.qingfu.tech","ourhost.com"]
 
 print("===== DNS 解析 =====")
 res = {}
@@ -76,7 +76,7 @@ def probe(ip, port, host, sni, path, timeout=8.0):
         ht = head.decode("utf-8","replace")
         st = 0
         m = re.match(r"HTTP/\d\.\d (\d+)", ht)
-        if m: st = int(target22.example.com(1))
+        if m: st = int(m.group(1))
         return st, body.decode("utf-8","replace")[:300].replace("\n"," ")
     except Exception as e:
         return None, "%s: %s" % (type(e).__name__, e)

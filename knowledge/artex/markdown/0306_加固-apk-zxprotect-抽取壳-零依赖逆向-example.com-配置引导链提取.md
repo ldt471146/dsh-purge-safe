@@ -58,8 +58,8 @@ for m in re.finditer(rb"dex\n0[0-9]{2}\x00", d):
 S = set()
 for pat in (rb"[\x20-\x7e]{4,400}", rb"(?:[\x20-\x7e]|[\xc2-\xf4][\x80-\xbf]+){4,400}"):
     for m in re.finditer(pat, d):
-        try: S.add(target22.example.com().decode("utf-8"))
-        except Exception: S.add(target22.example.com().decode("latin1"))
+        try: S.add(m.group().decode("utf-8"))
+        except Exception: S.add(m.group().decode("latin1"))
 open("dex_strings.txt", "w", encoding="utf-8").write("\n".join(sorted(S)))
 
 # ⑤ 找配置引导链：App 的 example.com 镜像（本站群固定 4 源）
@@ -68,7 +68,7 @@ for s in S:
 # 本站实测输出：
 #   http://203.0.113.5/routing-v27/example.com          (已废弃 404)
 #   https://example.com/routing-v27/example.com    (200)
-#   https://target321.example.com/routing-v27/example.com (200)
+#   https://example.com.aliyuncs.com/routing-v27/example.com (200)
 #   https://6z-1251023784.cos.ap-guangzhou.myqcloud.com/routing-v27/example.com (200)
 
 # ⑥ 找服务前缀正则与路径（路径全在字符串表里，可靠）

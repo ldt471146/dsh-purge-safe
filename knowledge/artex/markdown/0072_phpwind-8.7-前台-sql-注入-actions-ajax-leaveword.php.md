@@ -12,10 +12,10 @@
 
 知识库原记载的注入点为 actions/ajax/leaveword.php 的 leaveword 写入语句。在本轮从目标拉取的完整源码（runs/hklot/pw-src，3881 文件）中逐行核对，该处已被官方改写为参数化绑定：
 
-  actions/ajax/target47.example.com:80   //* $db->update("UPDATE $pw_posts SET leaveword=" . S::sqlEscape($atc_content) . " $sqladd WHERE pid=" ...);   ← 原注入语句，已被注释
-  actions/ajax/target47.example.com:81   $db->update(pwQuery::buildClause("UPDATE :pw_table SET leaveword=:leaveword WHERE pid=:pid AND tid=:tid", array($pw_posts,$atc_content,intval($pid),$tid)));   ← 占位符绑定，$atc_content 不再拼接
+  actions/ajax/leaveword.php:80   //* $db->update("UPDATE $pw_posts SET leaveword=" . S::sqlEscape($atc_content) . " $sqladd WHERE pid=" ...);   ← 原注入语句，已被注释
+  actions/ajax/leaveword.php:81   $db->update(pwQuery::buildClause("UPDATE :pw_table SET leaveword=:leaveword WHERE pid=:pid AND tid=:tid", array($pw_posts,$atc_content,intval($pid),$tid)));   ← 占位符绑定，$atc_content 不再拼接
 
-同文件其余 SQL 亦全部走 S::sqlEscape（require/target48.example.com:293-305）+ S::gp 的 escapeStr（target48.example.com:227-234，会把单引号实体化为 &#39;）：
+同文件其余 SQL 亦全部走 S::sqlEscape（require/security.php:293-305）+ S::gp 的 escapeStr（security.php:227-234，会把单引号实体化为 &#39;）：
   leaveword.php:9 / 14 / 36 / 52  均 "... WHERE tid=" . S::sqlEscape($tid) 形式，$tid/$pid 先过 S::gp，表名 $pw_posts 来自 GetPtable($tpc['ptable'])（库内字段，不可控）。
 
 另注：

@@ -10,13 +10,13 @@
 - **verified_note**: 【2026-09-30 example.com 白盒复核 → 该写入路径在本目标版本已加白名单+内容校验，实测与源码双向确认封堵，后续同圈子 phpwind 8.7 请先读此结论】
 
 ① 源码依据（本轮从目标拉取的 runs/hklot/pw-src，逐行核对）：
-  actions/job/target50.example.com:26   $ext = strtolower(substr(strrchr($_GET['filename'], '.'), 1));
-  actions/job/target50.example.com:30-38
+  actions/job/uploadicon.php:26   $ext = strtolower(substr(strrchr($_GET['filename'], '.'), 1));
+  actions/job/uploadicon.php:30-38
       if (!in_array(strtolower($ext), array('gif','jpg','jpeg','png','bmp'))) { Showmsg('undefined_action'); }
-  actions/job/target50.example.com:48   $filename = "{$winduid}.$ext";        ← 落盘文件名由 uid+白名单扩展名硬编码生成，$_GET['filename'] 的取值部分被完全丢弃，只借用它的扩展名
-  actions/job/target50.example.com:50   $middleDir = "upload/middle/$udir/";   $udir = str_pad(substr($winduid,-2),2,'0',STR_PAD_LEFT)
-  actions/job/target50.example.com:59   if (!$img_size = GetImgSize($middleFile)) { P_unlink($middleFile); Showmsg('upload_content_error'); }   ← 新增内容校验：非合法图片直接删除
-  actions/job/target50.example.com:56   writeover($middleFile, $data);  内容来自 php://input（原始 POST body）
+  actions/job/uploadicon.php:48   $filename = "{$winduid}.$ext";        ← 落盘文件名由 uid+白名单扩展名硬编码生成，$_GET['filename'] 的取值部分被完全丢弃，只借用它的扩展名
+  actions/job/uploadicon.php:50   $middleDir = "upload/middle/$udir/";   $udir = str_pad(substr($winduid,-2),2,'0',STR_PAD_LEFT)
+  actions/job/uploadicon.php:59   if (!$img_size = GetImgSize($middleFile)) { P_unlink($middleFile); Showmsg('upload_content_error'); }   ← 新增内容校验：非合法图片直接删除
+  actions/job/uploadicon.php:56   writeover($middleFile, $data);  内容来自 php://input（原始 POST body）
 
 ② 黑盒实测对照（前序 vuln-scan 在黑盒阶段完成）：
   GET/POST example.com?action=uploadicon&step=2&filename=x.php  →  返回「非法操作」（对应源码第 37 行 Showmsg('undefined_action')），与 $ext='php' 不在白名单完全吻合。
@@ -75,7 +75,7 @@ curl -s -H "Host: HOST" "http://TARGET/upload/middle/XX/{uid}.php" -d "1=phpinfo
 ```
 
 ## 变体入口
-`u/require/profile/target50.example.com:23` 同样是 `$ext = ...$_GET['filename']` 且**完全没有白名单**，
+`u/require/profile/uploadicon.php:23` 同样是 `$ext = ...$_GET['filename']` 且**完全没有白名单**，
 但保留了 `if (!file_exists($source))`（需先存在 `{uid}_tmp.<ext>`）。
 
 ## 判定

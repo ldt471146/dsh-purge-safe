@@ -9,7 +9,7 @@
 - **language**: php
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-13 在 203.0.113.22（宝塔 + PHP 5.6.40 / 7.2.33）实测：① `/tmp/example.com` 与 `/tmp/example.com` 均 mode 0666 无认证可连；② 提交 `PHP_ADMIN_VALUE="open_basedir=/\ndisable_functions="` 后任务回显 `OB=[/] DF=[]`（原值 `/www/wwwroot/jbg_com/:/tmp/` 与 46 项禁用函数）；③ 借此读到 /www/wwwroot 下 5 个站点、/etc/passwd、/www/server/nginx/conf/ 等（原 open_basedir 完全不可读）；④ 读到 target391.example.com 与 target392.example.com 的库凭据并实测 MySQL 连通（online/66Hj834jEsanz25b、sql_videosll_com/de7f94b1614ab）；⑤ 仍不可读 /www/server/panel/data（root 700，非 open_basedir 问题）；⑥ shell_exec/system/exec/passthru 即使 DF 为空仍无回显 → 印证函数表已摘除。
+- **verified_note**: 2026-10-13 在 203.0.113.22（宝塔 + PHP 5.6.40 / 7.2.33）实测：① `/tmp/example.com` 与 `/tmp/example.com` 均 mode 0666 无认证可连；② 提交 `PHP_ADMIN_VALUE="open_basedir=/\ndisable_functions="` 后任务回显 `OB=[/] DF=[]`（原值 `/www/wwwroot/jbg_com/:/tmp/` 与 46 项禁用函数）；③ 借此读到 /www/wwwroot 下 5 个站点、/etc/passwd、/www/server/nginx/conf/ 等（原 open_basedir 完全不可读）；④ 读到 newkjer.com 与 videosll.com 的库凭据并实测 MySQL 连通（online/66Hj834jEsanz25b、sql_videosll_com/de7f94b1614ab）；⑤ 仍不可读 /www/server/panel/data（root 700，非 open_basedir 问题）；⑥ shell_exec/system/exec/passthru 即使 DF 为空仍无回显 → 印证函数表已摘除。
 - **path**: pocs/php-fpm-fastcgi-未授权访问-php_admin_value-解除-open_basedir-清空-disable_functions-纯-php/fcgi_exec.php
 - **tags**: php-fpm,FastCGI,未授权,open_basedir,disable_functions,宝塔,unix socket,横向通用,无shell
 - **created_at**: 2026-10-13T09:19:05.554Z

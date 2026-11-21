@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt9942-com 靶标实测：`business-data`（203.0.113.73:80）原有记录 evidence 写"73 条会员"，自查确认实际 69 条后两次重记（hit id=15、16，points=50 显式传），**两次均返回 `counted:false` + `capped_by_service:true`，warning 明确"计分的是同服务的另一条（…73 条…）"**；`serviceCappedHits` 由 3→4→5，`achievedPoints` 保持 1290 不变 ⇒ 证实"同服务同分保留最早记录、重复提交无法顶掉旧条"。随后改用 `redteam_chain_add` 追加更正记录（chain id=121，含判据变更与三重交叉验证 20+20+20+9=69 / ID 73~141 连续 69 个 / 修正判据复测 69），并由指挥者裁定报告口径 A（报告写 69 + 注明库内仍为 73）。
+- **verified_note**: 在 449918-com 靶标实测：`business-data`（203.0.113.73:80）原有记录 evidence 写"73 条会员"，自查确认实际 69 条后两次重记（hit id=15、16，points=50 显式传），**两次均返回 `counted:false` + `capped_by_service:true`，warning 明确"计分的是同服务的另一条（…73 条…）"**；`serviceCappedHits` 由 3→4→5，`achievedPoints` 保持 1290 不变 ⇒ 证实"同服务同分保留最早记录、重复提交无法顶掉旧条"。随后改用 `redteam_chain_add` 追加更正记录（chain id=121，含判据变更与三重交叉验证 20+20+20+9=69 / ID 73~141 连续 69 个 / 修正判据复测 69），并由指挥者裁定报告口径 A（报告写 69 + 注明库内仍为 73）。
 - **path**: pocs/记分被-capped-时的正确处置-追加式更正-不改-target-规避去重-追加-chain-报告显式呈现差异/score-capped-append-only-correction.md
 - **tags**: 记分,去重,capped,数据完整性,自我纠错,方法论
 - **created_at**: 2026-09-28T23:50:30.104Z

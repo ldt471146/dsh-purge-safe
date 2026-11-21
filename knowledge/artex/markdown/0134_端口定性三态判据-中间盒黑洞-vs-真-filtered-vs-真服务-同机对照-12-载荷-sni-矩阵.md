@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 codex-tgt4796-com 靶标的 203.0.113.51 / 203.0.113.110 / 203.0.113.20 三台一致复现：8443 空闲连接可维持 5s+、发任意字节即被关闭且 0 字节响应、TLS ClientHello（5 种 SNI）一律 ECONNRESET、12 种协议载荷全无 banner；同机 443 返回真实 400/OpenResty、4321 返回真实 200 OK、8444/18443/9999/20000 全部 SYN 超时；FOFA 对两台主机的 8443 均无资产（同 IP 的 80/443 有）。据此判 8443 为中间盒黑洞、7070 为 filtered 且无 banner，均为无 Nday 可查的死面。
+- **verified_note**: 在 codex-miaomiaocode-com 靶标的 203.0.113.51 / 203.0.113.110 / 203.0.113.20 三台一致复现：8443 空闲连接可维持 5s+、发任意字节即被关闭且 0 字节响应、TLS ClientHello（5 种 SNI）一律 ECONNRESET、12 种协议载荷全无 banner；同机 443 返回真实 400/OpenResty、4321 返回真实 200 OK、8444/18443/9999/20000 全部 SYN 超时；FOFA 对两台主机的 8443 均无资产（同 IP 的 80/443 有）。据此判 8443 为中间盒黑洞、7070 为 filtered 且无 banner，均为无 Nday 可查的死面。
 - **path**: pocs/端口定性三态判据-中间盒黑洞-vs-真-filtered-vs-真服务-同机对照-12-载荷-sni-矩阵/port_triage_blackhole_vs_filtered.md
 - **tags**: 端口定性,黑洞,filtered,对照实验,ECONNRESET,TLS,SNI,nmap,FOFA,8443
 - **created_at**: 2026-09-30T01:54:34.370Z
@@ -46,7 +46,7 @@
 `*1\r\n$4\r\nPING\r\n`(RESP)、`JRMI\x00\x02\x4b`、`stats\r\n`(memcached)、`PING\r\n`(redis)、
 `PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n`+SETTINGS(h2c)、裸 TLS ClientHello（**并用 SNI 矩阵**：空 + 每个已知 vhost）、`\x00`*16、单字节。
 
-## 案例（实测，2026-09-30 codex-tgt4796-com）
+## 案例（实测，2026-09-30 codex-miaomiaocode-com）
 `nmap -sT -Pn -sV --version-all`：8443 判 open 但只猜得出 `https-alt?`（无版本）；7070 全 filtered。
 - 8443：TCP 可连、**空闲连接维持 5285ms+**；`GET / HTTP/1.0` → 约 500ms 后被关闭、**0 字节**；`HTTP/1.1+Host+UA` → **ECONNRESET**；**裸 TLS ClientHello（5 种 SNI 全试）→ ECONNRESET**；12 种协议载荷**全部 0 字节 banner**。
 - 同机对照：443 → 497ms 返回真实 `HTTP/1.1 400 Bad Request / Server: openresty`；4321 → 真实 `200 OK`；**8444/18443/9999/20000 → 每种载荷都 SYN 超时（那才是真 filtered）**。

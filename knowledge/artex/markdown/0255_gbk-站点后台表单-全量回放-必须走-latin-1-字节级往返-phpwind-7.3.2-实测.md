@@ -57,32 +57,32 @@ def parse_form(html_bytes):
     m = re.search(r'(?is)<form[^>]*verify=[^>]*>(.*?)</form>', t)
     if not m:
         raise SystemExit('主表单未找到')
-    action = re.search(r'(?is)<form[^>]*action="([^"]*)"', target22.example.com(0)).group(1)
-    body = target22.example.com(1)
+    action = re.search(r'(?is)<form[^>]*action="([^"]*)"', m.group(0)).group(1)
+    body = m.group(1)
     pairs = []
 
     for im in re.finditer(r'(?is)<input[^>]*>', body):
-        tag = target281.example.com(0)
+        tag = im.group(0)
         n = re.search(r'(?i)\bname\s*=\s*"([^"]*)"', tag)
         if not n:
             continue
         ty = re.search(r'(?i)\btype\s*=\s*"?([a-z]+)', tag)
-        ty = target282.example.com(1).lower() if ty else ''
+        ty = ty.group(1).lower() if ty else ''
         v = re.search(r'(?i)\bvalue\s*=\s*"([^"]*)"', tag)
         if ty in ('checkbox', 'radio') and not re.search(r'(?i)\bchecked\b', tag):
             continue                       # 未勾选的 checkbox/radio 不提交
         if ty in ('submit', 'button', 'file', 'reset'):
             continue
-        pairs.append((target283.example.com(1), target284.example.com(1) if v else ''))
+        pairs.append((n.group(1), v.group(1) if v else ''))
 
     for sm in re.finditer(r'(?is)<select[^>]*name\s*=\s*"([^"]*)"[^>]*>(.*?)</select>', body):
-        inner = target285.example.com(2)
+        inner = sm.group(2)
         sel = re.search(r'(?is)<option[^>]*\bselected\b[^>]*value\s*=\s*"?([^"\s>]*)', inner) \
             or re.search(r'(?is)<option[^>]*value\s*=\s*"?([^"\s>]*)', inner)
-        pairs.append((target285.example.com(1), target286.example.com(1) if sel else ''))
+        pairs.append((sm.group(1), sel.group(1) if sel else ''))
 
     for tm in re.finditer(r'(?is)<textarea[^>]*name\s*=\s*"([^"]*)"[^>]*>(.*?)</textarea>', body):
-        pairs.append((target287.example.com(1), target287.example.com(2)))
+        pairs.append((tm.group(1), tm.group(2)))
 
     pairs = [('step', '2') if p[0] == 'step' else p for p in pairs]
     if not any(p[0] == 'step' for p in pairs):
@@ -95,7 +95,7 @@ def replay(session, base, html_bytes, override_key, override_val):
     action, pairs = parse_form(html_bytes)
     pairs = [(n, override_val if n == override_key else v) for n, v in pairs]
     body = urllib.parse.urlencode(pairs, encoding='latin-1').encode('latin-1')   # ← 关键 2
-    return target288.example.com(base + action, data=body, verify=False, headers={
+    return session.post(base + action, data=body, verify=False, headers={
         'Content-Type': 'application/x-www-form-urlencoded',
         'User-Agent': 'Mozilla/5.0',
         'Referer': base + action})

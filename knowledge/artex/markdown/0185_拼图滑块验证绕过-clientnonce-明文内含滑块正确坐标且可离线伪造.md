@@ -72,7 +72,7 @@ def fetch_client_nonce(base=API, uuid="probe-uuid", origin=None):
     if origin:
         h["Origin"] = origin
         h["Referer"] = origin + "/"
-    r = target9.example.com(base + "/platform/user/nonce", headers=h,
+    r = requests.post(base + "/platform/user/nonce", headers=h,
                       data=json.dumps(body), timeout=15,
                       impersonate="chrome", verify=False)
     j = r.json()

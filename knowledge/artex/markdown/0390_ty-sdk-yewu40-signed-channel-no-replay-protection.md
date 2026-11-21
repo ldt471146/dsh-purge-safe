@@ -3,7 +3,7 @@
 - **code**: ty-sdk-yewu40-signed-channel-no-replay-protection
 - **kind**: template
 - **category**: auth-bypass
-- **component**: 熊猫体育 TY SDK (target415.example.com / example.com)
+- **component**: 熊猫体育 TY SDK (user-pc-new.si7akll.com / example.com)
 - **versions**: TY SDK new-pc-2025_idc_online（merchantCode 528312 站群）
 - **severity**: low
 - **language**: markdown
@@ -11,7 +11,7 @@
 - **verified**: 1
 - **verified_note**: 2026-10-14 在 example.com 以试玩 token dda10706…97fa 实测：161 秒前的原始签名请求整包重放 → {"code":"0000000","data":"success"}；同 body 仅改 uid 末位（sign 不变）→ 0400500 参数校验不通过；伪造 checkId（随机uuid+他人uid）调 /yewu12/user/getUserInfoPB → 0000000。
 - **path**: pocs/ty-sdk-yewu40-signed-channel-no-replay-protection/poc.md
-- **tags**: TY SDK,熊猫体育,白标体育,签名通道,防重放缺失,checkId,试玩token,target416.example.com,ue3238
+- **tags**: TY SDK,熊猫体育,白标体育,签名通道,防重放缺失,checkId,试玩token,api.s66ghci0.com,ue3238
 - **created_at**: 2026-10-14T08:53:26.814Z
 - **found_by**: vuln-scan
 
@@ -30,7 +30,7 @@
 ```
 ## TY SDK 白标体育平台 /yewu40 签名通道防护缺失（实测）
 
-**适用面**：熊猫体育/TY SDK 白标体育平台（前端 localStorage 键前缀 TY_SDK_*、merchantCode 528312）。试玩入口：主站 POST /api/getTryToken → 返回的 loginUrl（target415.example.com?token&gr&tm&lg&mk&api&sessionId）在浏览器打开即得试玩会话。
+**适用面**：熊猫体育/TY SDK 白标体育平台（前端 localStorage 键前缀 TY_SDK_*、merchantCode 528312）。试玩入口：主站 POST /api/getTryToken → 返回的 loginUrl（user-pc-new.si7akll.com?token&gr&tm&lg&mk&api&sessionId）在浏览器打开即得试玩会话。
 
 **实测行为**（example.com，鉴权头 requestId=<40hex token>）：
 1. POST /yewu40/req/request body={sessionId,os,sid,uid,code(AES密文b64),device,sign,t}

@@ -28,12 +28,12 @@ T=https://TARGET python probe.py；POST 类必须走 requests/Python（PowerShel
 
 ```go
 // 支付回调：注册时只有 anonymousRequestBodyLimit，**无任何鉴权中间件**
-target84.example.com("/stripe/webhook",  anonymousRequestBodyLimit, controller.StripeWebhook)
-target84.example.com("/creem/webhook",    anonymousRequestBodyLimit, controller.CreemWebhook)
-target84.example.com("/waffo/webhook",    anonymousRequestBodyLimit, controller.WaffoWebhook)
-target84.example.com("/waffo-pancake/webhook/:env", anonymousRequestBodyLimit, controller.WaffoPancakeWebhook)
+apiRouter.POST("/stripe/webhook",  anonymousRequestBodyLimit, controller.StripeWebhook)
+apiRouter.POST("/creem/webhook",    anonymousRequestBodyLimit, controller.CreemWebhook)
+apiRouter.POST("/waffo/webhook",    anonymousRequestBodyLimit, controller.WaffoWebhook)
+apiRouter.POST("/waffo-pancake/webhook/:env", anonymousRequestBodyLimit, controller.WaffoPancakeWebhook)
 userRoute.GET("/epay/notify",  controller.EpayNotify)   // GET 也注册！
-target85.example.com("/epay/notify", anonymousRequestBodyLimit, controller.EpayNotify)
+userRoute.POST("/epay/notify", anonymousRequestBodyLimit, controller.EpayNotify)
 apiRouter.GET/POST("/subscription/epay/notify", ...)
 
 // 初始化：无鉴权，但首行即 return
@@ -54,7 +54,7 @@ s.headers.update({"User-Agent":"Mozilla/5.0 Chrome/126"})
 ev=json.dumps({"id":"evt_X","object":"event","type":"checkout.session.completed",
   "data":{"object":{"id":"cs_X","payment_status":"paid","amount_total":100,"metadata":{"user_id":"1"}}}})
 for p in ("/api/stripe/webhook","/api/creem/webhook","/api/waffo/webhook","/api/waffo-pancake/webhook/prod"):
-    print(p, target8.example.com(T+p, data=ev, headers={"Content-Type":"application/json"}, timeout=12).status_code)
+    print(p, s.post(T+p, data=ev, headers={"Content-Type":"application/json"}, timeout=12).status_code)
 
 # 2) epay 回调：200 纯文本 `fail` = 端点活着但验签未过（无 key 不可伪造）
 base={"out_trade_no":"1","trade_no":"T1","trade_status":"TRADE_SUCCESS","total_fee":"0.01",
@@ -64,7 +64,7 @@ for p in ("/api/user/epay/notify","/api/subscription/epay/notify"):
 # 变体（空sign/错sign/零金额/错状态/缺pid/POST form）全部 `fail` => 排除
 
 # 3) setup：已初始化则任何载荷都拒绝
-print(target8.example.com(T+"/api/setup", json={"username":"root","password":"X@12345"}, timeout=12).text)
+print(s.post(T+"/api/setup", json={"username":"root","password":"X@12345"}, timeout=12).text)
 # => {"message":"系统已经初始化完成","success":false}
 ```
 

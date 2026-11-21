@@ -6,7 +6,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在真实目标 `http://203.0.113.55:80/Tk_Kj/login4`（`example.com.service.Login4`，旧包，`/LHService/login4` 为 404）上完整验证：① 最小必需参数集二分 13 轮从 390 收敛到 **1 个 = `flag`**，逐个删除复核确认；② 行号 oracle —— 16 个候选参数逐个给 `abc`，**只有 `flag` 触发 `target352.example.com:65`（字符串版）**，其余全部 `target351.example.com:542`+`null`（null 版）⇒ 精确锁定 `target353.example.com:36 = Integer.parseInt(getParameter("flag"))`；③ 值域枚举（用 `1300000xxxx` 递增假号，未触碰授权号）：`flag=-1/0/1/2/4/5` → `-数据异常`（登录尝试）、**`flag=3` → `-请重新登录`**（需会话，否掉"只认 ID 的绕过"假设）、**`flag=6` → `-操作过于频繁，请稍后再试`（触发限流 ⇒ 真登录分支）**。同批用 6 个账号参数名 × 12 个验证码参数名 = 72 组排除了 `/Tk_Kj/login_2020`（全部仍回「-请填写密码」⇒ 验证码不走它）。证据文件 exploit58/e37_out.txt、e37_run.log。
+- **verified_note**: 在真实目标 `http://203.0.113.55:80/Tk_Kj/login4`（`example.com.service.Login4`，旧包，`/LHService/login4` 为 404）上完整验证：① 最小必需参数集二分 13 轮从 390 收敛到 **1 个 = `flag`**，逐个删除复核确认；② 行号 oracle —— 16 个候选参数逐个给 `abc`，**只有 `flag` 触发 `NumberFormatException.java:65`（字符串版）**，其余全部 `Integer.java:542`+`null`（null 版）⇒ 精确锁定 `Login4.java:36 = Integer.parseInt(getParameter("flag"))`；③ 值域枚举（用 `1300000xxxx` 递增假号，未触碰授权号）：`flag=-1/0/1/2/4/5` → `-数据异常`（登录尝试）、**`flag=3` → `-请重新登录`**（需会话，否掉"只认 ID 的绕过"假设）、**`flag=6` → `-操作过于频繁，请稍后再试`（触发限流 ⇒ 真登录分支）**。同批用 6 个账号参数名 × 12 个验证码参数名 = 72 组排除了 `/Tk_Kj/login_2020`（全部仍回「-请填写密码」⇒ 验证码不走它）。证据文件 exploit58/e37_out.txt、e37_run.log。
 - **tags**: java,servlet,flag分支,最小参数集,二分,行号oracle,值域枚举,限流判据,登录入口
 - **created_at**: 2026-10-11T17:51:33.040Z
 - **found_by**: exploit
@@ -21,9 +21,9 @@
    ★ 关键：**收敛后再逐个删除复核一遍**（我这次复核确认必需参数就是 `flag` 一个，其余 389 个全可删）。
 2. **行号 oracle 精确定位"哪个参数被 parseInt"**
    逐个参数给**非数字值 `abc`**：
-   - 异常变成 `target352.example.com:65`（**字符串版**）⇒ **该参数就是被 parseInt 的那个**（值是 abc，转不了）
-   - 异常仍是 `target351.example.com:542` + 消息 `null`（**null 版**）⇒ 被 parseInt 的是**另一个**仍为 null 的参数，不是它
-   本例：16 个候选里**只有 `flag`** 触发字符串版 ⇒ 精确锁定 `target353.example.com:36 = Integer.parseInt(getParameter("flag"))`。
+   - 异常变成 `NumberFormatException.java:65`（**字符串版**）⇒ **该参数就是被 parseInt 的那个**（值是 abc，转不了）
+   - 异常仍是 `Integer.java:542` + 消息 `null`（**null 版**）⇒ 被 parseInt 的是**另一个**仍为 null 的参数，不是它
+   本例：16 个候选里**只有 `flag`** 触发字符串版 ⇒ 精确锁定 `Login4.java:36 = Integer.parseInt(getParameter("flag"))`。
 3. **值域枚举 + 「限流文案」当分支判据**
    逐个试 `flag ∈ {-1,0,1,...,11}`，看文案：
    ```
@@ -58,9 +58,9 @@ print("必需参数:", [x.split("=")[0] for x in need])
 # 第 2 步：行号 oracle 定位 parseInt 的那个参数
 for pn in CANDS:
     b = txt(GET(path + "?%s=abc" % pn))
-    if "target352.example.com:65" in b:
+    if "NumberFormatException.java:65" in b:
         print("★ parseInt 命中:", pn)      # 字符串版 NFE ⇒ 就是它
-    elif "target351.example.com:542" in b:
+    elif "Integer.java:542" in b:
         pass                                 # null 版 ⇒ 不是它
 
 # 第 3 步：值域枚举 + 用限流文案判分支（务必用假账号！）
@@ -74,8 +74,8 @@ for v in ["-1","0","1","2","3","4","5","6","9"]:
 **判定表**
 | 文案 | 含义 |
 |---|---|
-| `target352.example.com:65` | 该参数被 `parseInt`，且值非法 ⇒ **就是它** |
-| `target351.example.com:542` + `null` | 被 parseInt 的是别的（仍为 null 的）参数 |
+| `NumberFormatException.java:65` | 该参数被 `parseInt`，且值非法 ⇒ **就是它** |
+| `Integer.java:542` + `null` | 被 parseInt 的是别的（仍为 null 的）参数 |
 | `-数据异常` | 登录尝试分支，参数/数据不对 |
 | `-请重新登录` | 需已有会话的分支（**不是** ID-only 绕过） |
 | **`-操作过于频繁`** | **★★ 真入口**：已进入业务处理并触发限流 |

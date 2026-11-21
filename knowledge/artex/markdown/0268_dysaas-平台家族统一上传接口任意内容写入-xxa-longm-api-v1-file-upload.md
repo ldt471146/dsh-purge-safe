@@ -15,7 +15,7 @@
 
 ## 描述
 
-该平台家族（6T体育/example 等，dysaas 网关）的统一上传接口：POST {host}/longm/api/v1/file/upload，host=target291.example.com（通常 /xxa）。multipart 字段名固定为 "file"。服务端只按扩展名白名单(png/jpg/jpeg)校验、不校验内容与 MIME，且落地名与路径由服务端生成 <uuid>.<白名单扩展名>，写入 S3 对象存储后公开可读（响应头 x-amz-version-id）。因此可绕过扩展名（x.php.jpg / x.php%00.png）写入任意内容，但无法控制落地名 → 不构成 getshell，属任意文件写入/公开可读存储。
+该平台家族（6T体育/example 等，dysaas 网关）的统一上传接口：POST {host}/longm/api/v1/file/upload，host=localStorage.host（通常 /xxa）。multipart 字段名固定为 "file"。服务端只按扩展名白名单(png/jpg/jpeg)校验、不校验内容与 MIME，且落地名与路径由服务端生成 <uuid>.<白名单扩展名>，写入 S3 对象存储后公开可读（响应头 x-amz-version-id）。因此可绕过扩展名（x.php.jpg / x.php%00.png）写入任意内容，但无法控制落地名 → 不构成 getshell，属任意文件写入/公开可读存储。
 
 ## 用法
 

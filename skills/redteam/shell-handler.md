@@ -1,22 +1,20 @@
 ---
 name: shell-handler
-description: 【访问】反弹 Shell 与载荷投递：VPS 上起 MSF/nc/socat 监听接收 shell，或从目标主动拉取载荷落地
+description: 反弹 Shell 与载荷投递：VPS 上起 MSF/nc/socat 监听接收 shell，或从目标主动拉取载荷落地
 whenToUse: 需要 RCE/命令执行回连、投递后续载荷、把一次性命令执行变成可交互会话时
 role: exploit
-category: 访问
-tags: [shell, session, handler]
 enabled: true
 ---
 
 # 反弹 Shell 与载荷投递（拿到回连会话）
 
 > **先加载 VPS 配置**：本技能里所有 `$REDTEAM_VPS_HOST` / `$VPS_USER` 都来自本机配置，
-> 配置从 `$DSH_HOME/.env` 读取。每条命令前先 source 一次：
+> 首次由 `bash $DSH_HOME/redteam/setup.sh` 写入 `$DSH_HOME/.env`。每条命令前先 source 一次：
 > ```bash
 > set -a; . "$DSH_HOME/.env" 2>/dev/null || . "$HOME/.dsh/.env"; set +a
 > VPS_USER="${REDTEAM_VPS_USER:-ubuntu}"; VPS="$REDTEAM_VPS_HOST"
 > ```
-> 工具由用户自行准备；本技能不提供下载、安装脚本或教程。
+> 没配过就跑一次 `setup.sh`（技能 `redteam-setup`），它同时会验证 SSH 连通性与载荷服务。
 
 **命令执行 ≠ 会话**。一次性的 `?cmd=whoami` 只能证明有洞，不能持续操作。本技能负责把"能执行命令"
 变成**稳定、可交互、可复用**的回连会话，并投递后续载荷（马、隧道、扫描器）。
@@ -142,7 +140,7 @@ msf6 > exploit -j
 3. **隧道落库**（若通过它进了内网）：`redteam_tunnel_add`，`entry_kind` 必须说清目标侧那一端
    （`target-outbound`=目标反弹/目标跑 frp 客户端、`target-http`=经目标 WebShell 的 suo5、`target-agent`=经目标已控进程转发），
    然后 `redteam_session_check` 实测连通性。
-4. 记分时把实际命令/回显放进 `redteam_score_hit` 的 `command`/`result`，不需要再单独写 chain。
+4. 每个关键动作 `redteam_chain_add`：`stage_code=internet`（互联网侧拿权限）/ `boundary`（搭隧道）/ `internal`，
    `tool` 写**实际命令原文**（含完整反弹命令或 MSF 配置），`result` 写回显摘要（如 `uid=0(root) gid=0(root)`）。
 5. **交付给用户能复用的入口**：优先落地**冰蝎马/哥斯拉马**（技能 `webshell-toolkit`）——用户能在控制台直连操作；
    临时反弹会话要说明"这是一次性会话，非交付入口"。

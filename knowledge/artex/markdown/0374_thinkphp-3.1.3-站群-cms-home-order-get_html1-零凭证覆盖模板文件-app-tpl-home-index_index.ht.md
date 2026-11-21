@@ -12,7 +12,7 @@
 ① 零凭证 `GET /example.com?g=Home&m=Order&a=get_html1` → **200/47B {"ok":1,"msg":"成功请刷新"}**（同目录 `all_lock` 同为 200/47B；对照 `Home/Order/__nope__` → nginx 404，`Home/Article/*` → 200 "502" 说明该模块被单独拦而 Order 未被拦）。
 ② **真写入已证**：`/Upload/atop/attime3_5.txt` 由 `1791877860` → `1791880711`（该文件内容即 `time()`），`/Upload/atop/jquery3_5.txt` = 311791B 完整 HTML。
 ③ **抓取源确认是本站自身**：`jquery3_5.txt` 长度 311791 与 `GET ?g=Home&m=List&a=getapp_html&type=1` 的输出长度 311791 完全一致，特征串计数亦一致（『天花板』2/2、`ymgx` 28/28、`list_sun` 14/14）。
-④ **覆盖后的模板确实被渲染**：`GET https://target393.example.com/` → **200/341485B**（= `List/index&type=0` 输出 342361B 的渲染结果）；`GET https://example.thb..../` → 仅 710B（IndexAction::index 走 `indexalert` 防封页分支）；`target394.example.com` → 341486B（`indexapp` 分支）。
+④ **覆盖后的模板确实被渲染**：`GET https://zsm1girvry.mrummy2rbv.xyz/` → **200/341485B**（= `List/index&type=0` 输出 342361B 的渲染结果）；`GET https://example.thb..../` → 仅 710B（IndexAction::index 走 `indexalert` 防封页分支）；`spzsm1girvry.txdzdwwcgd.xyz` → 341486B（`indexapp` 分支）。
 ⑤ **模板原文可直读佐证**：`GET /App/Tpl/Home/Index_example.com` → 200/341056B。
 ⑥ 未闭合原因：176 上 `Home/Article/*` 已被应用层整模块拦为 `200 "502"`（19 种绕过变体全失败），且 `islogin()` 已加固（11 组 cookie 组合全 302），故缺写库入口/后台会话这一步。
 落库：vuln_id=35（high）、http_evidence id=25、chain id=67/68。

@@ -7,7 +7,7 @@
 - **severity**: medium
 - **language**: http
 - **source**: self
-- **verified_note**: 本条为**证伪型**成果，非可直接利用的 EXP。实测记录：在 example.com、okapi-good.example.org、okapi.example.com、okapi-good.example.com、target7.example.com、target6.example.com 共 6 台上，第 1 节全部绕过变体对管理 API 均返回 401 {"success":false,"error":"Authentication required"}（首测于 2026-09-28）；/admin.html、/admin%2Ehtml、/admin%252Ehtml、/./admin.html、//admin.html 返回 200/49282B 管理前端（静态壳，接口仍需鉴权）。同一清单在 203.0.113.118:13030 上成立（已知成果，父会话入库）。故 verified=false 表示"绕过在本产品上不成立"。
+- **verified_note**: 本条为**证伪型**成果，非可直接利用的 EXP。实测记录：在 example.com、okapi-good.example.org、okapi.example.com、okapi-good.example.com、api2.gemiaude.com、api.gemiaude.com 共 6 台上，第 1 节全部绕过变体对管理 API 均返回 401 {"success":false,"error":"Authentication required"}（首测于 2026-09-28）；/admin.html、/admin%2Ehtml、/admin%252Ehtml、/./admin.html、//admin.html 返回 200/49282B 管理前端（静态壳，接口仍需鉴权）。同一清单在 203.0.113.118:13030 上成立（已知成果，父会话入库）。故 verified=false 表示"绕过在本产品上不成立"。
 - **path**: pocs/airouter-白标-ai-网关-管理面鉴权绕过尝试集-api-大小写-admin-2ehtml-编码变体-与被证伪的迁移性/poc.http
 - **tags**: express,鉴权绕过,case-sensitive,url-encoding,airouter,白标网关,证伪,判别清单
 - **created_at**: 2026-09-28T03:39:06.308Z
@@ -28,7 +28,7 @@ for p in /login.html /admin.html /assets/pages/index.js /api/auth/login; do
 done
 # AIRouter 特征：无 /login.html(302→/) 无 /assets/pages/*.js 无 /api/auth/login(302)；
 #                首页 <title>…</title> + 引用根路径 styles.css / admin-styles.css / example.com / common.js
-#                首页 21164B(okapi 系) / 21066B(tgt8272 系)
+#                首页 21164B(okapi 系) / 21066B(gemiaude 系)
 
 # 第二步：绕过变体清单（逐个 GET，-o /dev/null -w '%{http_code}'）
 for p in \
@@ -76,9 +76,9 @@ curl -k -s -o /dev/null -w 'OPTIONS %{http_code}\n' -X OPTIONS --noproxy "*" -A 
 | 目标 | 产品 | /API/ 大小写绕过 | /admin%2Ehtml | 上游密钥 |
 |---|---|---|---|---|
 | 203.0.113.118:13030 | LLM 管理中心 | **成立**（200） | **成立**（200，管理前端） | **3466 条明文（3171 OpenRouter）** |
-| example.com / okapi.example.com / target6.example.com（203.0.113.117） | AIRouter | **不成立**（401） | 200 但仅前端壳，接口 401 | 未取到 |
+| example.com / okapi.example.com / api.gemiaude.com（203.0.113.117） | AIRouter | **不成立**（401） | 200 但仅前端壳，接口 401 | 未取到 |
 | okapi-good.example.org / okapi-good.example.com（203.0.113.20） | AIRouter | **不成立**（401） | 同上 | 未取到 |
-| target7.example.com（203.0.113.109） | AIRouter | **不成立**（401） | 同上 | 未取到 |
+| api2.gemiaude.com（203.0.113.109） | AIRouter | **不成立**（401） | 同上 | 未取到 |
 
 ## 三、AIRouter 产品结构指纹（用于识别"非 13030 同款"）
 

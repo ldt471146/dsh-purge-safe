@@ -7,7 +7,7 @@
 - **language**: js
 - **source**: self
 - **verified**: 1
-- **verified_note**: 密钥/AES 规范来自 admin_dist/assets/index-CyUgAjQc.js 反混淆原文，并与 vuln 2（代理后台内联脚本）互相印证；403 开关与大小写绕过见 vuln 11/13/14 的原始报文；TableController 参数与写盘路径逐行核对源码 target357.example.com:396-550,653-733；payload 内 crypto.subtle 实现已在真实 Chrome（example.com 域）实跑通过（能正确产出密文并发出请求）。
+- **verified_note**: 密钥/AES 规范来自 admin_dist/assets/index-CyUgAjQc.js 反混淆原文，并与 vuln 2（代理后台内联脚本）互相印证；403 开关与大小写绕过见 vuln 11/13/14 的原始报文；TableController 参数与写盘路径逐行核对源码 TableController.php:396-550,653-733；payload 内 crypto.subtle 实现已在真实 Chrome（example.com 域）实跑通过（能正确产出密文并发出请求）。
 - **path**: pocs/webman-admin-vue-art-design-pro-后台会话与请求加密规范-403-开关大小写绕过-crud-docblock-注入开火参数/poc.js
 - **tags**: webman-admin,ArtDesignPro,pinia,localStorage,AES-256-CBC,X-Encrypted,403开关绕过,docblock注入,Monitor热重载
 - **created_at**: 2026-10-12T11:56:01.094Z

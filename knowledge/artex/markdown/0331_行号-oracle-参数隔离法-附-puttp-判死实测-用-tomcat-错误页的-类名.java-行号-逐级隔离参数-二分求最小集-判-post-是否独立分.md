@@ -40,8 +40,8 @@ Tomcat 未关 `showServerInfo` 时，错误页会带 `类名.java:行号`。**�
 看**异常栈的调用链**，不要看行号：
 ```
 java.lang.NullPointerException
-    example.com.Service2_8.PutTp.doGet(target347.example.com:46)
-    example.com.Service2_8.PutTp.doPost(target347.example.com:82)     ← doPost:82 只是 doGet 的包装
+    example.com.Service2_8.PutTp.doGet(PutTp.java:46)
+    example.com.Service2_8.PutTp.doPost(PutTp.java:82)     ← doPost:82 只是 doGet 的包装
 ```
 ⇒ **POST 无独立分支**（"POST=上传"的假设被否）。反过来，若 POST 直接出现在栈顶（`doPost(xxx.java:NN)`）而 doGet 不出现，才是独立分支。
 
@@ -51,7 +51,7 @@ java.lang.NullPointerException
 
 ## 本靶标实测（PutTp，`/LHService/tp`）
 ```
-(空)                    → target347.example.com:40 NumberFormatException（第1个int）
+(空)                    → PutTp.java:40 NumberFormatException（第1个int）
 type=1                  → line 41（第2个int，且它要的不是 type）
 二分收敛                → **最小集 = {id, type}**
 {id,type} / 329参数钥匙 → line 46 NullPointerException（响应 1125B）

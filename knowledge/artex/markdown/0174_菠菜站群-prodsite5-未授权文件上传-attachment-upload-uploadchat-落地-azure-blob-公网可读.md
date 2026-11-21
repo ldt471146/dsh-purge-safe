@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 example.com (203.0.113.59, asset_id=1) 实测：不带任何 Cookie/token 的 POST /aocai-api/attachment/upload 返回 200 `{"result":"0","data":{"id":"6ac21ae5995ef75daee572e4","url":"https://target168.example.com/image/static/uploads/cash/10/d807be1ac5cb497b9ba370afad28a4b6.png"}}`；回读该 URL → 200 / len=67 / 字节一致。uploadChat 同样未授权落地 /uploads/chat/10/。已存原始请求 HTTP 证据 id=4、5；漏洞 id=1（high, confirmed）。**限制（必须如实说明）**：该点**无法 getshell** —— 内容做真实图片 Magic 校验（JSP 代码体 → 「不是有效的图片文件」）、存储扩展名被强制规范化为 .png（传 .gif/.jpeg/.blob 均落 .png）、换扩展名回读全 404。因此本条是「未授权文件写入」而非「未授权 RCE」。
+- **verified_note**: 在 example.com (203.0.113.59, asset_id=1) 实测：不带任何 Cookie/token 的 POST /aocai-api/attachment/upload 返回 200 `{"result":"0","data":{"id":"6ac21ae5995ef75daee572e4","url":"https://proimageserver-f9cqgnfsahgvaqhu.z01.azurefd.net/image/static/uploads/cash/10/d807be1ac5cb497b9ba370afad28a4b6.png"}}`；回读该 URL → 200 / len=67 / 字节一致。uploadChat 同样未授权落地 /uploads/chat/10/。已存原始请求 HTTP 证据 id=4、5；漏洞 id=1（high, confirmed）。**限制（必须如实说明）**：该点**无法 getshell** —— 内容做真实图片 Magic 校验（JSP 代码体 → 「不是有效的图片文件」）、存储扩展名被强制规范化为 .png（传 .gif/.jpeg/.blob 均落 .png）、换扩展名回读全 404。因此本条是「未授权文件写入」而非「未授权 RCE」。
 - **path**: pocs/菠菜站群-prodsite5-未授权文件上传-attachment-upload-uploadchat-落地-azure-blob-公网可读/aocai_unauth_upload.py
 - **tags**: 菠菜站群,prodSite5,aocai-api,未授权文件上传,Azure Blob,文件写入
 - **created_at**: 2026-10-04T09:35:01.866Z
@@ -23,7 +23,7 @@
 ```
 1) 把 BASE 换成目标站群任意域名（同套 prodSite5 系统通用）；
 2) python aocai_unauth_upload.py
-3) 判定：返回 `{"result":"0","data":{"id":"...","url":"https://proimageserver-*.target167.example.com/image/static/uploads/<分区>/10/<md5>.png"}}` 即未授权成功；
+3) 判定：返回 `{"result":"0","data":{"id":"...","url":"https://proimageserver-*.azurefd.net/image/static/uploads/<分区>/10/<md5>.png"}}` 即未授权成功；
 4) 回读该 URL 返回 200 且字节一致，证明文件已公网可读。
 对照接口（需登录）：/aocai-api/upload、/uploadFile、/file/upload → e00006。
 落地分区：/uploads/cash/10/ 与 /uploads/chat/10/；管理端分区为 /uploads/mgr/<NN>/。

@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt6403-com 靶标 https://example.com 实测：入口 index-CJpgplpq.js(322KB) 只有 60 条路由字面量、0 个 axios 调用；改抓 41 个懒加载 chunk 后提出 50+ 真实端点（/reseller/{dashboard,orders,ledger-entries,balance-accounts,withdraws,domains,site-config,product-settings}、/api-credential、/guest/orders、/me/* 等），并据此完成 24 条未授权探测（全部 401，零命中）。baseURL=/api/v1 由入口 JS 中 Mc="/api/v1" 确认。
+- **verified_note**: 在 pockgo-com 靶标 https://example.com 实测：入口 index-CJpgplpq.js(322KB) 只有 60 条路由字面量、0 个 axios 调用；改抓 41 个懒加载 chunk 后提出 50+ 真实端点（/reseller/{dashboard,orders,ledger-entries,balance-accounts,withdraws,domains,site-config,product-settings}、/api-credential、/guest/orders、/me/* 等），并据此完成 24 条未授权探测（全部 401，零命中）。baseURL=/api/v1 由入口 JS 中 Mc="/api/v1" 确认。
 - **path**: pocs/vue3-vite-spa-接口测绘法-入口-js-只给路由-真实-api-在懒加载-chunk-的数据层-use-.js-里/poc.sh
 - **tags**: 前端接口提取,Vite,Vue,chunk,SPA,接口测绘,只读
 - **created_at**: 2026-09-28T14:23:00.999Z

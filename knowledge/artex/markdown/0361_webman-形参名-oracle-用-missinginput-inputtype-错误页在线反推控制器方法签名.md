@@ -64,7 +64,7 @@ done
 #   -> "Input order_no must be of type string, int given"  即命中，参数类型一并到手
 ```
 
-**零副作用保证**：类型不符时异常在**方法体被调用之前**抛出（`target150.example.com:526-537` 在 `resolveMethodDependencies` 内，
+**零副作用保证**：类型不符时异常在**方法体被调用之前**抛出（`App.php:526-537` 在 `resolveMethodDependencies` 内，
 `resolveInject` 里 `$call(...$args)` 在其后）→ **方法体永不执行** → 不产生任何业务数据。
 所以对**写类/资金类**方法也只用必败参数探，是安全的。
 

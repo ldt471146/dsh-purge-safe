@@ -22,7 +22,7 @@
 
 ```
 看到群晖 API 返回 code 120 时：
-1) 读 target447.example.com 找出缺的参数，循环补齐（往往补 2-3 轮）
+1) 读 errors.name 找出缺的参数，循环补齐（往往补 2-3 轮）
 2) 只有最终返回 200 且 data 非空，才判定为未授权
 3) 补齐后返回 801 = 权限不足；103 = 需认证 → 都不是未授权
 对照表：120=缺参数 / 119=API不存在 / 102=参数错 / 103=需认证 / 801=权限不足 / 200+data=真未授权
@@ -52,7 +52,7 @@ GET /webapi/entry.cgi?api=SYNO.FotoTeam.Browse.Item&version=1&method=list
 ## 判读规则（务必遵守）
 | 错误码 | 含义 | 是否代表"未授权可访问" |
 |---|---|---|
-| **120** | 缺少必填参数（`target447.example.com` 指明缺哪个） | **否** — 必须补全参数再测 |
+| **120** | 缺少必填参数（`errors.name` 指明缺哪个） | **否** — 必须补全参数再测 |
 | **119** | API 不存在 或 method/version 不匹配 | 否 |
 | **102** | 参数错误 / 方法不支持 | 否 |
 | **103** | 需要认证 | 否（需凭据） |
@@ -62,7 +62,7 @@ GET /webapi/entry.cgi?api=SYNO.FotoTeam.Browse.Item&version=1&method=list
 
 ## 正确姿势
 ```bash
-# 1) 第一次返回 120 时，看 target447.example.com 指的缺哪个参数，循环补齐
+# 1) 第一次返回 120 时，看 errors.name 指的缺哪个参数，循环补齐
 curl -s "$B/webapi/entry.cgi?api=$API&version=1&method=$M"            # 缺 offset
 curl -s "$B/webapi/entry.cgi?api=$API&version=1&method=$M&offset=0"   # 缺 limit
 curl -s "$B/webapi/entry.cgi?api=$API&version=1&method=$M&offset=0&limit=100"  # 801 = 结论

@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在真实目标上全链路跑通：target13.example.com → target14.example.com（中转页，CF 灰云 A 记录 203.0.113.15/203.0.113.92）→ 404 页泄露 target11.example.com/script.js（引流劫持脚本，判中国 IP+移动端）→ workers.dev/go 302 → target16.example.com/k05/?shareName=ky007（落地站，非 CF，CDN target21.example.com）→ 会员系统 index.js 挖出资金站池 tgt2905-172~target18.example.com → 随机子域访问 200 标题「开元棋牌」→ main.ba5f953f.js 提取 202 个后端端点，baseUrl=/member/commonRests → /member/api/resources/banner 未授权 200 真实业务 JSON。
+- **verified_note**: 在真实目标上全链路跑通：3211122.shop → mj.uto-paol125d.shop（中转页，CF 灰云 A 记录 203.0.113.15/203.0.113.92）→ 404 页泄露 ribi123.com/script.js（引流劫持脚本，判中国 IP+移动端）→ workers.dev/go 302 → osbhf5j3te.kltotee.net/k05/?shareName=ky007（落地站，非 CF，CDN bacdn2026.com）→ 会员系统 index.js 挖出资金站池 ky588-172~175.com → 随机子域访问 200 标题「开元棋牌」→ main.ba5f953f.js 提取 202 个后端端点，baseUrl=/member/commonRests → /member/api/resources/banner 未授权 200 真实业务 JSON。
 - **path**: pocs/灰产资金站追踪链-灰云判别-中转页统计js-workers跳板-会员系统js-spa-bundle-逆向-api/dgha_fund_chain_trace.sh
 - **tags**: 灰产,资金链,域名轮换,SPA逆向,API提取,Workers跳板,未授权
 - **created_at**: 2026-09-28T08:38:05.680Z
@@ -15,39 +15,39 @@
 
 ## 描述
 
-灰产资金站全套追踪方法，四步链式推进：① 资金链域名多为 Cloudflare 灰云（NS 托管在 CF、A 记录直指真实 IP）或自建 CDN，用 CNAME 反查 CDN 供应商；② 中转页/404 页会嵌入统计域名（如 target11.example.com/script.js），该 JS 常是引流劫持脚本，内含 Cloudflare Workers 跳板，而 Workers 是纯 302 中继会直接暴露真实落地站 + 推广渠道码；③ 落地页引用的"会员系统"JS 里硬编码资金站域名池与客服域名；④ 资金站是 React SPA（或同类打包前端），下载 main bundle 正则提取全部后端端点，再找 baseUrl 前缀。
+灰产资金站全套追踪方法，四步链式推进：① 资金链域名多为 Cloudflare 灰云（NS 托管在 CF、A 记录直指真实 IP）或自建 CDN，用 CNAME 反查 CDN 供应商；② 中转页/404 页会嵌入统计域名（如 ribi123.com/script.js），该 JS 常是引流劫持脚本，内含 Cloudflare Workers 跳板，而 Workers 是纯 302 中继会直接暴露真实落地站 + 推广渠道码；③ 落地页引用的"会员系统"JS 里硬编码资金站域名池与客服域名；④ 资金站是 React SPA（或同类打包前端），下载 main bundle 正则提取全部后端端点，再找 baseUrl 前缀。
 
 ## 用法
 
 ```
-在无代理出口（VPS）执行 bash dgha_fund_chain_trace.sh。要点：域名判定必须无代理且校验响应中不得出现 cf-ray / server: cloudflare；泛解析域名（如 target12.example.com 根域无 A）必须用随机子域做 Host；随机子域前缀按 5-16 位字母数字生成（站点 JS 就是这么算的）。只读优先，禁止对资金接口做任何写/转账/提现/回调操作。
+在无代理出口（VPS）执行 bash dgha_fund_chain_trace.sh。要点：域名判定必须无代理且校验响应中不得出现 cf-ray / server: cloudflare；泛解析域名（如 ky588-172.com 根域无 A）必须用随机子域做 Host；随机子域前缀按 5-16 位字母数字生成（站点 JS 就是这么算的）。只读优先，禁止对资金接口做任何写/转账/提现/回调操作。
 ```
 
 ## 正文
 
 ```
 #!/bin/bash
-# tgt9215集群 — 资金链自动追踪 + 资金站 API 逆向
+# 大港澳集群 — 资金链自动追踪 + 资金站 API 逆向
 # 实测生效：2026-09-28，从主 API 未授权接口泄露的资金链域名一路追到真实资金站源站
 # 出口：必须在无代理环境（VPS 203.0.113.55）执行；本机 7892 代理会按 Host 分流产生假命中
 set -u
 UA='Mozilla/5.0 (Linux; Android 12; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/203.0.113.28 Mobile Safari/537.36'
 
 echo "=== [1] 资金链入口：灰云域名跟随跳转（判别是否 CF 代理）"
-for d in target13.example.com; do
+for d in 3211122.shop; do
   curl -skL --compressed --max-time 20 -A "$UA" -D - "https://$d/" -o /tmp/land.html 2>&1 \
     | grep -iE '^HTTP|^location|^server|^x-cache|cf-ray'
 done
-# 结果：target13.example.com -> target14.example.com（中转页，标题「正在载入，请稍等」）
+# 结果：3211122.shop -> mj.uto-paol125d.shop（中转页，标题「正在载入，请稍等」）
 
 echo "=== [2] 中转页/404 页里挖关联域名（hostArr 跳转池 + 统计脚本）"
-curl -sk --compressed --max-time 15 -A "$UA" "https://target14.example.com/" -o /tmp/mj.html
+curl -sk --compressed --max-time 15 -A "$UA" "https://mj.uto-paol125d.shop/" -o /tmp/mj.html
 grep -oE 'https://[a-zA-Z0-9._-]+' /tmp/mj.html | sort -u
 grep -oE 'https://[a-zA-Z0-9._-]+/script\.js' /tmp/mj.html | sort -u
-# 结果：hostArr=zad.teay-teay51[0-8]target15.example.com（6 个已轮换废弃）；404 页泄露统计域 target11.example.com
+# 结果：hostArr=zad.teay-teay51[0-8]d.shop（6 个已轮换废弃）；404 页泄露统计域 ribi123.com
 
 echo "=== [3] 统计域 script.js = 引流劫持脚本，挖 Workers 跳板"
-curl -sk --max-time 20 -A "$UA" "https://target11.example.com/script.js" -o /tmp/s.js
+curl -sk --max-time 20 -A "$UA" "https://ribi123.com/script.js" -o /tmp/s.js
 grep -oE 'window\.location\.href = "[^"]+"' /tmp/s.js
 grep -oE "fetch\('[^']+'" /tmp/s.js
 # 结果：跳板 https://frite-morning-e253.misstom321.workers.dev/go；注释里藏后端 /get.php
@@ -55,10 +55,10 @@ grep -oE "fetch\('[^']+'" /tmp/s.js
 echo "=== [4] Workers 跳板是纯 302 中继 —— 直接暴露真实落地站（含渠道码）"
 curl -sk --max-time 20 -A "$UA" -D - -o /dev/null "https://frite-morning-e253.misstom321.workers.dev/go" \
   | grep -iE '^HTTP|^location'
-# 结果：302 -> https://target16.example.com/k05/?shareName=ky007
+# 结果：302 -> https://osbhf5j3te.kltotee.net/k05/?shareName=ky007
 
 echo "=== [5] 落地页引用的会员系统 JS 里硬编码资金站域名池与客服"
-SUB='target17.example.com'
+SUB='04A1D727843B7CA6E3119404FC709235.bigo.h5.2026huiyuan.com'
 for f in index.js appinstall.js; do
   curl -sk --compressed --max-time 20 -A "$UA" "https://$SUB/xiaowei/ky58/$f" -o /tmp/$f
   echo "--- $f"
@@ -66,10 +66,10 @@ for f in index.js appinstall.js; do
   grep -oE 'https://[a-zA-Z0-9._/-]+' /tmp/$f | sort -u    # 客服/指纹上报域
   grep -oE 'appKey[: ]+"[^"]+"' /tmp/$f
 done
-# 结果：autourldefault=tgt2905-172~target18.example.com；客服 target19.example.com；指纹上报 target20.example.com；appKey=bAlm3vhCBpgMhnX
+# 结果：autourldefault=ky588-172~175.com；客服 web.2026kfx.com；指纹上报 opspg2026.com；appKey=bAlm3vhCBpgMhnX
 
 echo "=== [6] 资金站域名是泛解析（阿里云 DNS）—— 必须用随机子域做 Host"
-SUB2="$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n' | cut -c1-10).target12.example.com"
+SUB2="$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n' | cut -c1-10).ky588-172.com"
 curl -skL --compressed --max-time 20 -A "$UA" -D - "https://$SUB2/?shareName=ky007" -o /tmp/spa.html \
   | grep -iE '^HTTP|^server|^x-cache|cf-ray'
 grep -oE '<title>[^<]+' /tmp/spa.html

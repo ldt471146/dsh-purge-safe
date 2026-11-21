@@ -27,7 +27,7 @@
   - 401 `{"message":"This token status is unavailable","success":false}` → **令牌在库中存在但被禁用/过期**（禁用令牌走 tokenAuthPrefix 校验，库里有记录所以是"状态不可用"而非"不存在"）。
   - 401 `{"error":{"message":"无效的令牌 ...","type":"new_api_error"}}`（`/v1/*` relay 路径）→ 令牌不存在/已删除。
 - 注意：**禁用令牌在 /v1/* relay 路径报"无效的令牌"**——只用 /v1/models 验活会把"存在但禁用"误判成"已删除"。判定状态必须用 /api/usage/token/（或 /api/log/token）。
-- /api/log/token 在部分 vhost（target460.example.com）404，/api/usage/token/ 全 vhost 一致，优先用后者。
+- /api/log/token 在部分 vhost（api.modelsp.com）404，/api/usage/token/ 全 vhost 一致，优先用后者。
 
 ## 背景（ModelSell 自建 Token Quota 面板）
 - 面板是 CRA 静态站，nginx 纯托管。**真实后端不在面板所在主机**，由构建期环境变量注入：JS 内 `REACT_APP_BASE_URL='{"server1": "https://example.com"}'`，请求 `S+"/api/usage/token/"` 与 `S+"/api/log/token"`，`Authorization: Bearer <sk-token>`。
@@ -35,6 +35,6 @@
 
 ## 本次实测
 - 目标 203.0.113.26:8088 /token-quota.config.json → 200（nginx/1.19.0，无鉴权）。
-- 泄露令牌对 example.com / example.com / target461.example.com / target462.example.com / target460.example.com 全部：/api/usage/token/ → 401 unavailable；/v1/models → 401 无效的令牌。结论：存在但禁用，不可利用。
+- 泄露令牌对 example.com / example.com / www.modelsell.cc / api.lovtokens.com / api.modelsp.com 全部：/api/usage/token/ → 401 unavailable；/v1/models → 401 无效的令牌。结论：存在但禁用，不可利用。
 - example.com 与 example.com 同实例（X-New-Api-Version 一致，Via: 1.1 Caddy；--resolve 直连源站 Host 被接受）。
 ```

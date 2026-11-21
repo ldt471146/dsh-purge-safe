@@ -9,7 +9,7 @@
 - **source**: self
 - **verified**: 1
 - **verified_note**: 在 example.com 上实测：走 7892 代理返回 502/404 + body "hello"，而 --noproxy 直连及 --resolve 到 4 个解析 IP(203.0.113.101/125/46/84) 全部 conn-fail。代理伪造结论由"唯一可达路径为代理"与"占位体固定为 hello"双重印证。
-- **path**: pocs/代理分流造假样本-target30.example.com-经-7892-返回伪造-502-404-hello/poc.sh
+- **path**: pocs/代理分流造假样本-net.firstworkgoing.art-经-7892-返回伪造-502-404-hello/poc.sh
 - **tags**: 代理造假,7892,判定方法论,负结论
 - **created_at**: 2026-09-28T10:08:21.611Z
 - **found_by**: exploit

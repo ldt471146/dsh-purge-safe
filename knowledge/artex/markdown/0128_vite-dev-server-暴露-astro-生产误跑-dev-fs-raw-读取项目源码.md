@@ -9,7 +9,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-09-29 在 203.0.113.51:4321（AI Price Rank = target79.example.com 源站）实测：/@vite/client 200/320683B；/@fs/root/aiprice/package.json 200/2201B；auth.ts 200/8963B（拿到 ADMIN_COOKIE=aiprice_admin、HMAC-SHA256 会话签名、timingSafeEqual 常量时间比较、TTL 8h）；server-context.ts?raw 200/2141B（internalSecret() 要求 process.env.ADMIN_SECRET 长度 ≥32 否则抛错 ⇒ 无默认密钥）；login.astro?raw 200/2280B（单字段 secret 的 POST 登录逻辑）；middleware.ts 200/7036B（私有前缀 /api/ /health/ /internal/ /ui/）；dist/runtime/entry.js 200/4934633B。边界实测：/@fs/etc/passwd 403、.env 与 .git/config 与 .npmrc 403，%2e 编码/?raw/?import/%00/尾随字符等 7 种绕过全部失败。据此确认漏洞真实存在且已定位后台 /internal/login/，但 ADMIN_SECRET 与 DATABASE_URL 实值未取得。
+- **verified_note**: 2026-09-29 在 203.0.113.51:4321（AI Price Rank = pricerank.miaomiaocode.com 源站）实测：/@vite/client 200/320683B；/@fs/root/aiprice/package.json 200/2201B；auth.ts 200/8963B（拿到 ADMIN_COOKIE=aiprice_admin、HMAC-SHA256 会话签名、timingSafeEqual 常量时间比较、TTL 8h）；server-context.ts?raw 200/2141B（internalSecret() 要求 process.env.ADMIN_SECRET 长度 ≥32 否则抛错 ⇒ 无默认密钥）；login.astro?raw 200/2280B（单字段 secret 的 POST 登录逻辑）；middleware.ts 200/7036B（私有前缀 /api/ /health/ /internal/ /ui/）；dist/runtime/entry.js 200/4934633B。边界实测：/@fs/etc/passwd 403、.env 与 .git/config 与 .npmrc 403，%2e 编码/?raw/?import/%00/尾随字符等 7 种绕过全部失败。据此确认漏洞真实存在且已定位后台 /internal/login/，但 ADMIN_SECRET 与 DATABASE_URL 实值未取得。
 - **path**: pocs/vite-dev-server-暴露-astro-生产误跑-dev-fs-raw-读取项目源码/vite_dev_leak.sh
 - **tags**: vite,dev-server,astro,源码泄露,任意文件读,/@fs,?raw,robots内部路径
 - **created_at**: 2026-09-29T23:43:04.806Z

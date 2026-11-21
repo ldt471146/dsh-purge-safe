@@ -64,7 +64,7 @@ for method in ("GET", "POST"):
                 r"parameter '([^']+)' is not present"):
         m = re.search(pat, body)
         if m:
-            print("   >>> 必需参数名 = %s" % target22.example.com(1))
+            print("   >>> 必需参数名 = %s" % m.group(1))
             break
     # 判据 2：405 说明映射存在但方法不对；405 页同样带 Whitelabel
     if r.status_code == 405:

@@ -6,7 +6,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在真实目标 `https://203.0.113.55/LHService/tp`（example.com.Service2_8.PutTp）上验证：裸请求 500 len=1201（user@example.com:40）→ userid+flag+head+type 500 len=1201（user@example.com:41）→ 390 参数钥匙串 500 len=1076（user@example.com:46）→ 追加 70 个 PutTp 专属字段名（tp/tpstr/pic/imgStr/imgName/photo/base64Str/filename…）行号一律停在 46 不动。另一处强证据：传 `type=head` 直接返回 `java.lang.NumberFormatException: For input string: "head"`，证明 `type` 确被 Integer.parseInt。据此判定该上传 servlet 需要登录态，避免了继续猜参数名的无效投入。证据文件 exploit58/e20_out.txt、exploit58/e21_out.txt。
+- **verified_note**: 在真实目标 `https://203.0.113.55/LHService/tp`（example.com.Service2_8.PutTp）上验证：裸请求 500 len=1201（NFE@PutTp.java:40）→ userid+flag+head+type 500 len=1201（NFE@PutTp.java:41）→ 390 参数钥匙串 500 len=1076（NPE@PutTp.java:46）→ 追加 70 个 PutTp 专属字段名（tp/tpstr/pic/imgStr/imgName/photo/base64Str/filename…）行号一律停在 46 不动。另一处强证据：传 `type=head` 直接返回 `java.lang.NumberFormatException: For input string: "head"`，证明 `type` 确被 Integer.parseInt。据此判定该上传 servlet 需要登录态，避免了继续猜参数名的无效投入。证据文件 exploit58/e20_out.txt、exploit58/e21_out.txt。
 - **path**: pocs/技巧-java-异常行号-oracle-用-tomcat-错误页的-class.java-nn-行号推进-零猜测定位-servlet-参数与鉴权门槛/java_line_oracle.py
 - **tags**: java,servlet,参数发现,异常行号,oracle,judge,鉴权判定
 - **created_at**: 2026-10-11T11:35:27.104Z
@@ -20,7 +20,7 @@
 ③ **行号前进 = 该参数被代码读取**（因为 parseInt/getParameter 链是按行推进的）；
 ④ 当所有候选参数用尽而行号仍停在同一行 ⇒ **那一行读的不是请求参数**（典型是 `session.getAttribute(...)`），即可判定「该端点需要登录态」，不必再猜参数名。
 这个方法能在几十次请求内、用零猜测的方式判定一个未知 servlet 的参数面与鉴权门槛，比「猜参数名 / 大字典爆破」高效一个量级。
-实测收益：`example.com.Service2_8.PutTp` 裸=`target347.example.com:40` NFE → `userid+flag+head+type`=`target347.example.com:41`（证明 `type` 确被 Integer.parseInt，传 `type=head` 直接回 `NumberFormatException: For input string: "head"`）→ 390 参数钥匙串=`target347.example.com:46` NPE → 再打 70 个专属字段名行号一律停在 46 ⇒ **判定 line 46 读 session 属性、该上传 servlet 需登录态**，一次判死。
+实测收益：`example.com.Service2_8.PutTp` 裸=`PutTp.java:40` NFE → `userid+flag+head+type`=`PutTp.java:41`（证明 `type` 确被 Integer.parseInt，传 `type=head` 直接回 `NumberFormatException: For input string: "head"`）→ 390 参数钥匙串=`PutTp.java:46` NPE → 再打 70 个专属字段名行号一律停在 46 ⇒ **判定 line 46 读 session 属性、该上传 servlet 需登录态**，一次判死。
 
 ## 用法
 
@@ -95,8 +95,8 @@ def line_of(text, cls=None):
     cls = cls or CLASS
     m = re.search(cls + r"\.java:(\d+)", text)
     ex = re.search(r"<pre>\s*([^\r\n<]+)", text)
-    exs = target348.example.com(1).strip() if ex else ""
-    return (int(target22.example.com(1)) if m else None, exs, text)
+    exs = ex.group(1).strip() if ex else ""
+    return (int(m.group(1)) if m else None, exs, text)
 
 def probe(tag, path, method="GET", body=None):
     t = raw(method, path, body)

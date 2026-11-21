@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-06 在 203.0.113.126:21 实测：Pure-FTPd banner `220-This is a private system - No anonymous login`；两批共 12 对凭据（含宝塔站点目录名 `target234.example.com`、域名段 `tgt2840`/`tgt2840a0`/`wwwtgt2840`/`target235.example.com`、随机子域 `tgt3090`、系统名 `admin`/`www`/`ftp`，密码含同名与 123456）**全部返回完全一致的 `530 Login authentication failed`** ⇒ 证实无法用户名枚举、且这 12 对不在字典内。
+- **verified_note**: 2026-10-06 在 203.0.113.126:21 实测：Pure-FTPd banner `220-This is a private system - No anonymous login`；两批共 12 对凭据（含宝塔站点目录名 `1113060.1113060a0.top`、域名段 `1113060`/`1113060a0`/`www1113060`/`8886060bdh1.shop`、随机子域 `moh6hrwx4t`、系统名 `admin`/`www`/`ftp`，密码含同名与 123456）**全部返回完全一致的 `530 Login authentication failed`** ⇒ 证实无法用户名枚举、且这 12 对不在字典内。
 - **path**: pocs/宝塔-pure-ftpd-口令面判据-存在-不存在用户同一条-530-无法枚举-只有-230-算通-字典来源与-put-马战术/poc.py
 - **tags**: 宝塔,Pure-FTPd,MySQL虚拟用户,530,用户名枚举不可行,230判据,FTP字典,上传webshell
 - **created_at**: 2026-10-06T12:13:36.487Z
@@ -41,20 +41,20 @@
 ## 实测字典与结果（12 对，全 530）
 | 用户名 | 密码 | 结果 |
 |---|---|---|
-| `target234.example.com`（= 宝塔站点根目录名，从 phpinfo 的 DOCUMENT_ROOT 得到） | 同名 / `123456` | 530 |
-| `tgt2840` | `tgt2840` / `123456` | 530 |
-| `tgt3090`（站点的随机子域名） | `123456` | 530 |
+| `1113060.1113060a0.top`（= 宝塔站点根目录名，从 phpinfo 的 DOCUMENT_ROOT 得到） | 同名 / `123456` | 530 |
+| `1113060` | `1113060` / `123456` | 530 |
+| `moh6hrwx4t`（站点的随机子域名） | `123456` | 530 |
 | `admin` | `123456` | 530 |
-| `wwwtgt2840` | 同名 | 530 |
-| `tgt2840a0` | 同名 | 530 |
+| `www1113060` | 同名 | 530 |
+| `1113060a0` | 同名 | 530 |
 | `example.com` | 同名 | 530 |
-| `target235.example.com` | 同名 | 530 |
+| `8886060bdh1.shop` | 同名 | 530 |
 | `ftp` / `www` | `123456` | 530 |
 
 ## 字典的正确来源（按依据强度排序）
 1. **宝塔站点根目录名**（最准）：宝塔"添加站点"时目录名默认 = 域名（或 `站点名_随机`），而"添加 FTP"时账号默认填**站点名**。站点名可从 phpinfo 的 `DOCUMENT_ROOT=/www/wwwroot/<站点名>` 直接读出，或从 nginx 报错页/备份文件泄露的路径推。
 2. **面板数据表**：FTP 账号存在面板 MySQL 的 `ftps` 表（有 `name`/`password`），拿到面板或数据库即一次性拿全。
-3. **域名段 / 站点编号**（如 `tgt2840`、`tgt2840a0`、`tgt3840`）：站长常用固定编号做账号。
+3. **域名段 / 站点编号**（如 `1113060`、`1113060a0`、`8886060`）：站长常用固定编号做账号。
 4. 面板/系统名（`www`、`ftp`、`test`、`bt`）。
 
 ## 战术要点

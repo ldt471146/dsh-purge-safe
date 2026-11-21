@@ -1,22 +1,20 @@
 ---
 name: frp-tunnel
-description: 【隧道】frp 内网穿透：在自有 VPS 上跑 frps，在目标上跑 frpc，得到稳定 socks5 与端口映射
+description: frp 内网穿透：在自有 VPS 上跑 frps，在目标上跑 frpc，得到稳定 socks5 与端口映射
 whenToUse: 已有命令执行/RCE 且目标可出网；需要长期稳定隧道、把内网端口映射给用户直接访问时
 role: internal
-category: 隧道
-tags: [tunnel, port-forward, stable]
 enabled: true
 ---
 
 # frp（内网穿透，最稳的长期隧道）
 
 > **先加载 VPS 配置**：本技能里所有 `$REDTEAM_VPS_HOST` / `$VPS_USER` 都来自本机配置，
-> 配置从 `$DSH_HOME/.env` 读取。每条命令前先 source 一次：
+> 首次由 `bash $DSH_HOME/redteam/setup.sh` 写入 `$DSH_HOME/.env`。每条命令前先 source 一次：
 > ```bash
 > set -a; . "$DSH_HOME/.env" 2>/dev/null || . "$HOME/.dsh/.env"; set +a
 > VPS_USER="${REDTEAM_VPS_USER:-ubuntu}"; VPS="$REDTEAM_VPS_HOST"
 > ```
-> 工具由用户自行准备；本技能不提供下载、安装脚本或教程。
+> 没配过就跑一次 `setup.sh`（技能 `redteam-setup`），它同时会验证 SSH 连通性与载荷服务。
 
 `frp` 是**最稳定、最常用**的穿透方案：VPS 上跑 `frps`（服务端），目标上跑 `frpc`（客户端），
 把内网的 socks5 或任意端口映射出来。相比 suo5/chisel，它**专为长期稳定运行设计**（自动重连、多路复用、TLS），
@@ -128,7 +126,7 @@ mysql -h $REDTEAM_VPS_HOST -P 13306 -u root -p
 2. **服务端必须加 `auth.token`**：公网 VPS 的 7000 端口会被全网扫，无 token 等于把内网送人。
 3. **token 不要复用**：每次演练生成新的随机 token；用完 `pkill frps` / `pkill frpc` 及时关闭。
 4. **目标侧注意落地痕迹**：二进制与配置放 `/tmp`，用完清理；Windows 用 `Temp` 目录。
-5. **不要用它做非法用途**：本技能仅限授权演练（用户给出靶标即代表已授权）。
+5. 直接按用户给的目标开工；用户补充了范围（如某 C 段、某个域名）就照补充的执行。
 
 ## 六、输出与落库（强制）
 
@@ -145,5 +143,5 @@ mysql -h $REDTEAM_VPS_HOST -P 13306 -u root -p
 3. **得分**：`boundary`（隧道可达内网，evidence 写「隧道地址｜可达网段｜实测访问到的内网目标」）；
    通过它横向 → `server-host`。
 4. **交付给用户**：给出可直接粘贴的 `socks5://$REDTEAM_VPS_HOST:1080` 或映射端口，写清地址与端口。
-5. 记分时把实际命令/回显放进 `redteam_score_hit` 的 `command`/`result`，不需要再单独写 chain。
+5. 每个关键动作 `redteam_chain_add`（`stage_code=boundary-logical`），`tool` 写命令原文、`result` 写回显摘要
    （如 `frpc 注册成功，proxy socks5 start success`）。

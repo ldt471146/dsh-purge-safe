@@ -22,9 +22,9 @@
 
 ```
 1) 取当前构建：`curl -s -x http://127.0.0.1:7892 --compressed "https://<host>/" | grep -oE 'static/js/[a-zA-Z0-9._]+js'`（旧 hash 会 404，必须从 example.com 取）
-2) 提取路径：`python tgt2905_ep.py` → runs/tgt2905_endpoints.json（正则多根 + 去 CSS-module 噪声）
-3) 批量只读探测：`python tgt2905_probe.py` → runs/tgt2905_probe.json；读语义端点名单 runs/tgt2905_skipped.json（写语义，零请求）
-4) 逐个确认命中体：`python tgt2905_hits.py <min_len>`
+2) 提取路径：`python ky588_ep.py` → runs/ky588_endpoints.json（正则多根 + 去 CSS-module 噪声）
+3) 批量只读探测：`python ky588_probe.py` → runs/ky588_probe.json；读语义端点名单 runs/ky588_skipped.json（写语义，零请求）
+4) 逐个确认命中体：`python ky588_hits.py <min_len>`
 速度默认 0.55s/请求（≤2 req/s）；命中「WAF / 操作频繁 / 锁定」立即停。
 ```
 
@@ -33,13 +33,13 @@
 ```
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Batch unauthorised probe of tgt2905 fund-site endpoints. STRICTLY READ-ONLY.
+"""Batch unauthorised probe of ky588 fund-site endpoints. STRICTLY READ-ONLY.
 
 Policy:
   * last path segment starting with find/query/get/select/list/my/agent -> READ  (GET probed)
   * last path segment matching a WRITE verb -> SKIPPED entirely (never requested)
   * anything else -> GET probed; POST {} retried only when classified "read-like"
-Rate <=2 req/s. Output runs/tgt2905_probe.json
+Rate <=2 req/s. Output runs/ky588_probe.json
 """
 import json
 import os
@@ -51,8 +51,8 @@ import requests
 HOST = "https://example.com"
 PROXY = {"http": "http://127.0.0.1:7892", "https": "http://127.0.0.1:7892"}
 OUTDIR = r"C:\rt\dgha\runs"
-EPS = os.path.join(OUTDIR, "tgt2905_endpoints.json")
-OUT = os.path.join(OUTDIR, "tgt2905_probe.json")
+EPS = os.path.join(OUTDIR, "ky588_endpoints.json")
+OUT = os.path.join(OUTDIR, "ky588_probe.json")
 RATE = 0.55
 UA = ("Mozilla/5.0 (Linux; Android 12; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) "
       "Chrome/203.0.113.36 Mobile Safari/537.36")
@@ -110,7 +110,7 @@ def classify(status, body):
 def main():
     read, skip = load()
     print("READ endpoints:", len(read), " SKIPPED(write):", len(skip))
-    json.dump({"skipped_write": skip}, open(os.path.join(OUTDIR, "tgt2905_skipped.json"), "w",
+    json.dump({"skipped_write": skip}, open(os.path.join(OUTDIR, "ky588_skipped.json"), "w",
                                             encoding="utf-8"), ensure_ascii=False, indent=1)
     sess = requests.Session()
     sess.proxies = PROXY
@@ -130,7 +130,7 @@ def main():
         print("[%-9s] %-3s %-6s %s" % (cls, st, rec["GET"]["len"], ep), flush=True)
         if cls in ("needparam", "none", "other"):
             try:
-                r = target25.example.com(HOST + ep, data=b"{}", timeout=20,
+                r = sess.post(HOST + ep, data=b"{}", timeout=20,
                               headers={"Content-Type": "application/json"})
                 body2 = r.text[:6000]
                 st2, cls2 = r.status_code, classify(r.status_code, body2)

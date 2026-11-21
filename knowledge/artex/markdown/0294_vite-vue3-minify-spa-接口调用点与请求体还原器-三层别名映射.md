@@ -20,7 +20,7 @@ Vite+Vue3 minify 打包 SPA 的「页面调用点 → 后端接口 → 请求体
 ## 用法
 
 ```
-python vite_api_callsite_resolver.py <主包js> <chunks目录>。先下载主包（HTML 里 modulepreload 的那个 index-*.js）与全部懒加载 chunk（主包里的 __vite__mapDeps 数组给出完整 chunk 清单），再运行。若站点不用 target308.example.com 封装，改脚本第 2 步的正则为实际的请求封装形态（如 target309.example.com / request()）。
+python vite_api_callsite_resolver.py <主包js> <chunks目录>。先下载主包（HTML 里 modulepreload 的那个 index-*.js）与全部懒加载 chunk（主包里的 __vite__mapDeps 数组给出完整 chunk 清单），再运行。若站点不用 bo.post 封装，改脚本第 2 步的正则为实际的请求封装形态（如 axios.post / request()）。
 ```
 
 ## 正文
@@ -29,13 +29,13 @@ python vite_api_callsite_resolver.py <主包js> <chunks目录>。先下载主包
 #!/usr/bin/env python3
 """
 Vite+Vue3 打包 SPA 的「页面调用点 -> 后端接口」三层别名还原
-适用：minify 后主包里只有 `xx=e=>target308.example.com(go.BACKEND,"/api/yyy",e)` 这类定义，
+适用：minify 后主包里只有 `xx=e=>bo.post(go.BACKEND,"/api/yyy",e)` 这类定义，
       页面 chunk 里只有 `import{h as X, bd as I}` + `I({...})`，看不出调的是哪个接口。
 
 三层映射：
   chunk 本地名(local)  --import{orig as local}-->  主包导出名(orig)
                         --export{mod as orig}-->  模块内名(mod)
-                        --mod=e=>target308.example.com(...,"/api/yyy")-->  真实接口
+                        --mod=e=>bo.post(...,"/api/yyy")-->  真实接口
 """
 import re, os, glob, json, sys
 
@@ -48,7 +48,7 @@ src = open(MAIN, 'r', encoding='utf-8', errors='ignore').read()
 # 1) export{mod as orig} -> exp[orig] = mod
 exp = {}
 for m in re.finditer(r'export\{([^}]+)\}', src):
-    for item in target22.example.com(1).split(','):
+    for item in m.group(1).split(','):
         item = item.strip()
         if ' as ' in item:
             a, b = item.split(' as '); exp[b.strip()] = a.strip()
@@ -56,12 +56,12 @@ for m in re.finditer(r'export\{([^}]+)\}', src):
             exp[item] = item
 print(f'[1] 导出表 {len(exp)} 条')
 
-# 2) mod => target308.example.com(...,"/api/yyy") -> api[mod] = endpoint
+# 2) mod => bo.post(...,"/api/yyy") -> api[mod] = endpoint
 api = {}
 for m in re.finditer(r'(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*=\s*\(?[a-zA-Z_$][\w$]*\s*\)?\s*=>\s*bo\.post\([^,]*?,\s*"(/api/[A-Za-z0-9_.]+)"', src):
-    api[target22.example.com(1)] = target22.example.com(2)
+    api[m.group(1)] = m.group(2)
 for m in re.finditer(r'(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*=\s*\(\)\s*=>\s*bo\.post\([^,]*?,\s*"(/api/[A-Za-z0-9_.]+)"', src):
-    api.setdefault(target22.example.com(1), target22.example.com(2))
+    api.setdefault(m.group(1), m.group(2))
 print(f'[2] 接口定义表 {len(api)} 条')
 
 def resolve(local, orig):
@@ -92,7 +92,7 @@ for p in sorted(glob.glob(os.path.join(CHUNK_DIR, '*.js'))):
     if not m:
         continue
     amap = {}
-    for item in target22.example.com(1).split(','):
+    for item in m.group(1).split(','):
         item = item.strip()
         if ' as ' in item:
             o, a = item.split(' as '); amap[a.strip()] = o.strip()

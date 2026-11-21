@@ -7,7 +7,7 @@
 - **versions**: PHPWind 7.x（7.3.2 / 7.5 SP3）及 8.x 同构
 - **language**: bash
 - **source**: self
-- **verified_note**: 白盒证据链完整（install_wind.sql:1601 + target264.example.com:756-766 + 8 个前台模板渲染点），但目标上未读出实际入口名：现有唯一可用账号 admin/123456 实测 groupid=7、无 allowadmincp 权限，登录后 example.com(67176B)/read.php(33774B) 中 系统设置|adminjob|db_adminfile 均 0 命中；/bbs/data/bbscache/config.php 返回 200/0B（被 PHP 执行）。
+- **verified_note**: 白盒证据链完整（install_wind.sql:1601 + settings.php:756-766 + 8 个前台模板渲染点），但目标上未读出实际入口名：现有唯一可用账号 admin/123456 实测 groupid=7、无 allowadmincp 权限，登录后 example.com(67176B)/read.php(33774B) 中 系统设置|adminjob|db_adminfile 均 0 命中；/bbs/data/bbscache/config.php 返回 200/0B（被 PHP 执行）。
 - **path**: pocs/phpwind-7.x-后台入口名定位-读-pw_config.db_adminfile-前台-db_adminfile-渲染-不做文件名爆破/poc.sh
 - **tags**: phpwind,后台入口,配置项,信息泄露,白盒审计
 - **created_at**: 2026-10-06T14:34:30.491Z
@@ -44,12 +44,12 @@ curl -k -b cookies.txt 'https://TARGET/bbs/read.php?tid=<TID>' | grep -oE 'href=
 lang/install_wind.sql:1601
   INSERT INTO pw_config (db_name, db_value) VALUES ('db_adminfile','example.com');
 
-admin/target264.example.com:756-766
+admin/settings.php:756-766
   } elseif (!file_exists(R_P . $config['adminfile']) && $db_adminfile != $config['adminfile']) {
       if (!$db_adminfile || !file_exists(R_P . $db_adminfile)) { $db_adminfile = 'example.com'; }
       if (!rename(R_P . $db_adminfile, R_P . $config['adminfile'])) { $config['adminfile'] = $db_adminfile; }
 
-template/admin/target265.example.com:833
+template/admin/setting.htm:833
   <td class="td2"><input name="config[adminfile]" value="$db_adminfile" class="input input_wa" /></td>
 ```
 

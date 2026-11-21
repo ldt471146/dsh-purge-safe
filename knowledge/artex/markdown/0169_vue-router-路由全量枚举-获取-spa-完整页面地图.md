@@ -8,7 +8,7 @@
 - **language**: js
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.45（金沙娛樂場 target165.example.com）实测有效：枚举出 101 条路由（95 条无参数），据此发现 /home/credit-manage（额度管理，含「请输入直属下级账号」输入框与批量操作）、/home/personal-daily-report（个人日报表：输赢/投注金额/有效投注/注单量）、/home/report（6 个账务标签页：账户明细/投注记录/个人报表/找回余额/存款记录/提现记录）等高价值页面，逐页实测确认完整渲染且无权限拒绝。该方法与 Pinia store 读取互补：路由给页面地图，store 给页面数据。
+- **verified_note**: 在 203.0.113.45（金沙娛樂場 904.com）实测有效：枚举出 101 条路由（95 条无参数），据此发现 /home/credit-manage（额度管理，含「请输入直属下级账号」输入框与批量操作）、/home/personal-daily-report（个人日报表：输赢/投注金额/有效投注/注单量）、/home/report（6 个账务标签页：账户明细/投注记录/个人报表/找回余额/存款记录/提现记录）等高价值页面，逐页实测确认完整渲染且无权限拒绝。该方法与 Pinia store 读取互补：路由给页面地图，store 给页面数据。
 - **path**: pocs/vue-router-路由全量枚举-获取-spa-完整页面地图/vue-router-route-enumeration.js
 - **tags**: Vue Router,SPA,路由枚举,页面测绘,前端逆向,CDP
 - **created_at**: 2026-10-03T16:12:30.063Z
@@ -48,7 +48,7 @@ const router = app.__vue_app__.config.globalProperties.$router;
 // 2) 枚举全部路由（含懒加载的）
 const routes = router.getRoutes().map(r => ({
   path: r.path,
-  name: target166.example.com,
+  name: r.name,
   hasParams: /:/.test(r.path)
 }));
 console.log(routes.length, routes);
@@ -113,7 +113,7 @@ React Router 无统一实例，可从 `<Router>` 上下文或 `window.__REACT_RO
 - **分段输出**：`for(let i=0;i<s.length;i+=200) parts.push(s.slice(i,i+200))`
 - 路由**路径本身是 ASCII**，通常不会被过滤；被过滤的往往是含 query/cookie 的完整 URL
 
-## 实测产出（203.0.113.45 金沙娛樂場 target165.example.com）
+## 实测产出（203.0.113.45 金沙娛樂場 904.com）
 枚举出 **101 条路由**（95 条无参数），发现此前未覆盖的高价值页面：
 ```
 /home/report                    账户明细/投注记录/个人报表/找回余额/存款记录/提现记录

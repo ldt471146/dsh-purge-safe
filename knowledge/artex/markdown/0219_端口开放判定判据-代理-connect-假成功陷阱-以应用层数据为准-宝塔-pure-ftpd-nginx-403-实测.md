@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-06 在 203.0.113.126 实测：经 127.0.0.1:7892 —— **21 真开**（`220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------` / `No anonymous login`）、**888 真开**（nginx 403 548B，`/pma`、`/phpmyadmin/`、`/PMA/`、无斜杠、XFF 伪造全 403）、22/3306/8888/843/5432 零字节。**三项对照实验钉死结论**：① `github.com:22` 经 SOCKS5 与 HTTP CONNECT **两条通道都零字节** ⇒ 代理节点屏蔽 22，故目标 22 记"不可判定"；② `target233.example.com:3306` 回 **DATA(90)** `11.8.9-MariaDB-log … mysql_native_password` ⇒ 代理能转发 3306，故目标 3306 零字节=目标侧不响应；③ 目标 `:888` 回 nginx 403 ⇒ 代理能转发高端口，故目标 8888 零字节=目标侧不响应。另：VPS 出口 203.0.113.55 直连 22/80/443/2222/8080/3389 全超时、经代理 CONNECT 假成功零字节；免费代理池 2286 候选 / 276 验活全部不可用于非标端口（Squid 回 `403 Proxy Error`）。
+- **verified_note**: 2026-10-06 在 203.0.113.126 实测：经 127.0.0.1:7892 —— **21 真开**（`220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------` / `No anonymous login`）、**888 真开**（nginx 403 548B，`/pma`、`/phpmyadmin/`、`/PMA/`、无斜杠、XFF 伪造全 403）、22/3306/8888/843/5432 零字节。**三项对照实验钉死结论**：① `github.com:22` 经 SOCKS5 与 HTTP CONNECT **两条通道都零字节** ⇒ 代理节点屏蔽 22，故目标 22 记"不可判定"；② `db4free.net:3306` 回 **DATA(90)** `11.8.9-MariaDB-log … mysql_native_password` ⇒ 代理能转发 3306，故目标 3306 零字节=目标侧不响应；③ 目标 `:888` 回 nginx 403 ⇒ 代理能转发高端口，故目标 8888 零字节=目标侧不响应。另：VPS 出口 203.0.113.55 直连 22/80/443/2222/8080/3389 全超时、经代理 CONNECT 假成功零字节；免费代理池 2286 候选 / 276 验活全部不可用于非标端口（Squid 回 `403 Proxy Error`）。
 - **path**: pocs/端口开放判定判据-代理-connect-假成功陷阱-以应用层数据为准-宝塔-pure-ftpd-nginx-403-实测/poc.py
 - **tags**: 端口复验,CONNECT假成功,应用层判据,宝塔,Pure-FTPd,phpMyAdmin,IP白名单,免费代理不可用,换出口
 - **created_at**: 2026-10-06T12:13:11.323Z
@@ -24,7 +24,7 @@
 【第一步先证代理能力，再判目标端口】FOFA 说某端口开着、直连 nmap 说 filtered 时按本流程：
 1) 找三个对照，先钉死"通道是否可用"：
    · 判 22 → 用 `github.com:22`（公网 SSH 必回 `SSH-2.0-` banner）；若它也零字节，说明**代理节点屏蔽 22**，目标 22 一律记"不可判定"。
-   · 判 3306 → 用 `target233.example.com:3306`（公开 MySQL 测试服务，必回 greeting 如 `11.8.9-MariaDB-log`）。
+   · 判 3306 → 用 `db4free.net:3306`（公开 MySQL 测试服务，必回 greeting 如 `11.8.9-MariaDB-log`）。
    · 判 8888/888 类高端口 → 用目标上任何**已知真开**的同类端口（本例 `:888` 回 nginx 403）。
 2) 对照全有数据、目标端口零字节 ⇒ **目标侧不响应**（未监听/防火墙/面板 IP 白名单），换代理节点无用（墙在目标侧）。
 3) 对照也零字节 ⇒ 是**我们这侧通道**的问题，别急着写"端口关闭"。
@@ -81,8 +81,8 @@ def probe(host, port, http=False, proxy=("127.0.0.1",7892), timeout=12):
 
 ## 三、FTP（宝塔 Pure-FTPd）的坑
 - 宝塔的 Pure-FTPd 用 **MySQL 虚拟用户**后端，**存在与不存在的用户名都回同一条 `530 Login authentication failed`** ⇒ **无法用响应差异枚举用户名**，只能直接试口令。
-- 实测 12 对失败（`target234.example.com`/同名、`tgt2840`、`tgt3090`、`admin`、`wwwtgt2840`、`tgt2840a0`、`example.com`、`target235.example.com`、`ftp`/123456、`www`/123456）；**判据只有 `230` 才算通**。
-- 字典正确来源（按依据强度）：宝塔站点**根目录名**（如 `/www/wwwroot/target234.example.com` → 账号常同名）> 域名段 > 面板/系统名。
+- 实测 12 对失败（`1113060.1113060a0.top`/同名、`1113060`、`moh6hrwx4t`、`admin`、`www1113060`、`1113060a0`、`example.com`、`8886060bdh1.shop`、`ftp`/123456、`www`/123456）；**判据只有 `230` 才算通**。
+- 字典正确来源（按依据强度）：宝塔站点**根目录名**（如 `/www/wwwroot/1113060.1113060a0.top` → 账号常同名）> 域名段 > 面板/系统名。
 - FTP 一旦能登且能写 web 目录 ⇒ **直接 PUT `.php` 马 = WebShell**，绕过所有 HTTP 层白名单。
 
 ## 四、888（宝塔 phpMyAdmin 端口）的坑

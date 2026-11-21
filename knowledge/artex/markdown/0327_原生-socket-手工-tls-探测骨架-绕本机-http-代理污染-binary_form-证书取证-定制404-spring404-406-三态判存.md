@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在本靶标 7 台（203.0.113.96/63/70/101/102/103/104，:443 与 .70:80）上实测生效：由它完成基线（base）、41 种路由形状反推（prefix，由此发现 /service）、7 台差异表（diff，区分出无安全头/带安全头的两个应用版本）、单段路由枚举（enum，>2000 请求）、/service 语义穷尽（svc/deep/keys/hdrtry）、multipart 500（mp）、证书与 whois 归属取证（cert2/whois，定出 O=每日互动股份有限公司 CN=*.target350.example.com）。未取得任何权限，纯探测骨架。
+- **verified_note**: 在本靶标 7 台（203.0.113.96/63/70/101/102/103/104，:443 与 .70:80）上实测生效：由它完成基线（base）、41 种路由形状反推（prefix，由此发现 /service）、7 台差异表（diff，区分出无安全头/带安全头的两个应用版本）、单段路由枚举（enum，>2000 请求）、/service 语义穷尽（svc/deep/keys/hdrtry）、multipart 500（mp）、证书与 whois 归属取证（cert2/whois，定出 O=每日互动股份有限公司 CN=*.getui.com）。未取得任何权限，纯探测骨架。
 - **path**: pocs/原生-socket-手工-tls-探测骨架-绕本机-http-代理污染-binary_form-证书取证-定制404-spring404-406-三态判存/poc.py
 - **tags**: 原生socket,手写HTTP,绕本机代理,SNI=IP,证书取证,指纹判存,chunked
 - **created_at**: 2026-10-11T12:02:26.890Z
@@ -112,7 +112,7 @@ def req(ip, port, path, method="GET", body=None, hdrs=None, timeout=8.0):
             out["headers"] = hd.decode("latin-1", "replace")
             m = re.match(r"HTTP/1\.[01]\s+(\d+)", out["headers"])
             if m:
-                out["status"] = int(target22.example.com(1))
+                out["status"] = int(m.group(1))
             if "transfer-encoding: chunked" in out["headers"].lower():
                 bd = dechunk(bd)
             out["body"] = bd
@@ -143,8 +143,8 @@ def cert_org(ip, port=443):
 
 
 def whois_apnic(ip):
-    """归属查询：target349.example.com:43 原始 TCP。"""
-    s = socket.create_connection(("target349.example.com", 43), timeout=15)
+    """归属查询：whois.apnic.net:43 原始 TCP。"""
+    s = socket.create_connection(("whois.apnic.net", 43), timeout=15)
     s.sendall(("%s\r\n" % ip).encode())
     buf = b""
     while True:

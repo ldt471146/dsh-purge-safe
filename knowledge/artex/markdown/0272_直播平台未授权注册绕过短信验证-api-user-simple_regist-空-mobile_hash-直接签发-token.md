@@ -54,5 +54,5 @@ curl -k -s -X POST 'https://example.com/api/user/login' \
 
 ## 判定要点（避免误报）
 - 对照证明短信校验确实存在：/api/user/readyForTakeOff {mobile,smscode} 任意码 → 「验证码错误」；/api/user/checkSmsCode 未登录 → LOGIN TIMEOUT；同手机号二次 simple_regist → 「帐号已存在」（说明走的是真实建号逻辑，不是空响应）
-- 通用性：同一平台多租户共用该后端（reg-source 头按域名取码），换租户域名同样适用；镜像主机 target294.example.com 亦路由该接口
+- 通用性：同一平台多租户共用该后端（reg-source 头按域名取码），换租户域名同样适用；镜像主机 images.lmim1.com 亦路由该接口
 ```

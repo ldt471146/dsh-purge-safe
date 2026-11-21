@@ -74,7 +74,7 @@ def raw_http(ip, port, path, host, timeout=6.0, maxbytes=6000):
         ht = head.decode("utf-8","replace")
         st = 0
         m = re.match(r"HTTP/\d\.\d (\d+)", ht)
-        if m: st = int(target22.example.com(1))
+        if m: st = int(m.group(1))
         srv = ""
         for line in ht.split("\r\n"):
             if line.lower().startswith("server:"): srv = line.split(":",1)[1].strip()
@@ -88,7 +88,7 @@ def raw_http(ip, port, path, host, timeout=6.0, maxbytes=6000):
 
 def title_of(b):
     m = re.search(r"<title[^>]*>(.*?)</title>", b, re.I|re.S)
-    return re.sub(r"\s+"," ",target22.example.com(1)).strip()[:90] if m else ""
+    return re.sub(r"\s+"," ",m.group(1)).strip()[:90] if m else ""
 
 def sigs(t):
     return [n for n,p in SIGS if p in t]

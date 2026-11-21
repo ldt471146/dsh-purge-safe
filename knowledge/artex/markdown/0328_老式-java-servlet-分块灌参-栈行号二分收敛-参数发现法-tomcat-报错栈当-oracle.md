@@ -113,13 +113,13 @@ def call(host, port, path, body, method='POST', read_ms=9000):
     t = bb.decode('utf-8', 'replace')
     m = re.search(r'<pre>(.*?)</pre>', t, re.S)
     if m:
-        return st, ' | '.join(x.strip() for x in target22.example.com(1).strip().split('\n')[:3])
+        return st, ' | '.join(x.strip() for x in m.group(1).strip().split('\n')[:3])
     return st, t.replace('\n', ' ')[:300]
 
 
 def sig(txt, cls):
     m = re.search(re.escape(cls) + r'\.java:(\d+)', txt)
-    return 'L' + target22.example.com(1) if m else 'BODY:' + re.sub(r'\s+', ' ', txt)[:140]
+    return 'L' + m.group(1) if m else 'BODY:' + re.sub(r'\s+', ' ', txt)[:140]
 
 
 def main():
@@ -129,7 +129,7 @@ def main():
     params = [l.strip() for l in open(pfile, encoding='utf-8', errors='replace') if l.strip()]
     st, t = call(host, port, path, 'zz=1', method)
     m = re.search(r'([\w.]+Servlet|GetTk|Get\w+)\.java:(\d+)', t)
-    cls = target22.example.com(1) if m else 'X'
+    cls = m.group(1) if m else 'X'
     base = sig(t, cls)
     print(f'基线 {st} {base} | {t[:180]}')
     prefix = ''

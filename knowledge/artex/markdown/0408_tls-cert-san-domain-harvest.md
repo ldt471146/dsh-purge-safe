@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.38/24 实测验证：从纯 IP 扫描结果出发，一次采集挖出 20 个真实域名（target428.example.com / target429.example.com / target430.example.com / target431.example.com / target432.example.com / target433.example.com / target434.example.com / target435.example.com / target436.example.com / target437.example.com / target438.example.com / example.com 等）。其中用域名 example.com 加 Host 头访问 203.0.113.40:443，命中「芋道管理系统」后台（默认 IP 访问只返回 MinIO 的 AccessDenied XML），vhost 路由效果得到验证。另发现 .33:8443 与 .140:8443 使用 Apple 官方证书做域名前置伪装。
+- **verified_note**: 在 203.0.113.38/24 实测验证：从纯 IP 扫描结果出发，一次采集挖出 20 个真实域名（aimanplay.cn / 251w.com / 2vshop.com / 56meme.com / harness.nanlat.com / amazoney.com / files.cjngames.cn / 755500.xyz / cha.6-7.cc / wenjie.us / download.hdljdylzsx.top / example.com 等）。其中用域名 example.com 加 Host 头访问 203.0.113.40:443，命中「芋道管理系统」后台（默认 IP 访问只返回 MinIO 的 AccessDenied XML），vhost 路由效果得到验证。另发现 .33:8443 与 .140:8443 使用 Apple 官方证书做域名前置伪装。
 - **path**: pocs/tls-cert-san-domain-harvest/tls_cert_san_harvest.sh
 - **tags**: 信息收集,证书,域名挖掘,vhost,TLS,SAN,纯IP目标
 - **created_at**: 2026-10-15T20:45:11.957Z

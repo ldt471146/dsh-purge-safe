@@ -8,9 +8,9 @@
 - **language**: markdown
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-18 实测 example.com：user@example.com 注册 200 success，登录后 GET /api/user/self 返回 uid3037 quota=0 role=1；mail.tm 收到验证码 4e636f 与密码重置邮件（发件人 user@example.com）。
+- **verified_note**: 2026-10-18 实测 example.com：artexw4383@maxxspace.com 注册 200 success，登录后 GET /api/user/self 返回 uid3037 quota=0 role=1；mail.tm 收到验证码 4e636f 与密码重置邮件（发件人 noreply@modelsp.com）。
 - **path**: pocs/new-api-mailtm-tempmail-register-flow-api-modelsell-cc/poc.md
-- **tags**: new-api,modelsell,register,mail.tm,临时邮箱,verification,go-captcha,quota,注册建号,target458.example.com
+- **tags**: new-api,modelsell,register,mail.tm,临时邮箱,verification,go-captcha,quota,注册建号,api.modelsell.cc
 - **created_at**: 2026-10-17T22:02:34.829Z
 - **found_by**: exploit
 
@@ -21,7 +21,7 @@ modelsell (New API 分支) 注册墙由 mail.tm 公共一次性邮箱 + GET /api
 ## 用法
 
 ```
-1) POST https://api.mail.tm/accounts + /token 建一次性邮箱；2) GET https://example.com/api/verification?email=<addr> 下发验证码；3) GET https://api.mail.tm/messages 收 6 位验证码（user@example.com，10 分钟有效）；4) kb go-captcha 破解链取 scene=register 的 X-Go-Captcha-Token；5) POST /api/user/register?turnstile= {username,password,email,verification_code,aff_code} + X-Go-Captcha-Token → 200。新号初始 quota=0（SSRF/relay 前置门不开）。限速：敏感动作间 sleep≥9s。
+1) POST https://api.mail.tm/accounts + /token 建一次性邮箱；2) GET https://example.com/api/verification?email=<addr> 下发验证码；3) GET https://api.mail.tm/messages 收 6 位验证码（noreply@modelsp.com，10 分钟有效）；4) kb go-captcha 破解链取 scene=register 的 X-Go-Captcha-Token；5) POST /api/user/register?turnstile= {username,password,email,verification_code,aff_code} + X-Go-Captcha-Token → 200。新号初始 quota=0（SSRF/relay 前置门不开）。限速：敏感动作间 sleep≥9s。
 ```
 
 ## 正文
@@ -29,10 +29,10 @@ modelsell (New API 分支) 注册墙由 mail.tm 公共一次性邮箱 + GET /api
 ```
 ## 注册流完整请求形态（2026-10-18 端到端实测 200）
 
-前置：/api/status 中 register_enabled=true、email_verification=true、go_captcha_check=true、turnstile_check=false；邮箱域无黑名单（mail.tm 的 target463.example.com 实测可收码）。
+前置：/api/status 中 register_enabled=true、email_verification=true、go_captcha_check=true、turnstile_check=false；邮箱域无黑名单（mail.tm 的 maxxspace.com 实测可收码）。
 
 1) 建临时邮箱（mail.tm 公共 API，程序化收信）：
-   POST https://api.mail.tm/accounts {"address":"user@example.com","password":"..."} → 201
+   POST https://api.mail.tm/accounts {"address":"artexXXXXXXXXXX@maxxspace.com","password":"..."} → 201
    POST https://api.mail.tm/token {"address","password"} → token
    GET https://api.mail.tm/messages?page=1 (Bearer token) → 收信
 

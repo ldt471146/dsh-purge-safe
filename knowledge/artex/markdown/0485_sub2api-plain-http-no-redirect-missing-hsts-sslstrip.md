@@ -9,11 +9,11 @@
 - **language**: markdown
 - **source**: self
 - **verified**: 1
-- **verified_note**: task#609，2026-11-01 06:31-07:43 UTC 在本机 Windows 用 curl --noproxy '*' 直连实测：① GET http://target485.example.com/ → HTTP/1.1 200 OK，text/html，无 Location/无 301/308；② GET http://target485.example.com/api/v1/settings/public → 200 application/json（业务 API 明文可达）；③ GET https://target485.example.com/home → 200，有 CSP/X-Frame-Options: DENY/nosniff/Referrer-Policy，但无 Strict-Transport-Security；④ 本地落盘 39 份响应头（D:\ARTEX\data\tasks\609\i6691\*.hdr）grep Strict-Transport-Security 命中 0；⑤ http/https 首页正文均 3288 字节、Etag 与 Server 相同，证明是同一应用而非残缺镜像。另证：index bundle 里 localStorage.setItem("auth_token"/"refresh_token")，令牌对同源 JS 可读，故明文信道可被中间人直接取走。
+- **verified_note**: task#609，2026-11-01 06:31-07:43 UTC 在本机 Windows 用 curl --noproxy '*' 直连实测：① GET http://www.dahurj999.top/ → HTTP/1.1 200 OK，text/html，无 Location/无 301/308；② GET http://www.dahurj999.top/api/v1/settings/public → 200 application/json（业务 API 明文可达）；③ GET https://www.dahurj999.top/home → 200，有 CSP/X-Frame-Options: DENY/nosniff/Referrer-Policy，但无 Strict-Transport-Security；④ 本地落盘 39 份响应头（D:\ARTEX\data\tasks\609\i6691\*.hdr）grep Strict-Transport-Security 命中 0；⑤ http/https 首页正文均 3288 字节、Etag 与 Server 相同，证明是同一应用而非残缺镜像。另证：index bundle 里 localStorage.setItem("auth_token"/"refresh_token")，令牌对同源 JS 可读，故明文信道可被中间人直接取走。
 - **path**: pocs/sub2api-plain-http-no-redirect-missing-hsts-sslstrip/poc.md
 - **tags**: hsts,strict-transport-security,plaintext-http,ssl-strip,downgrade,misconfiguration,sub2api,photon-edge,transport-layer
 - **created_at**: 2026-11-01T07:52:52.151Z
-- **engine**: http://target485.example.com/ (80/tcp)
+- **engine**: http://www.dahurj999.top/ (80/tcp)
 
 ## 描述
 

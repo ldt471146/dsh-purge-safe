@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 实测 10 台主机（203.0.113.33/.151/.63/.194/.45/.189 + 203.0.113.57 + 203.0.113.60 + 203.0.113.56 + 203.0.113.89）× 3 个 Host（example.com/target49.example.com/example.com）全部未授权可读，共用同一后端数据库。203.0.113.31 返回站点 id=5483 与 16 条分站链接；203.0.113.58 返回站点 id=5481 name 老澳与 16 条分站链接。
+- **verified_note**: 实测 10 台主机（203.0.113.33/.151/.63/.194/.45/.189 + 203.0.113.57 + 203.0.113.60 + 203.0.113.56 + 203.0.113.89）× 3 个 Host（example.com/f57ff99.com/example.com）全部未授权可读，共用同一后端数据库。203.0.113.31 返回站点 id=5483 与 16 条分站链接；203.0.113.58 返回站点 id=5481 name 老澳与 16 条分站链接。
 - **path**: pocs/智讯网站群管理系统-api-未授权访问-form-urlencoded-传参-action-index-泄露站点配置/poc_zhixun_api.sh
 - **tags**: php,站群,未授权,api,form-urlencoded,智讯网
 - **created_at**: 2026-09-28T20:10:21.601Z

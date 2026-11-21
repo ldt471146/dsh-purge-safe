@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-09-29 在 tgt9942-com 靶标 203.0.113.72:443 上实测：9 组 Host（example.com、h5./admin./cdn.example.com、target69.example.com、target71.example.com、target72.example.com、target62.example.com、localhost）经 --resolve 双置位后响应均为 200/1204B 且 sha256 完全一致；6 组 SNI 握手均返回 CN=*.target69.example.com（Certum DV，2026-12-24 到期）。据此确认该机为「单默认站点、单一证书绑定、无 vhost」，并修正了此前「只改 Host 头不改 SNI」的取证缺陷。同时该脚本第 3 步暴露了一个真实配置问题：SNI=example.com 时返回的是 *.target69.example.com 证书（域名不匹配，已落 vuln_id=54）。
+- **verified_note**: 2026-09-29 在 449918-com 靶标 203.0.113.72:443 上实测：9 组 Host（example.com、h5./admin./cdn.example.com、luckywin666.net、www.luckywin666.net、neapi.com、ng-api.vip、localhost）经 --resolve 双置位后响应均为 200/1204B 且 sha256 完全一致；6 组 SNI 握手均返回 CN=*.luckywin666.net（Certum DV，2026-12-24 到期）。据此确认该机为「单默认站点、单一证书绑定、无 vhost」，并修正了此前「只改 Host 头不改 SNI」的取证缺陷。同时该脚本第 3 步暴露了一个真实配置问题：SNI=example.com 时返回的是 *.luckywin666.net 证书（域名不匹配，已落 vuln_id=54）。
 - **path**: pocs/vhost-真伪判定-sni-双置位法-curl-resolve-同时置位-sni-host-逐-sni-证书对比/vhost-true-check.ps1
 - **tags**: vhost,sni,iis,方法论,避坑
 - **created_at**: 2026-09-28T23:33:28.329Z
@@ -21,7 +21,7 @@
 ## 用法
 
 ```
-pwsh .\vhost-true-check.ps1 -Ip 203.0.113.72 -Port 443 -Hosts "example.com,h5.example.com,target69.example.com,localhost"
+pwsh .\vhost-true-check.ps1 -Ip 203.0.113.72 -Port 443 -Hosts "example.com,h5.example.com,luckywin666.net,localhost"
 # 判读：① 所有 Host 响应 sha256 相同 ⇒ 无 vhost；② 所有 SNI 返回同一 Subject ⇒ 只有一份证书绑定。
 # 反例（曾误判的场景）：只发 `curl -H "Host: admin.x.com" https://IP/`，SNI 仍是 IP，
 #   若目标按 SNI 绑定多站点，会漏掉所有非默认站点。
@@ -71,8 +71,8 @@ if ($uniq.Count -eq 1) {
 Write-Host "`n=== 第 3 步：证书按 SNI 对比（有几张证书 = 有几个绑定） ==="
 foreach ($h in $Hosts) {
   try {
-    $tcp = New-Object target70.example.com.Sockets.TcpClient; $tcp.Connect($Ip, $Port)
-    $ssl = New-Object target70.example.com.Security.SslStream($tcp.GetStream(),$false,([target70.example.com.Security.RemoteCertificateValidationCallback]{$true}))
+    $tcp = New-Object System.Net.Sockets.TcpClient; $tcp.Connect($Ip, $Port)
+    $ssl = New-Object System.Net.Security.SslStream($tcp.GetStream(),$false,([System.Net.Security.RemoteCertificateValidationCallback]{$true}))
     $ssl.AuthenticateAsClient($h)
     $c = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($ssl.RemoteCertificate)
     Write-Host ("SNI={0,-40} => {1} (NotAfter {2:yyyy-MM-dd})" -f $h, $c.Subject, $c.NotAfter)

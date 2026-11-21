@@ -56,7 +56,7 @@ action=root_user_index&uid=<任意合法格式uid>&key=<LIKE关键词>&curpage=N
 
 ## 数据形态
 
-`target58.example.com[]` 每条含：`id, uid, userid, login_name, login_ip, passwd(md5), opass(**明文**), belong, classid, domain, email, safe, addTime, loginTime, lastTime`。
+`result.info[]` 每条含：`id, uid, userid, login_name, login_ip, passwd(md5), opass(**明文**), belong, classid, domain, email, safe, addTime, loginTime, lastTime`。
 
 ## 复现命令
 

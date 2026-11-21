@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt9942-com 靶标实测：Chrome 153.0.8010.53（Windows）用 `--host-resolver-rules="MAP example.com 203.0.113.73"` 启动 headless（进程命令行核实参数已传入），CDP 捕获 `Server: cloudflare` ⇒ 映射失效、仍走 CDN；改为系统 hosts 追加 `203.0.113.73 example.com` 后 `Resolve-DnsName` 返回 203.0.113.73，CDP 复验响应头为 **`Server: Microsoft-IIS/10.0`** ⇒ 确认直连源站。随后按纪律删除映射并复验解析恢复为 203.0.113.21 / 203.0.113.70。
+- **verified_note**: 在 449918-com 靶标实测：Chrome 153.0.8010.53（Windows）用 `--host-resolver-rules="MAP example.com 203.0.113.73"` 启动 headless（进程命令行核实参数已传入），CDP 捕获 `Server: cloudflare` ⇒ 映射失效、仍走 CDN；改为系统 hosts 追加 `203.0.113.73 example.com` 后 `Resolve-DnsName` 返回 203.0.113.73，CDP 复验响应头为 **`Server: Microsoft-IIS/10.0`** ⇒ 确认直连源站。随后按纪律删除映射并复验解析恢复为 203.0.113.21 / 203.0.113.70。
 - **path**: pocs/浏览器实测必须用-hosts-映射-chrome-host-resolver-rules-在本机-153-版不生效-附-server-头复验判据与当即还原纪律/chrome-host-resolver-rules-broken-use-hosts.md
 - **tags**: 浏览器实测,hosts,cloudflare,源站直连,踩坑,cdp
 - **created_at**: 2026-09-28T23:47:03.966Z
@@ -62,7 +62,7 @@ Copy-Item $hosts "runs\hosts.bak" -Force
 
 # 2) 追加一行（幂等，别重复加）
 $pre = Get-Content $hosts
-if(-not ($pre -match "ng-api")){ [target73.example.com.File]::WriteAllLines($hosts, ($pre + "203.0.113.73 example.com")) }
+if(-not ($pre -match "ng-api")){ [System.IO.File]::WriteAllLines($hosts, ($pre + "203.0.113.73 example.com")) }
 ipconfig /flushdns | Out-Null
 
 # 3) 验证解析确实指向源站
@@ -74,7 +74,7 @@ Resolve-DnsName "example.com" -Type A | Where-Object {$_.IPAddress} | Select-Obj
 
 # 5) ⚠️ 用完"当即"删除该行并复验（不要拖到收尾）
 $now = Get-Content $hosts
-[target73.example.com.File]::WriteAllLines($hosts, ($now | Where-Object { $_ -notmatch "ng-api" }))
+[System.IO.File]::WriteAllLines($hosts, ($now | Where-Object { $_ -notmatch "ng-api" }))
 ipconfig /flushdns | Out-Null
 Get-Content $hosts | Select-String "ng-api"       # 期望：无输出
 Resolve-DnsName "example.com" -Type A     # 期望：恢复为 CDN IP
@@ -100,5 +100,5 @@ Send-Cdp "Page.navigate" @{url="http://<域名>/<路径>"} | Out-Null
 ## 纪律（本机是用户的机器）
 - **hosts 是"对用户本机唯一的一处改动"，必须"用完当即还原"**，不要拖到任务收尾（可能忘记）；
 - 每次"加→用→删"都要在攻击链里留一条记录，**并在最后核验 `Get-Content $hosts | Select-String "<域名>"` 为空 + `Resolve-DnsName` 已恢复**；
-- **不要用 `Set-Content` 整文件重写**（可能改变编码/丢注释），用 `[target73.example.com.File]::WriteAllLines` 逐行过滤；改动前先 `Copy-Item` 备份。
+- **不要用 `Set-Content` 整文件重写**（可能改变编码/丢注释），用 `[System.IO.File]::WriteAllLines` 逐行过滤；改动前先 `Copy-Item` 备份。
 ```

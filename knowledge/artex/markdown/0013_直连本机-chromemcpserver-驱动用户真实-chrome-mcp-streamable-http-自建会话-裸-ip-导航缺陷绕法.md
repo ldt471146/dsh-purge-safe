@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt7737-org 靶标上实测：直连 127.0.0.1:12306/mcp 成功接管用户真实 Chrome（get_windows_and_tabs 返回 3 个真实登录态标签）；用 sslip.io 域名绕开裸 IP 导航缺陷后，于真实浏览器内完成 9089 面板登录（chrome_read_page 取 ref_2/3/4 → chrome_fill_or_select → chrome_click_element），并以 chrome_screenshot(tabId,storeBase64) 落盘 runs/browser/shot-9089-dashboard-1790538151.jpg，页面渲染 "Your Google Accounts 1 account(s) — wdq1314070@gmail.com / Projects: 3 / Connected 2026/9/28"。同时实测确认 chrome_navigate 对裸 IP 报 Invalid url pattern、window.open 被 popup blocker 拦、截图返回字段为 base64Data 且默认只截活动标签。
+- **verified_note**: 在 aigemini-org 靶标上实测：直连 127.0.0.1:12306/mcp 成功接管用户真实 Chrome（get_windows_and_tabs 返回 3 个真实登录态标签）；用 sslip.io 域名绕开裸 IP 导航缺陷后，于真实浏览器内完成 9089 面板登录（chrome_read_page 取 ref_2/3/4 → chrome_fill_or_select → chrome_click_element），并以 chrome_screenshot(tabId,storeBase64) 落盘 runs/browser/shot-9089-dashboard-1790538151.jpg，页面渲染 "Your Google Accounts 1 account(s) — wdq1314070@gmail.com / Projects: 3 / Connected 2026/9/28"。同时实测确认 chrome_navigate 对裸 IP 报 Invalid url pattern、window.open 被 popup blocker 拦、截图返回字段为 base64Data 且默认只截活动标签。
 - **path**: pocs/直连本机-chromemcpserver-驱动用户真实-chrome-mcp-streamable-http-自建会话-裸-ip-导航缺陷绕法/cmcp.py
 - **tags**: browser,chrome,mcp,真实登录态,ChromeMcpServer,sslip.io,工具坑
 - **created_at**: 2026-09-27T19:43:12.483Z
@@ -21,7 +21,7 @@
 ## 用法
 
 ```
-1) 确认 ChromeMcpServer 活着：curl -s -X POST http://127.0.0.1:12306/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" --data-binary '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"probe","version":"1"}}}'  → 返回 target5.example.com=ChromeMcpServer 即正常。
+1) 确认 ChromeMcpServer 活着：curl -s -X POST http://127.0.0.1:12306/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" --data-binary '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"probe","version":"1"}}}'  → 返回 serverInfo.name=ChromeMcpServer 即正常。
 2) python cmcp.py list 看工具清单。
 3) python cmcp.py call get_windows_and_tabs '{}' 确认接管的是用户真实浏览器（标签页里能看到真实登录态页面）。
 4) 导航：优先用域名；裸 IP 用 http://<ip 点分>.sslip.io:<port>/。
@@ -56,7 +56,7 @@ DSH 的 MCP 客户端，自己起一个 MCP 会话直连服务。
 1) 服务地址在 DSH 配置里：C:\\Users\\<user>\\workspace\\cordis.patch.yml 的
    mcp-streamable-mcp-server → url: http://127.0.0.1:12306/mcp
    （是 streamable-http，不是 stdio；探活：POST initialize 能返回
-   target5.example.com="ChromeMcpServer" 即服务活着）。
+   serverInfo.name="ChromeMcpServer" 即服务活着）。
 2) 必须自己维护 mcp-session-id：initialize 响应的 header 里取，后续每个请求
    带 mcp-session-id 头，并在 initialize 后补一条 notifications/initialized，
    否则 tools/call 会被拒。

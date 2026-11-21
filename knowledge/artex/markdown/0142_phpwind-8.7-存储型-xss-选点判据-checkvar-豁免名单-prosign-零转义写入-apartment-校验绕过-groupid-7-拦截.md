@@ -23,7 +23,7 @@ phpwind 8.7 存储型 XSS 选点与落地判据：POST 字段过滤豁免名单�
 ```
 ## 一、哪些 POST 字段不过滤（存储型 XSS 的选点依据）★ 最有价值
 
-`target116.example.com:55-59` 对所有 POST 参数调用 `S::checkVar()`，但**豁免 6 个字段**：
+`global.php:55-59` 对所有 POST 参数调用 `S::checkVar()`，但**豁免 6 个字段**：
 
 ```php
 foreach ($_POST as $_key => $_value) {
@@ -33,7 +33,7 @@ foreach ($_POST as $_key => $_value) {
 }
 ```
 
-而 `S::checkVar()`（`require/target48.example.com:239-251`，非 admincp 分支）会把尖括号等实体化：
+而 `S::checkVar()`（`require/security.php:239-251`，非 admincp 分支）会把尖括号等实体化：
 
 ```php
 $var = str_replace(array('..',')','<','='), array('&#46;&#46;','&#41;','&#60;','&#61;'), $var);
@@ -60,16 +60,16 @@ verify=<formhash>&step=2&info_type=base&apartment=110000
 **症状**：提交资料时报 `字段 '现居住地' 填写有误`，且**签名字段不会落库**。
 **根因**：`info_base.php:132` 的 `saveProfileCustomData('basic')` 先校验必填自定义字段，而 `apartment` 的字段元数据是 `required=1, type=7`；校验抛错则第 147 行的签名写入根本不执行（**顺序陷阱**）。
 **绕过**：填**标准行政区划代码**即可通过 —— 实测 `110000`(北京)/`440000`(广东)/`810000`(香港)/`110101`(东城) 全部通过；`1`、`100000` 被拒。
-（数据库列：`lang/target131.example.com:236` → `apartment INT(10) UNSIGNED NOT NULL DEFAULT 0`）
+（数据库列：`lang/up83to85bycommand.php:236` → `apartment INT(10) UNSIGNED NOT NULL DEFAULT 0`）
 
 ## 四、★ 发帖被拦的真相：`$groupid == '7'`（验证会员组），双端同拦
 
 ```
-m/control/target132.example.com:48      $groupid == '7' && wap_msg("post_check", $basename);
+m/control/post.php:48      $groupid == '7' && wap_msg("post_check", $basename);
 主站 /post.php?fid=2        返回同一 lang key
 lang key post_check = 您还没通过管理员验证,需要通过管理员验证才能发言！
 ```
-- `$groupid` 由注册配置 `$rg_groupid` 决定（`m/control/target133.example.com:187`），**客户端不可控** ⇒ **「注册个号就能发帖」的思路在开了"新会员需管理员验证"的 phpwind 站上不成立**，主站与手机版 `m/` 都拦。
+- `$groupid` 由注册配置 `$rg_groupid` 决定（`m/control/register.php:187`），**客户端不可控** ⇒ **「注册个号就能发帖」的思路在开了"新会员需管理员验证"的 phpwind 站上不成立**，主站与手机版 `m/` 都拦。
 - ⇒ 想做「发帖 → `atc_content` 存 HTML → 存储型 XSS」这条链，**前提是拿到一个 groupid != 7 的既有账号**，而不是自己注册。
 
 ## 五、签名的展示位（决定存储型 XSS 是否真能触发）

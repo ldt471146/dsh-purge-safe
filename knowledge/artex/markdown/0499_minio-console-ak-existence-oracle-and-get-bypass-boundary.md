@@ -8,10 +8,10 @@
 - **language**: markdown
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-03 于 192.0.2.15（MinIO 9000 + Console 9001）直连实测：116 个候选 AK 全表只有 omnihelm 回 500 EXISTS（其余 115 个 401 NOT_EXIST），12 条同源 SK 猜测全 500；admin 路由 PUT add-service-account/add-user 对 omnihelm 全 403 AccessDenied；GET /?list-type=2 不带 Authorization 回 403 AccessDenied（进 handler），带 bogus AK 回 InvalidAccessKeyId。脚本与日志 D:/ARTEX/data/tasks/612/i7597/ak_enum*.log、admin_matrix.log、get_probe2.log。
+- **verified_note**: 2026-11-03 于 23.147.148.253（MinIO 9000 + Console 9001）直连实测：116 个候选 AK 全表只有 omnihelm 回 500 EXISTS（其余 115 个 401 NOT_EXIST），12 条同源 SK 猜测全 500；admin 路由 PUT add-service-account/add-user 对 omnihelm 全 403 AccessDenied；GET /?list-type=2 不带 Authorization 回 403 AccessDenied（进 handler），带 bogus AK 回 InvalidAccessKeyId。脚本与日志 D:/ARTEX/data/tasks/612/i7597/ak_enum*.log、admin_matrix.log、get_probe2.log。
 - **tags**: minio,console,ak-enumeration,oracle,session,sigv4,streaming-unsigned-payload-trailer,get-vs-put,identity-gate
 - **created_at**: 2026-11-02T17:21:42.150Z
-- **engine**: http://192.0.2.15:9001
+- **engine**: http://23.147.148.253:9001
 
 ## 描述
 

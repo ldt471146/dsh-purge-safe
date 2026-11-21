@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt9942-com 靶标 203.0.113.90「DNS智能解析管理」平台上实战：44 个 chunk 全量下载 → 提取 519 条调用 → 还原出 13 个 /admin/* 管理端接口、用户侧 /domains /records /apikeys /ns-servers /lines/tree 全套接口，并从 ApiDocs chunk 挖出内建的"兼容 DNSPod 协议开放 API"（http://<IP>:8080/api/v1/?c=…&uid=&api_key=，uid 由客户端自填）——该线索是本次唯一可能一步拿下控制面的入口（公网不可达，已转为内网第一优先待办）。
+- **verified_note**: 在 449918-com 靶标 203.0.113.90「DNS智能解析管理」平台上实战：44 个 chunk 全量下载 → 提取 519 条调用 → 还原出 13 个 /admin/* 管理端接口、用户侧 /domains /records /apikeys /ns-servers /lines/tree 全套接口，并从 ApiDocs chunk 挖出内建的"兼容 DNSPod 协议开放 API"（http://<IP>:8080/api/v1/?c=…&uid=&api_key=，uid 由客户端自填）——该线索是本次唯一可能一步拿下控制面的入口（公网不可达，已转为内网第一优先待办）。
 - **tags**: spa,vite,vue,recon,api-surface
 - **created_at**: 2026-09-28T21:54:04.822Z
 - **found_by**: vuln-scan

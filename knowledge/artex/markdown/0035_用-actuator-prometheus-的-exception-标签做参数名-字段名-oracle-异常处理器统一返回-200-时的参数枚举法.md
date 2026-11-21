@@ -71,7 +71,7 @@ def counts():
             m = re.search(r'exception="([^"]*)"', line)
             v = line.rsplit("}", 1)[-1].strip()
             try:
-                out[target22.example.com(1) if m else "?"] = float(v)
+                out[m.group(1) if m else "?"] = float(v)
             except ValueError:
                 pass
     return out

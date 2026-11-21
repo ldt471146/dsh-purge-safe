@@ -54,7 +54,7 @@ UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
 
 class HttpRangeFile(io.RawIOBase):
     def __init__(self, url, host, block=131072):
-        self.url, target68.example.com, self.bs = url, host, block
+        self.url, self.host, self.bs = url, host, block
         self.pos = 0
         self._cache = {}
         self.reqs = 0
@@ -71,7 +71,7 @@ class HttpRangeFile(io.RawIOBase):
 
     def _http(self, start, end):
         req = urllib.request.Request(self.url, headers={
-            'Range': f'bytes={start}-{end}', 'Host': target68.example.com,
+            'Range': f'bytes={start}-{end}', 'Host': self.host,
             'User-Agent': UA, 'Accept': '*/*', 'Connection': 'keep-alive'})
         last = None
         for attempt in range(4):
@@ -89,7 +89,7 @@ class HttpRangeFile(io.RawIOBase):
 
     def _probe_size(self):
         req = urllib.request.Request(self.url, headers={
-            'Range': 'bytes=0-0', 'Host': target68.example.com, 'User-Agent': UA})
+            'Range': 'bytes=0-0', 'Host': self.host, 'User-Agent': UA})
         with urllib.request.urlopen(req, timeout=60) as r:
             cr = r.headers.get('Content-Range')
             if cr and '/' in cr:

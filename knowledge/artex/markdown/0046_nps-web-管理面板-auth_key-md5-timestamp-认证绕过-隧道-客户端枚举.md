@@ -56,7 +56,7 @@ def main(base):
                        ("/index/gettunnel", {"offset": 0, "limit": 100, "type": "tcp", "client_id": "", "search": ""}),
                        ("/index/gettunnel", {"offset": 0, "limit": 100, "type": "socks5", "client_id": "", "search": ""}),
                        ("/index/hostlist", {"offset": 0, "limit": 100, "search": ""})]:
-        r = target8.example.com(signed(base, path), data=data, headers=h, timeout=15, verify=False)
+        r = s.post(signed(base, path), data=data, headers=h, timeout=15, verify=False)
         print(path, r.status_code, r.text[:300])
 
 

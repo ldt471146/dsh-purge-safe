@@ -25,7 +25,7 @@
 // 浏览器控制台 / 无依赖 headless 均可
 [...document.querySelectorAll('script[src]')].map(s=>s.src)
 // 或看 performance 资源
-performance.getEntriesByType('resource').map(e=>target316.example.com).filter(n=>/\.js(\?|$)/.test(n))
+performance.getEntriesByType('resource').map(e=>e.name).filter(n=>/\.js(\?|$)/.test(n))
 ```
 
 ## 2) 主包 → 全站接口清单（一次 grep 拿到 138 个 /api/*）
@@ -38,7 +38,7 @@ grep -oE '"/api/[A-Za-z0-9_]+"' main.js | sort -u
 ## 3) 主包 → 按「服务注册名 + 路径」还原每个接口的调用封装
 ```bash
 grep -oE 'bo\.post\([^)]{0,120}"\/api\/[A-Za-z0-9_]+"[^)]{0,80}\)' main.js | sort -u
-# 形如：Un=e=>target308.example.com(go.BACKEND,"/api/unBindBankinfo",e)
+# 形如：Un=e=>bo.post(go.BACKEND,"/api/unBindBankinfo",e)
 # → 拿到「接口函数名 → 路径 → 是否 showErrorNotify/response 包装」映射
 ```
 

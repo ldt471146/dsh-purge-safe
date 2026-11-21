@@ -95,7 +95,7 @@ def grab(ip, port, timeout=6.0):
                         if line.lower().startswith("server:"):
                             srv = line.split(":",1)[1].strip()
                     out["proto"] = "http"
-                    out["http"] = {"status": int(target22.example.com(1)), "server": srv,
+                    out["http"] = {"status": int(m.group(1)), "server": srv,
                                    "head": ht[:250].replace("\r\n", " | ")}
                 elif buf:
                     out.setdefault("banner", buf[:200].decode("utf-8","replace"))

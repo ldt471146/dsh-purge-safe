@@ -9,11 +9,11 @@
 - **language**: python
 - **source**: manual
 - **verified**: 1
-- **verified_note**: 2026-11-01 08:1x-08:2x UTC，task#609，本机 Windows 直连 https://target485.example.com（Sub2API 0.2.19），脚本 burst2.py / rl.py 两次独立复现：前 120 次全部 401 {"code":"INVALID_API_KEY"}，第 121 次精确返回 HTTP 429 + Retry-After: 60 + {"code":"INVALID_AUTH_RATE_LIMITED"}（t≈11.3s），与源码默认 threshold=120/block_seconds=60 吻合；封禁期内改用 X-Forwarded-For / X-Real-IP / CF-Connecting-IP / Forwarded / XFF 双值均仍 429（RA=50 递减），证明客户端头无法重置限流 key；同刻 GET /api/v1/settings/public 仍 200，POST /v1/images/generations 与 GET /v1beta/models 均 429，证明桶共享且只作用在 apiKeyAuth 链；源码侧 middleware/api_key_auth.go:37、ingress_reject.go:44-46、target486.example.com:2379-2380 三处对齐。另外 HEAD /v1/models 恒 404、OPTIONS 恒 403 不计入计数。
+- **verified_note**: 2026-11-01 08:1x-08:2x UTC，task#609，本机 Windows 直连 https://www.dahurj999.top（Sub2API 0.2.19），脚本 burst2.py / rl.py 两次独立复现：前 120 次全部 401 {"code":"INVALID_API_KEY"}，第 121 次精确返回 HTTP 429 + Retry-After: 60 + {"code":"INVALID_AUTH_RATE_LIMITED"}（t≈11.3s），与源码默认 threshold=120/block_seconds=60 吻合；封禁期内改用 X-Forwarded-For / X-Real-IP / CF-Connecting-IP / Forwarded / XFF 双值均仍 429（RA=50 递减），证明客户端头无法重置限流 key；同刻 GET /api/v1/settings/public 仍 200，POST /v1/images/generations 与 GET /v1beta/models 均 429，证明桶共享且只作用在 apiKeyAuth 链；源码侧 middleware/api_key_auth.go:37、ingress_reject.go:44-46、config.go:2379-2380 三处对齐。另外 HEAD /v1/models 恒 404、OPTIONS 恒 403 不计入计数。
 - **path**: pocs/sub2api-invalid-auth-rate-limit-429-shared-bucket-dos/sub2api_invalid_auth_dos.py
 - **tags**: sub2api,rate-limit,dos,invalid_auth,429,retry-after,api-key,限流预算,x-forwarded-for,new-api系
 - **created_at**: 2026-11-01T08:23:44.752Z
-- **engine**: https://target485.example.com
+- **engine**: https://www.dahurj999.top
 - **found_by**: vuln-scan
 
 ## 描述
@@ -41,7 +41,7 @@ Sub2API 的 invalid_auth 护栏在 middleware/api_key_auth.go 第一行、先于
 # Sub2API invalid_auth 限流打满 PoC
 # 原理：middleware/api_key_auth.go:37 先于鉴权调用 rejectInvalidAuthAbuse()
 #      -> ingress_reject.go:44-46 invalidAuthClientKey = normalizeIngressRejectIP(SecurityClientIP(c))
-#      -> target486.example.com:2379-2380 默认 threshold=120 / block_seconds=60
+#      -> config.go:2379-2380 默认 threshold=120 / block_seconds=60
 # 结果：第 121 次 429 Retry-After: 60；桶被 /v1beta、/images 共享；伪造转发头无效
 
 import sys, time, urllib.request, urllib.error

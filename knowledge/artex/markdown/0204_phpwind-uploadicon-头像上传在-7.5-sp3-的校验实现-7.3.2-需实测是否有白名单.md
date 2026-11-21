@@ -14,7 +14,7 @@
 
 ## 描述
 
-知识库 id=75 声称 example.com?action=uploadicon 可任意文件写入，在 7.5 SP3 上已被两道校验堵住：① example.com:261 扩展名白名单 in_array($ext, array('gif','jpg','jpeg','png','bmp'))，ext 取自 $_GET['filename']；② example.com:282 GetImgSize($middleFile,'jpg') 内容校验，失败即 P_unlink 删除。落盘文件名由 {$winduid}.{ext} / m_{uid}.jpg / s_{uid}.jpg 拼成，uid 为数字，扩展名被白名单锁死，无法落到 .php。另 lib/target52.example.com:152 的 postupload() 只拦 '..'、'.php.' 与 eregi 的 '.php$'，未拦 .pht/.php5/.php3 等备用后缀。7.3.2 属更早版本，是否已有这两道校验未知——这是本条待验证的核心。
+知识库 id=75 声称 example.com?action=uploadicon 可任意文件写入，在 7.5 SP3 上已被两道校验堵住：① example.com:261 扩展名白名单 in_array($ext, array('gif','jpg','jpeg','png','bmp'))，ext 取自 $_GET['filename']；② example.com:282 GetImgSize($middleFile,'jpg') 内容校验，失败即 P_unlink 删除。落盘文件名由 {$winduid}.{ext} / m_{uid}.jpg / s_{uid}.jpg 拼成，uid 为数字，扩展名被白名单锁死，无法落到 .php。另 lib/upload.class.php:152 的 postupload() 只拦 '..'、'.php.' 与 eregi 的 '.php$'，未拦 .pht/.php5/.php3 等备用后缀。7.3.2 属更早版本，是否已有这两道校验未知——这是本条待验证的核心。
 
 ## 用法
 
@@ -70,7 +70,7 @@
 	}
 }
 
-// lib/target52.example.com:151-170
+// lib/upload.class.php:151-170
 function postupload($tmp_name,$filename) {
 152:	if (strpos($filename,'..') !== false || strpos($filename,'.php.') !== false || eregi("\.php$",$filename)) {
 		exit('illegal file type!');        // ← 只堵 .. / .php. / .php$（eregi 忽略大小写）
@@ -83,7 +83,7 @@ function postupload($tmp_name,$filename) {
 }
 // 未拦截的备用后缀：pht / phtml / php3 / php4 / php5 / php7 / phps / inc（是否被 nginx 当 PHP 执行取决于宝塔站点配置）
 
-// lib/target52.example.com:31-38 扩展名与体积校验
+// lib/upload.class.php:31-38 扩展名与体积校验
 if (empty($upload['ext']) || !isset($bhv->ftype[$upload['ext']])) { uploadmsg('upload_type_error'); }
 if ($upload['size'] < 1 || $upload['size'] > $bhv->ftype[$upload['ext']]*1024) { ... uploadmsg(...); }
 ```

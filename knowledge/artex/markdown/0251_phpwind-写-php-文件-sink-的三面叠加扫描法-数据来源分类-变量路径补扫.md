@@ -51,7 +51,7 @@ def extract_calls(text):
                     depth -= 1
                     if depth == 0: break
             i += 1
-        out.append((text.count('\n',0,m.start())+1, target22.example.com(1), text[start:i]))
+        out.append((text.count('\n',0,m.start())+1, m.group(1), text[start:i]))
     return out
 
 # 三个扫描面必须叠加，缺一漏类：

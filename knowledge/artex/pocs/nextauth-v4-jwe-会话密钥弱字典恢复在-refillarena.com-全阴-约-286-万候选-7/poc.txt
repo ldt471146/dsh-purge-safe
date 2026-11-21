@@ -1,0 +1,15 @@
+// 核心派生（Node 18+，完整脚本见 jwe_crack.js / jwe_crack2.js）
+const crypto = require('crypto');
+const ub64u = s => Buffer.from(s, 'base64url');
+function key(secret, salt, info) {
+  return Buffer.from(crypto.hkdfSync('sha256', Buffer.from(secret,'utf8'), Buffer.from(salt,'utf8'), Buffer.from(info,'utf8'), 32));
+}
+function decrypt(token, secret, v) {
+  const [h,,iv,ct,tag] = token.split('.');
+  const d = crypto.createDecipheriv('aes-256-gcm', key(secret, v.salt, v.info), ub64u(iv));
+  d.setAAD(Buffer.from(h,'ascii')); d.setAuthTag(ub64u(tag));
+  return JSON.parse(Buffer.concat([d.update(ub64u(ct)), d.final()]).toString('utf8'));
+}
+// 7 variants: cookie 名取 __Secure-next-auth.session-token / next-auth.session-token / __Host-next-auth.session-token
+// 每个 cookie 名两种 info：`NextAuth.js Generated Encryption Key (${c})` 与 'NextAuth.js Generated Encryption Key'
+// 外加 salt='' + info='NextAuth.js Generated Encryption Key'

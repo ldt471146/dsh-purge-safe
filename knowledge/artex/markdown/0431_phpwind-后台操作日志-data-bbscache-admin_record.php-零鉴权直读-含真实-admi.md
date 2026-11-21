@@ -9,7 +9,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-19 在 https://example.com 实测：无 Cookie GET /data/bbscache/admin_record.php 返回 200，完整下载 28,726,269B、10,978 行（GBK），时间跨度 2021-01-04~2026-10-03；提取到 uid=1 管理员（email user@example.com）、45 个 adminjob 模块、备份前缀 pre=pw_0404_97e3f04329_（表含 pw_administrators）；带唯一 marker 的访客请求后全文零命中，确认不记录访客字段。
+- **verified_note**: 2026-10-19 在 https://example.com 实测：无 Cookie GET /data/bbscache/admin_record.php 返回 200，完整下载 28,726,269B、10,978 行（GBK），时间跨度 2021-01-04~2026-10-03；提取到 uid=1 管理员（email admin@admin.com）、45 个 adminjob 模块、备份前缀 pre=pw_0404_97e3f04329_（表含 pw_administrators）；带唯一 marker 的访客请求后全文零命中，确认不记录访客字段。
 - **tags**: phpwind,postlog,adminlog,info-leak,backup-prefix,unauthorized
 - **created_at**: 2026-10-19T05:49:20.812Z
 - **found_by**: work

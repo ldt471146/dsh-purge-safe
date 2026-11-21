@@ -86,7 +86,7 @@ Public/admin/ueditor/php/{action_crawler,action_upload,controller,action_list}.p
 Public/main/js/kindeditor/php/{upload_json,file_manager_json,JSON}.php
 App/Conf/Admin/config.php
 App/Conf/config.php
-App/Conf/target406.example.com.php
+App/Conf/config.site.php
 App/Lib/Action/Admin/{Common,User,Article,System,Index}Action.class.php
 App/Lib/Action/Home/{Common,List,Article,Order,Info,Help,Index}Action.class.php
 App/Runtime/Cache/Admin/{2d3e227b15d6848ba412ebab65951245,ae53e8adfd2c689cfb5ed715c12fcb0c,

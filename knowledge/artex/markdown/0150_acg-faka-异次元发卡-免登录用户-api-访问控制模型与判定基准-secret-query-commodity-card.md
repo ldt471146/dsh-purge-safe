@@ -8,7 +8,7 @@
 - **source**: manual
 - **source_url**: https://github.com/lizhipay/acg-faka/blob/main/app/Controller/User/Api/Index.php
 - **verified**: 1
-- **verified_note**: 在靶标 tgt6639-com 的资产 203.0.113.116（Host: example.com，直连源站绕过 Cloudflare）实测复核并与官方 main 源码逐行对齐：① `POST /user/api/index/secret` body `tradeNo=1` / `orderId=1` / `tradeNo=202610022059000001` 全部返回 `{"code":0,"msg":"未查询到相关信息"}`（与源码 trade_no 不存在分支完全一致）；② `POST /user/api/index/query` body `keywords=test@example.com` 分别不带 captcha、`captcha=0000`、`captcha=`（空）、`captcha=0`，**四种全部返回 `{"code":0,"msg":"验证码错误"}`** → 线上强制校验图形验证码；③ `POST /user/api/index/card` body `item_id=25344`/`item_id=31232`（后者取自本站 commodity 接口返回的真实 id）均回 `{"code":0,"msg":"商品不存在"}`，加 `search-secret=zzzznope`、`betweenStart-id=1&betweenEnd-id=999999` 后响应与基线完全一致、无 total 差异 → 站点已含 `setFilterColumns` 白名单修复。证据文件：runs/acgfaka-probe.txt。
+- **verified_note**: 在靶标 huomatiaozhuangmm-com 的资产 203.0.113.116（Host: example.com，直连源站绕过 Cloudflare）实测复核并与官方 main 源码逐行对齐：① `POST /user/api/index/secret` body `tradeNo=1` / `orderId=1` / `tradeNo=202610022059000001` 全部返回 `{"code":0,"msg":"未查询到相关信息"}`（与源码 trade_no 不存在分支完全一致）；② `POST /user/api/index/query` body `keywords=test@example.com` 分别不带 captcha、`captcha=0000`、`captcha=`（空）、`captcha=0`，**四种全部返回 `{"code":0,"msg":"验证码错误"}`** → 线上强制校验图形验证码；③ `POST /user/api/index/card` body `item_id=25344`/`item_id=31232`（后者取自本站 commodity 接口返回的真实 id）均回 `{"code":0,"msg":"商品不存在"}`，加 `search-secret=zzzznope`、`betweenStart-id=1&betweenEnd-id=999999` 后响应与基线完全一致、无 total 差异 → 站点已含 `setFilterColumns` 白名单修复。证据文件：runs/acgfaka-probe.txt。
 - **path**: pocs/acg-faka-异次元发卡-免登录用户-api-访问控制模型与判定基准-secret-query-commodity-card/acg-faka-user-api-access-control.md
 - **tags**: acg-faka,异次元发卡,发卡网,未授权,越权,列过滤盲注,源码判定
 - **created_at**: 2026-10-02T14:28:28.158Z
@@ -21,7 +21,7 @@ acg-faka（异次元发卡）用户侧免登录 API 的访问控制模型与源�
 
 ```
 1) 先用指纹段判定目标是否为 acg-faka（Cookie ACG-SHOP + /user/api/<Controller>/<action> 驼峰路由）；
-2) 免登录接口探测：`curl -s -X POST https://TARGET/user/api/index/commodity -d "page=1&limit=1"`、`-d "tradeNo=1"`（secret）、`-d "keywords=user@example.com&captcha=0000"`（query）；
+2) 免登录接口探测：`curl -s -X POST https://TARGET/user/api/index/commodity -d "page=1&limit=1"`、`-d "tradeNo=1"`（secret）、`-d "keywords=a@b.com&captcha=0000"`（query）；
 3) 判"是否有归属校验"必须回源码看 `where('user_id',...)`/session 比对，不能只看线上响应（线上对一切不存在的 trade_no 都回同一句）；
 4) 若目标版本较旧，优先试 `card()` 的列过滤预言机：`-d "item_id=<支持预选的商品id>&page=1&limit=1&search-secret=<guess>"`，观察 total 的 0/1 变化；
 5) 遇到限流（请求过于频繁）立即停止枚举，定性取证即可。

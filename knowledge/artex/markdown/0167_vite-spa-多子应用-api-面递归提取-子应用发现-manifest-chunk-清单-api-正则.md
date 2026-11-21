@@ -54,9 +54,9 @@ tops = set(re.findall(r'["\'`](/(?!api/)[A-Za-z][A-Za-z0-9_\-/]{1,60})["\'`]', m
 ### 2) 读入口 chunk 拿 manifest
 ```python
 entry = re.search(r'import"\./(index\.[A-Za-z0-9_\-]+\.js)"', html)
-entry_js = GET("/assets/theme-0/" + target163.example.com(1))
+entry_js = GET("/assets/theme-0/" + entry.group(1))
 mf = re.search(r"__MANIFEST_ASSETS\s*=\s*'([^']+)'", entry_js)
-manifest = json.loads(GET("/" + target164.example.com(1)))
+manifest = json.loads(GET("/" + mf.group(1)))
 ```
 
 ### 3) **manifest 里的 chunk 名本身就是功能清单**

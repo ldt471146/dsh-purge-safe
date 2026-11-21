@@ -67,7 +67,7 @@ def api(path, body=None, host=HOST, ip=None):
     url = "https://%s%s" % (ip or host, path)
     h = dict(BARE)
     h["Host"] = host
-    r = target9.example.com(url, headers=h, data=json.dumps(body if body is not None else {}),
+    r = requests.post(url, headers=h, data=json.dumps(body if body is not None else {}),
                       timeout=20, impersonate="chrome", verify=False, allow_redirects=False)
     return r.status_code, r.content, dict(r.headers)
 

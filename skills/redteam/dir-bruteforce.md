@@ -1,10 +1,8 @@
 ---
 name: dir-bruteforce
-description: 【验证】目录与文件爆破：后台入口、备份文件、配置泄露、源码与版本库暴露（ffuf/feroxbuster/dirsearch/gobuster）
+description: 目录与文件爆破：后台入口、备份文件、配置泄露、源码与版本库暴露（ffuf/feroxbuster/dirsearch/gobuster）
 whenToUse: 已确认 Web 存活但指纹无直接 Nday 线索；需要找后台入口、备份、配置、源码、上传点等隐藏路径
 role: vuln-scan
-category: 验证
-tags: [web, dir, backup]
 enabled: true
 ---
 
@@ -20,7 +18,7 @@ enabled: true
 | --- | --- | --- | --- |
 | **feroxbuster** | `/usr/bin/feroxbuster` | 2.13.1 | Rust，递归爆破最强，自动跟随目录层级，**首选** |
 | **ffuf** | `/usr/bin/ffuf` | 2.1.0-dev | 最快、最灵活，支持多字典/vhost/参数 fuzz |
-| **dirsearch** | `$DSH_HOME/redteam/toolkit/dirsearch/dirsearch` | v0.5.0 | Python，字典全、报告友好，带自带运行时 |
+| **dirsearch** | `$DSH_HOME/redteam/toolkit/dirsearch/dirsearch` | v0.5.0 | Python。`setup.sh` 不下载，需自行放到该路径 |
 | **gobuster** | `/usr/bin/gobuster` | — | 轻量稳定，dir/dns/vhost 三模式 |
 
 ## 一、feroxbuster（首选：递归 + 自动过滤）
@@ -109,6 +107,9 @@ gobuster dir -u https://target -w /usr/share/seclists/Discovery/Web-Content/comm
 1. **隐藏路径本身不是得分项**，但**每个拿到东西的路径都要落库**：
    - 找到后台/上传点/接口文档 → 记进该资产 `redteam_asset_test` 的 `surface`（追加式），交给漏洞发现/利用的下一个动作；
    - 泄露源码/配置/密钥/凭据 → `redteam_credential_add`（`source=配置泄露`，`tool` 写路径与命令，明文写 `secret_value`）；
-   - 未授权可访问的接口/监控台 → 直接 `redteam_vuln_add`（`evidence` 回显 + `request`/`response` 原始请求）。
+   - 未授权可访问的接口/监控台 → 直接 `redteam_vuln_add`（含 `evidence` 回显）+ `redteam_http_evidence_add`。
+2. 每个关键动作 `redteam_chain_add`：`stage_code=internet`（或 `internal`），
+   `tool` 写实际命令原文（例如 `feroxbuster -u https://target -w raft-large-directories.txt -x php,zip,bak -d 3 --rate-limit 80`），
+   `result` 写命中摘要（例如 `命中 /admin/、/backup/www.zip、/.env`）。
 3. 跑完立刻 `redteam_asset_test` 回写 `status`/`test`/`surface`——不写状态后面的人一定重复扫。
 4. 字典与结果文件一律放 `runs/`（报告要能复现）。

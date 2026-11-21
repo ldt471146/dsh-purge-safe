@@ -7,11 +7,11 @@
 - **severity**: medium
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-29 在 https://target479.example.com 零 Cookie 实测：GET /Home/Index/bbs/post/1 → 200/25996B 空模板基线；post/8000 → 200/125023B 真实正文（含会员发帖「今晚的直接给大家大中了…」「成功收米！」）；?post=9999 → 200/27563B；长度随 id 变化：2000→27921、5000→42644、8000→125023、9999→27563、10000→27659、15000→187540B；页面头部显示「您现在是游客」，该渲染点未做登录/购买校验。
+- **verified_note**: 2026-10-29 在 https://thbac1dsua6v.csnsg36j8n.xyz 零 Cookie 实测：GET /Home/Index/bbs/post/1 → 200/25996B 空模板基线；post/8000 → 200/125023B 真实正文（含会员发帖「今晚的直接给大家大中了…」「成功收米！」）；?post=9999 → 200/27563B；长度随 id 变化：2000→27921、5000→42644、8000→125023、9999→27563、10000→27659、15000→187540B；页面头部显示「您现在是游客」，该渲染点未做登录/购买校验。
 - **path**: pocs/thinkphp-3.1.3-站群-home-index-bbs-的-post-参数零鉴权渲染文章正文-游客态可批量拖/poc.txt
 - **tags**: thinkphp3.1.3,站群,idor,未授权读取,文章枚举,bbs
 - **created_at**: 2026-10-28T18:59:29.048Z
-- **engine**: https://target479.example.com
+- **engine**: https://thbac1dsua6v.csnsg36j8n.xyz
 
 ## 描述
 

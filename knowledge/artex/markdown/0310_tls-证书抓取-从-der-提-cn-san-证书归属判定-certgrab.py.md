@@ -7,7 +7,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 靶标上实测，产出本次最硬的一条归属证据：`203.0.113.12:443` 证书 CN=**example.com**（节点清单里的"隐藏网关"域名），`203.0.113.13:443`/`.64:443` 证书 CN=**example.com** —— 把"域名↔IP"用密码学方式绑定。同时一次性把段内无关租户识别出来（.133=target322.example.com、.179=target323.example.com、.85=*.target324.example.com、.172=target325.example.com、.204=target326.example.com、.223=target327.example.com、.120=target328.example.com、.180=target329.example.com、.199=target330.example.com、.215=target331.example.com、.212=server-150-242-58-151.da.direct、.224=CDN.Server），据此写了 24 条"非靶标→排除"判定。
+- **verified_note**: 靶标上实测，产出本次最硬的一条归属证据：`203.0.113.12:443` 证书 CN=**example.com**（节点清单里的"隐藏网关"域名），`203.0.113.13:443`/`.64:443` 证书 CN=**example.com** —— 把"域名↔IP"用密码学方式绑定。同时一次性把段内无关租户识别出来（.133=pay.qingfu.tech、.179=ourhost.com、.85=*.niaoyun.com、.172=5gbd.jishidaili.com、.204=czssrmyy.com、.223=www.baopiji.com、.120=yinlingjiaoyu.com、.180=push.ydkj2.com、.199=a.ydwl6.com、.215=hanazewa.com、.212=server-150-242-58-151.da.direct、.224=CDN.Server），据此写了 24 条"非靶标→排除"判定。
 - **path**: pocs/tls-证书抓取-从-der-提-cn-san-证书归属判定-certgrab.py/certgrab.py
 - **tags**: 证书,归属判定,SAN,DER,无代理,tls
 - **created_at**: 2026-10-11T09:41:10.647Z

@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-06 在 203.0.113.126（tgt4382，PHPWind 7.3.2 / GBK / nginx 1.30.4 / 宝塔）实测：`example.com/bbs/` 与 `example.com/bbs/` 完整响应体相似度 **0.9998**，19 行差异全部为主机名字符串（archives / rss.php / example.com?fid= / u.php 四个绝对链接）；尺寸 67528B vs 67544B，差 16B = 4×4；主目标 `example.com` 67556B 与 67528B 差 **28B = 4×7**（主机名长度差 7）。另 6 个 vhost 全部 generator=7.3.2、Set-Cookie 前缀同为 `752fb_`。该判定直接推翻了"站群内存在未加固独立实例"的假设。
+- **verified_note**: 2026-10-06 在 203.0.113.126（白小姐站群，PHPWind 7.3.2 / GBK / nginx 1.30.4 / 宝塔）实测：`example.com/bbs/` 与 `example.com/bbs/` 完整响应体相似度 **0.9998**，19 行差异全部为主机名字符串（archives / rss.php / example.com?fid= / u.php 四个绝对链接）；尺寸 67528B vs 67544B，差 16B = 4×4；主目标 `example.com` 67556B 与 67528B 差 **28B = 4×7**（主机名长度差 7）。另 6 个 vhost 全部 generator=7.3.2、Set-Cookie 前缀同为 `752fb_`。该判定直接推翻了"站群内存在未加固独立实例"的假设。
 - **path**: pocs/站群同源判定-多-vhost-是否指向同一-document_root-body-diff-相似度-尺寸-4-主机名长度差/poc.py
 - **tags**: 站群,同源判定,body,diff,DOCUMENT_ROOT,Cookie前缀,判据,负面情报
 - **created_at**: 2026-10-06T12:13:11.236Z

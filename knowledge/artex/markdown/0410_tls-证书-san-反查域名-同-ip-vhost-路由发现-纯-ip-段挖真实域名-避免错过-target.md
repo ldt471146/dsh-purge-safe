@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.84/24、203.0.113.88/24、203.0.113.38/24、203.0.113.80/24 实战验证（2026-10-15）。核心验证：203.0.113.40:443 按 Host 头路由到三个不同服务 —— 裸 IP 返回 MinIO AccessDenied XML；Host: example.com 返回迷茫网 Vue3 SPA；Host: example.com 返回芋道管理系统 5.7.0（落库 vuln_id=30 critical）；Host: oss.example.com 返回 MinIO S3 API。一次证书采集从 SAN 挖出 20+ 真实域名（example.com / example.com / oss.example.com / target440.example.com / target428.example.com / target429.example.com / target430.example.com / target431.example.com / target433.example.com / target434.example.com / target435.example.com / target436.example.com / target437.example.com / target441.example.com / target442.example.com / target443.example.com / target444.example.com / target432.example.com 等）。同时验证了"页面源码绝对 URL 挖自动生成 vhost"（从 PHPWind 后台页挖出 example.com → 203.0.113.86，148 词字典爆破不可能命中）。
+- **verified_note**: 在 203.0.113.84/24、203.0.113.88/24、203.0.113.38/24、203.0.113.80/24 实战验证（2026-10-15）。核心验证：203.0.113.40:443 按 Host 头路由到三个不同服务 —— 裸 IP 返回 MinIO AccessDenied XML；Host: example.com 返回迷茫网 Vue3 SPA；Host: example.com 返回芋道管理系统 5.7.0（落库 vuln_id=30 critical）；Host: oss.example.com 返回 MinIO S3 API。一次证书采集从 SAN 挖出 20+ 真实域名（example.com / example.com / oss.example.com / hk.092000.xyz / aimanplay.cn / 251w.com / 2vshop.com / 56meme.com / amazoney.com / files.cjngames.cn / 755500.xyz / cha.6-7.cc / wenjie.us / pay.yertw.cn / pay.winxizhifu.top / kk1.xqcc88.top / cc.ygdnvjvjc.top / harness.nanlat.com 等）。同时验证了"页面源码绝对 URL 挖自动生成 vhost"（从 PHPWind 后台页挖出 example.com → 203.0.113.86，148 词字典爆破不可能命中）。
 - **path**: pocs/tls-证书-san-反查域名-同-ip-vhost-路由发现-纯-ip-段挖真实域名-避免错过-target/tls_san_vhost_discovery.py
 - **tags**: 信息泄露,TLS证书,SAN,vhost发现,域名挖掘,纯IP段,内网服务发现,可复用
 - **created_at**: 2026-10-15T20:49:13.884Z
@@ -65,7 +65,7 @@ import socket, ssl, subprocess, tempfile, os, re
 ctx = ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE
 s = ctx.wrap_socket(socket.create_connection((IP,443),timeout=12), server_hostname=IP)
 der = s.getpeercert(binary_form=True)
-with tempfile.NamedTemporaryFile(suffix=".der", delete=False) as f: f.write(der); fn=target439.example.com
+with tempfile.NamedTemporaryFile(suffix=".der", delete=False) as f: f.write(der); fn=f.name
 txt = subprocess.run(["openssl","x509","-inform","DER","-in",fn,"-noout","-text"],
                      capture_output=True,text=True).stdout
 os.unlink(fn)

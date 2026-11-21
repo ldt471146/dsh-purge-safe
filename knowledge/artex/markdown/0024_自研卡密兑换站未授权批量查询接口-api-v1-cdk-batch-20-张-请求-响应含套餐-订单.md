@@ -40,7 +40,7 @@ HOST = "example.com"
 H = {"User-Agent": "Mozilla/5.0 Chrome/124", "Content-Type": "application/json", "Host": HOST}
 
 def batch(codes):
-    r = target9.example.com(BASE + "/api/v1/cdk/batch", headers=H, data=json.dumps({"codes": codes}),
+    r = requests.post(BASE + "/api/v1/cdk/batch", headers=H, data=json.dumps({"codes": codes}),
                       timeout=30, verify=False)
     d = r.json()
     assert d.get("ok"), d
@@ -53,7 +53,7 @@ for x in d["results"]:
         print(json.dumps(x, ensure_ascii=False))
 
 # 单卡接口（同样无鉴权）
-r = target9.example.com(BASE + "/api/v1/cdk/lookup", headers=H, data=json.dumps({"code": "TEST1234"}), timeout=30, verify=False)
+r = requests.post(BASE + "/api/v1/cdk/lookup", headers=H, data=json.dumps({"code": "TEST1234"}), timeout=30, verify=False)
 print(r.text[:300])
 
 ```

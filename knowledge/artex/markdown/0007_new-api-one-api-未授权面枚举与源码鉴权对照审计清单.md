@@ -9,7 +9,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.118:4203（糖果姐姐 / example.com）与 :4303（CookingAI / target2.example.com）实测，两实例均为 New API target1.example.com。命中 4 条未授权可读：/api/rankings（19899B，3.6 亿 tokens 用量与按日曲线）、/api/perf-metrics/summary（5838B，45 模型性能）、/api/perf-metrics?model=（泄露内部 group 名）、/api/user/groups（全部分组倍率）；另 /mj/image/:id 实证未认证可达（400 midjourney_task_not_found 而非 401）。步骤 5 的全部"不可行路径"均已通过读对应 tag 源码逐行证伪，非猜测。未取得 admin 与渠道密钥。【2026-09-28 tgt3767-top 复测：target3.example.com（源站 203.0.113.63:443 直连 + CF 边缘双路）New API v1.0.0-rc.37 清单全部成立——拉 rc.37 tag 源码逐行确认 header_nav.go fallback{Enabled:true,RequireAuth:false} 与 api-router.go L36-43/L89 挂载不变；命中 /api/rankings(3628B,242,884,563 tokens+7日曲线)、/api/perf-metrics/summary、/api/user/groups、/api/pricing(4018B,13模型计费)；/mj/image/:id 未认证可达 400；v1.0.0-rc.37 起 /v1/models 亦需 token(401)。/api/ratio_config 该实例已禁用(403)。清单对 rc.37 仍有效，可直接复用】
+- **verified_note**: 在 203.0.113.118:4203（糖果姐姐 / example.com）与 :4303（CookingAI / oneapi.gemiaude.com）实测，两实例均为 New API v1.0.0-example.com。命中 4 条未授权可读：/api/rankings（19899B，3.6 亿 tokens 用量与按日曲线）、/api/perf-metrics/summary（5838B，45 模型性能）、/api/perf-metrics?model=（泄露内部 group 名）、/api/user/groups（全部分组倍率）；另 /mj/image/:id 实证未认证可达（400 midjourney_task_not_found 而非 401）。步骤 5 的全部"不可行路径"均已通过读对应 tag 源码逐行证伪，非猜测。未取得 admin 与渠道密钥。【2026-09-28 hetune-top 复测：chat.pandaapi.xyz（源站 203.0.113.63:443 直连 + CF 边缘双路）New API v1.0.0-rc.37 清单全部成立——拉 rc.37 tag 源码逐行确认 header_nav.go fallback{Enabled:true,RequireAuth:false} 与 api-router.go L36-43/L89 挂载不变；命中 /api/rankings(3628B,242,884,563 tokens+7日曲线)、/api/perf-metrics/summary、/api/user/groups、/api/pricing(4018B,13模型计费)；/mj/image/:id 未认证可达 400；v1.0.0-rc.37 起 /v1/models 亦需 token(401)。/api/ratio_config 该实例已禁用(403)。清单对 rc.37 仍有效，可直接复用】
 - **path**: pocs/new-api-one-api-未授权面枚举与源码鉴权对照审计清单/newapi_unauth_audit.sh
 - **tags**: new-api,one-api,未授权,信息泄露,源码对照,审计清单
 - **created_at**: 2026-09-27T18:01:47.651Z
@@ -44,7 +44,7 @@ $CURL "$T/api/status" | python3 -c "import sys,json;d=json.load(sys.stdin)['data
 # RootInit/DatabaseType 从未赋值，恒为 false/""，**不代表 root 未初始化**。
 
 # ---------- 步骤 2：源码对照（比字典枚举准）----------
-tag="target1.example.com"   # 换成步骤 1 得到的版本
+tag="v1.0.0-example.com"   # 换成步骤 1 得到的版本
 for f in router/api-router.go router/channel-router.go router/relay-router.go \
          router/video-router.go router/dashboard.go router/authz-router.go \
          middleware/auth.go middleware/header_nav.go middleware/rate-limit.go \

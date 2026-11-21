@@ -66,7 +66,7 @@ def attempt(name, pw):
     cap = ocr.classification(png)                  # 大小写不敏感
     body = {"name": name, "password": enc_pw(pw), "captcha": cap,
             "captchaID": g["captchaID"], "language": "zh"}
-    r = target8.example.com(BASE + "/api/v2/core/auth/login", json=body, timeout=25)
+    r = S.post(BASE + "/api/v2/core/auth/login", json=body, timeout=25)
     return r.json()                                # message: ErrAuth / ErrEntrance / ErrCaptchaCode
 
 # 判读

@@ -6,7 +6,7 @@
 - **language**: powershell
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt6403-com 靶标 http://203.0.113.117:11600/api/auth/login 上实测：内联 -d 传参 Content-Length=29（应为 37）→ 统一 500 Internal Server Error（21 字节），一度被误判为 Redis 依赖故障；改用 --data-binary @file 传同一 body 后立即返回真实业务响应 403 {"error":"Username and password are error"}，误判解除。
+- **verified_note**: 在 pockgo-com 靶标 http://203.0.113.117:11600/api/auth/login 上实测：内联 -d 传参 Content-Length=29（应为 37）→ 统一 500 Internal Server Error（21 字节），一度被误判为 Redis 依赖故障；改用 --data-binary @file 传同一 body 后立即返回真实业务响应 403 {"error":"Username and password are error"}，误判解除。
 - **path**: pocs/powershell-下-curl-内联-json-body-被吃双引号-服务端全-500-被误判为目标故障/poc.ps1
 - **tags**: powershell,curl,json,false-positive,探测陷阱
 - **created_at**: 2026-09-28T13:23:00.309Z

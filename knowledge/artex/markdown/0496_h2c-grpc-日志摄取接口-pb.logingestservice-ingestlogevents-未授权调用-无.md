@@ -8,11 +8,11 @@
 - **language**: markdown
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-03 在 task#612 目标 192.0.2.15:18081（target485.example.com 后端）实测：① 空体 POST /pb.LogIngestService/ingestLogEvents（content-type: application/grpc，无任何 metadata/authorization）→ grpc-status 2，grpc-message "invalid ingest request: ownerUserId is required"，证明鉴权层根本不存在、请求直达业务参数校验；② 按离线 proto 构造最小合法帧（00 00 00 00 0d + 18 01 22 09 0a 02 65 32 18 01 22 02 76 31，即 {3:1,4:{1:"e2",3:1,4:"v1"}}）再发 → 校验全过并进入发布路径，返回 grpc-status 2 "publish failed: dial tcp: lookup kafka on 127.0.0.11:53: no such host"；③ 同窗口 18082/metrics 对照：log_ingest_grpc_requests_total 215→247、log_ingest_events_received_total 76→105、log_ingest_events_rejected_total 65→84、log_ingest_kafka_write_errors_total 215→247，accepted_total 恒为 0。四组计数器同步递增是"请求确实被处理器接收"的硬证据；accepted=0 仅因 Kafka 主机名 kafka 在本机 DNS 127.0.0.11:53 不可解析。
+- **verified_note**: 2026-11-03 在 task#612 目标 23.147.148.253:18081（www.dahurj999.top 后端）实测：① 空体 POST /pb.LogIngestService/ingestLogEvents（content-type: application/grpc，无任何 metadata/authorization）→ grpc-status 2，grpc-message "invalid ingest request: ownerUserId is required"，证明鉴权层根本不存在、请求直达业务参数校验；② 按离线 proto 构造最小合法帧（00 00 00 00 0d + 18 01 22 09 0a 02 65 32 18 01 22 02 76 31，即 {3:1,4:{1:"e2",3:1,4:"v1"}}）再发 → 校验全过并进入发布路径，返回 grpc-status 2 "publish failed: dial tcp: lookup kafka on 127.0.0.11:53: no such host"；③ 同窗口 18082/metrics 对照：log_ingest_grpc_requests_total 215→247、log_ingest_events_received_total 76→105、log_ingest_events_rejected_total 65→84、log_ingest_kafka_write_errors_total 215→247，accepted_total 恒为 0。四组计数器同步递增是"请求确实被处理器接收"的硬证据；accepted=0 仅因 Kafka 主机名 kafka 在本机 DNS 127.0.0.11:53 不可解析。
 - **path**: pocs/h2c-grpc-日志摄取接口-pb.logingestservice-ingestlogevents-未授权调用-无/grpc-h2c-logingest-unauth.md
 - **tags**: grpc,h2c,unauthorized,log-ingest,protobuf,metrics,kafka,18081
 - **created_at**: 2026-11-02T16:45:01.220Z
-- **engine**: 192.0.2.15:18081
+- **engine**: 23.147.148.253:18081
 
 ## 描述
 
@@ -40,8 +40,8 @@
 ## 步骤
 
 ```bash
-TARGET=192.0.2.15:18081
-METRICS=http://192.0.2.15:18082/metrics
+TARGET=23.147.148.253:18081
+METRICS=http://23.147.148.253:18082/metrics
 
 # 0) 确认是 gRPC 且支持 h2c（应看到 grpc-status 或 HTTP/2 帧，而不是 400/404 HTML）
 curl -V | grep -i http2

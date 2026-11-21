@@ -1,10 +1,8 @@
 ---
 name: vps-reverse-shell
-description: 【基础设施】用自建 VPS（<你的VPS_IP>，SSH 私钥登录）做反弹 Shell 落地与中转：9000-9999 端口监听、非交互会话驱动、载荷投递、反向隧道
+description: 用自建 VPS（<你的VPS_IP>，SSH 私钥登录）做反弹 Shell 落地与中转：9000-9999 端口监听、非交互会话驱动、载荷投递、反向隧道
 whenToUse: 目标无法回连本机 / 需要公网固定监听端口 / 需要长期在线跳板 / 需要让智能体自己下发命令到反弹 Shell
 role: exploit
-category: 基础设施
-tags: [vps, payload, listener]
 enabled: true
 ---
 
@@ -34,7 +32,8 @@ enabled: true
 
 **密钥纪律**：私钥只在上面这个路径。任何情况下不要把私钥内容写进技能文件、报告、仓库或对话。
 
-同一 VPS 可能已有其它演练占用的端口/会话；开工前先跑 `$VPS status` 确认，**不要 kill 不属于本次演练的会话**。
+已长期占用的端口：**9001 / 9007 / 9009（还有其他 9008 等临时服务）**，另有 tmux 会话 `cap / sh / up / www`。
+**这些不是本次演练的，不要 kill、不要覆盖。**
 
 ## 快速开始
 

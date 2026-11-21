@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 example.com 上实测：/fbsport/v1/getToken 返回 200 与 12 组 domainList（20 个域名，含 target304.example.com、wss://target305.example.com、target306.example.com 等）；/ob/v2/getTryToken 三次调用返回恒定 token=8b2af1ff66e9aceb5e5b4d981ac82e1a332ed22b 与 userId=528925123876225549 及可用 loginUrl；/common/v1/hotLegues/getHotLegues 返回 38461 字节真实联赛数据。均无需任何凭据。
+- **verified_note**: 在 example.com 上实测：/fbsport/v1/getToken 返回 200 与 12 组 domainList（20 个域名，含 a.vx9a.com、wss://push.9r9o.com、api.xyz3524.com 等）；/ob/v2/getTryToken 三次调用返回恒定 token=8b2af1ff66e9aceb5e5b4d981ac82e1a332ed22b 与 userId=528925123876225549 及可用 loginUrl；/common/v1/hotLegues/getHotLegues 返回 38461 字节真实联赛数据。均无需任何凭据。
 - **path**: pocs/fakertoken-服务无鉴权探测-fbsport-v1-gettoken-与-ob-v2-gettrytoken-泄漏后端域名与-token/fakertoken_recon.sh
 - **tags**: fakerToken,guest token,未授权,信息泄露,requestData,form编码,线路域名路由表,白标供应商,体育平台,ob体育
 - **created_at**: 2026-10-10T18:42:26.575Z

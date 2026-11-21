@@ -7,11 +7,11 @@
 - **severity**: medium
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-29 在 https://target479.example.com 实测：① POST /Home/Index/login body name=test&pwd=test → 200 {"ok":1,"ms":"登录成功","username":"test","balance":"0"} 并 Set-Cookie PHPSESSID；② 带该 Cookie GET /Index/user → 200/21307B 含 test、0.00 金币、level 0；去 Cookie 同 URL 200/21301B 不含 test（认证态对照）；③ 连续 34 组错误口令（间隔 0.7s）全部同一错误 JSON，无验证码、无 429、无锁定；④ GET /App/Tpl/Admin/Index_login.html 零凭证 → 200/1086B 后台登录模板源码（仅 username/password，无验证码字段）。
+- **verified_note**: 2026-10-29 在 https://thbac1dsua6v.csnsg36j8n.xyz 实测：① POST /Home/Index/login body name=test&pwd=test → 200 {"ok":1,"ms":"登录成功","username":"test","balance":"0"} 并 Set-Cookie PHPSESSID；② 带该 Cookie GET /Index/user → 200/21307B 含 test、0.00 金币、level 0；去 Cookie 同 URL 200/21301B 不含 test（认证态对照）；③ 连续 34 组错误口令（间隔 0.7s）全部同一错误 JSON，无验证码、无 429、无锁定；④ GET /App/Tpl/Admin/Index_login.html 零凭证 → 200/1086B 后台登录模板源码（仅 username/password，无验证码字段）。
 - **path**: pocs/somcns-站群前台会员登录-home-index-login-无验证码无频控-test-test-直登-后台登/poc.txt
 - **tags**: thinkphp3.1.3,站群,弱口令,无频控,会员登录
 - **created_at**: 2026-10-28T18:59:32.987Z
-- **engine**: https://target479.example.com
+- **engine**: https://thbac1dsua6v.csnsg36j8n.xyz
 
 ## 描述
 

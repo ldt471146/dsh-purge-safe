@@ -38,7 +38,7 @@ webman v2 的控制器调用链：
 2. 需要注入时走 `Webman\App::resolveInject()`：
 
 ```php
-// webman-framework src/target150.example.com:391-399
+// webman-framework src/App.php:391-399
 protected static function resolveInject(string $plugin, $call, $args): Closure
 {
     return function (Request $request) use ($plugin, $call, $args) {
@@ -53,7 +53,7 @@ protected static function resolveInject(string $plugin, $call, $args): Closure
 3. `resolveMethodDependencies()` **按形参名**从 `$inputs` 取值：
 
 ```php
-// webman-framework src/target150.example.com:498-537
+// webman-framework src/App.php:498-537
 foreach ($reflector->getParameters() as $parameter) {
     $parameterName = $parameter->name;
     $typeName = $parameter->getType()?->getName();

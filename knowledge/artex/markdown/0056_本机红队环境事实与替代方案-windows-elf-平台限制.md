@@ -45,7 +45,7 @@ Windows 作业环境事实：toolkit 多为 ELF 不可用（.exe 白名单 3 个
 ⇒ 本机出口链路对境外高频 connect 扫描存在干扰/过滤。**端口面以被动测绘（FOFA）+ 单次 HTTP 实测为准，不要用 nmap 结果落库。**
 
 ## 5. 替代工具选型
-- Web 存活/指纹/标题：自研限速 Python 探针（`runs/recon-tgt6403/http-probe.py`、`runs/e5-probe.py`），串行 + 固定间隔 + 超时即停，比 pd-httpx 更适合“少而准”。
+- Web 存活/指纹/标题：自研限速 Python 探针（`runs/recon-pockgo/http-probe.py`、`runs/e5-probe.py`），串行 + 固定间隔 + 超时即停，比 pd-httpx 更适合“少而准”。
 - vhost / 源站命中（Cloudflare 后域名找不到源站时）：连源站 IP:443 但用 `Host` 头 + SNI 指定域名（等价 `curl --resolve`），见 `runs/e5-probe.py` 的 `vhost` 模式。
 - 目录/接口枚举：Python 自研 + 白名单路径，或 `dirsearch`（若为 .py 则可运行，需验平台）。
 ```

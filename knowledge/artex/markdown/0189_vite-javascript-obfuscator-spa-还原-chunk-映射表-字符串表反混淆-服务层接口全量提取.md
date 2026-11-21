@@ -64,7 +64,7 @@ python runs/js-audit/harvest3.py             # 迭代到没有新 chunk 为止
 
 # 四、从服务层常量表还原接口 + HTTP 方法
 # CN7 模式：x(Cls,"name","/api/...")   ← x = Object.defineProperty，Cls 是服务类
-#           class X extends pn { foo(t){ return target177.example.com(target178.example.com, t) } }
+#           class X extends pn { foo(t){ return this.requester.post(Cls.name, t) } }
 # 两次正则求交集 → 路径 + 动词 + JS 方法名
 python runs/js-audit/extract_api.py
 

@@ -8,11 +8,11 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-02 于 task#613（192.0.2.11，168six 站群源站）实测：经 socks5 出口 192.0.2.12:10808 与 192.0.2.13:10808、以及本机直连出口 192.0.2.14，三条路径均收到 74 字节明文 ERR "Host '<出口IP>' is not allowed to connect to this MySQL server"；同一时刻对 80 端口 curl 返回 200 / 0.25s 作阳性对照，排除网络故障。判定成立：3306 对外暴露，但服务端按 IP 白名单在鉴权前拒绝，本阶段拿不到 version 与账号面。证据落盘 p3306.bin / p3306c.bin / p3306d.bin。
+- **verified_note**: 2026-11-02 于 task#613（61.31.226.59，168six 站群源站）实测：经 socks5 出口 101.36.104.239:10808 与 101.36.104.46:10808、以及本机直连出口 39.144.128.99，三条路径均收到 74 字节明文 ERR "Host '<出口IP>' is not allowed to connect to this MySQL server"；同一时刻对 80 端口 curl 返回 200 / 0.25s 作阳性对照，排除网络故障。判定成立：3306 对外暴露，但服务端按 IP 白名单在鉴权前拒绝，本阶段拿不到 version 与账号面。证据落盘 p3306.bin / p3306c.bin / p3306d.bin。
 - **path**: pocs/mysql-3306-exposed-host-not-allowed-ip-whitelist-three-egres/poc.sh
 - **tags**: mysql,3306,ip-whitelist,host-not-allowed,info-leak,judgement,negative,egress-ip,ssrf-pivot
 - **created_at**: 2026-11-02T11:14:27.699Z
-- **engine**: 192.0.2.11:3306
+- **engine**: 61.31.226.59:3306
 - **found_by**: recon
 
 ## 描述
@@ -56,7 +56,7 @@ curl.exe -s --http0.9 --connect-timeout 30 --max-time 25 --proxy socks5://<PROXY
 目标主机监听 3306，公网 TCP 可建连，服务端主动回 MySQL 明文 ERR 包：
 
 ```
-74B:  46 00 00 00 3f 6a 04 "Host '192.0.2.12' is not allowed to connect to this MySQL server"
+74B:  46 00 00 00 3f 6a 04 "Host '101.36.104.239' is not allowed to connect to this MySQL server"
 ```
 
 错误文案里直接回显我方出口 IP —— 这是 mysql 的 ERROR 1130（鉴权前 Host ACL 拒绝），
@@ -66,11 +66,11 @@ curl.exe -s --http0.9 --connect-timeout 30 --max-time 25 --proxy socks5://<PROXY
 
 ```bash
 # 出口 A（境外 socks5）
-curl.exe -s --http0.9 --proxy socks5://192.0.2.12:10808 \
+curl.exe -s --http0.9 --proxy socks5://101.36.104.239:10808 \
   --connect-timeout 30 --max-time 25 http://<TARGET>:3306/ | xxd
 
 # 出口 B（另一条 socks5，证明不是单出口临时封）
-curl.exe -s --http0.9 --proxy socks5://192.0.2.13:10808 \
+curl.exe -s --http0.9 --proxy socks5://101.36.104.46:10808 \
   --connect-timeout 30 --max-time 25 http://<TARGET>:3306/
 
 # 本机直连（第三出口，绕过代理）

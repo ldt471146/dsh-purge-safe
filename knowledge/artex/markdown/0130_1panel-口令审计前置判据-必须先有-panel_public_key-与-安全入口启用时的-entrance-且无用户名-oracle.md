@@ -8,7 +8,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 codex-tgt4796-com 靶标实测：① ddddocr 对 203.0.113.51:9527 的 1Panel v2 验证码 11/12 通过（92%），用登录响应 ErrAuth/ErrCaptchaCode 做 ground truth；② 203.0.113.109:9527（1Panel v1）对 13 条路由 dump 响应头**无任何 panel_public_key**，而 v1.10.28-LTS 的 DecryptPassword 强制三段式 ⇒ 该面板口令审计不可进行（vuln 53 / evidence 40）；③ 203.0.113.51:9527 有安全入口，匿名 passkey 路由回 "安全入口信息错误"；④ 用正确验证码 + 畸形密文在 v2 仍得 ErrAuth ⇒ 无用户名 oracle；⑤ 41 个候选用户名在 v1 全部 ErrAuth ⇒ 用户名非默认。
+- **verified_note**: 在 codex-miaomiaocode-com 靶标实测：① ddddocr 对 203.0.113.51:9527 的 1Panel v2 验证码 11/12 通过（92%），用登录响应 ErrAuth/ErrCaptchaCode 做 ground truth；② 203.0.113.109:9527（1Panel v1）对 13 条路由 dump 响应头**无任何 panel_public_key**，而 v1.10.28-LTS 的 DecryptPassword 强制三段式 ⇒ 该面板口令审计不可进行（vuln 53 / evidence 40）；③ 203.0.113.51:9527 有安全入口，匿名 passkey 路由回 "安全入口信息错误"；④ 用正确验证码 + 畸形密文在 v2 仍得 ErrAuth ⇒ 无用户名 oracle；⑤ 41 个候选用户名在 v1 全部 ErrAuth ⇒ 用户名非默认。
 - **path**: pocs/1panel-口令审计前置判据-必须先有-panel_public_key-与-安全入口启用时的-entrance-且无用户名-oracle/1panel_password_audit_preconditions.md
 - **tags**: 1panel,口令审计,前置条件,panel_public_key,RSA三段式,安全入口,ddddocr,验证码,用户名oracle
 - **created_at**: 2026-09-30T01:01:40.730Z
@@ -58,7 +58,7 @@ func DecryptPassword(encryptedData string, privateKey *rsa.PrivateKey) (string, 
 ## 前置 2：安全入口启用时，口令正确也登录不了
 `Login()` 里入口校验在口令校验**之后**：
 ```go
-if nameSetting.Value != target80.example.com { return nil, constant.ErrAuth }
+if nameSetting.Value != info.Name { return nil, constant.ErrAuth }
 if err = checkPassword(info.Password); err != nil { return nil, err }
 if len(entranceSetting.Value) != 0 && entranceSetting.Value != entrance { return nil, buserr.New(constant.ErrEntrance) }
 ```
@@ -67,7 +67,7 @@ if len(entranceSetting.Value) != 0 && entranceSetting.Value != entrance { return
 
 ## 前置 3：没有用户名 oracle，用户名和口令得同时猜
 `Login()` 先比用户名再验口令。理论上「错用户名→ErrAuth、对用户名+畸形密文→raw 解密错误」可当 oracle，**但 v2 实测不成立**：用**正确验证码** + 畸形密文 `AQ==:AAAA:AAAA`（1 字节 RSA 段）提交，仍返回 `ErrAuth` ⇒ 无法区分「用户名错」与「解密失败」。
-因此实战只能整体猜 (用户名, 口令) 组合；实测 41 个常见用户名（1panel/admin/root/zwluoqi/tgt4796/blueseek/tgt6403/example/bd2/tangguosheng…）+ 垃圾口令全部 ErrAuth，**该运营者的面板用户名非默认**。
+因此实战只能整体猜 (用户名, 口令) 组合；实测 41 个常见用户名（1panel/admin/root/zwluoqi/miaomiaocode/blueseek/pockgo/example/bd2/tangguosheng…）+ 垃圾口令全部 ErrAuth，**该运营者的面板用户名非默认**。
 （v1 源码里 `checkPassword` 的报错是 `errors.New(...)` 而非 `constant.ErrAuth`，所以在 v1 上 oracle 理论上成立；但 v1 那台恰恰没有公钥，走不通。）
 
 ## 结论判据（先判能不能打，再动手）

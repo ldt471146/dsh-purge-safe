@@ -48,7 +48,7 @@ phpwind 8.7，配置为「新会员需管理员验证」(rg_ifcheck=1)。注册�
 ## 三个必填项（逐一实测确定）
 | 顺序 | 缺失时提示 | 来源字段 | 说明 |
 |---|---|---|---|
-| 1 | `请填写注册原因。` | `regreason` | `target134.example.com:105 setReason()`：`L::reg('rg_ifcheck')` 为真时强制 |
+| 1 | `请填写注册原因。` | `regreason` | `register.class.php:105 setReason()`：`L::reg('rg_ifcheck')` 为真时强制 |
 | 2 | `字段 '现居住地' 填写有误` | `apartment` | 自定义 area 类型字段，值为地区数字 ID |
 | 3 | 通用反爬提示 | `_hexie` | 注册页隐藏域，值形如 `cn0zz`；**HTML 中 `value` 在 `name` 之前**，正则写反会取到空值 |
 
@@ -66,7 +66,7 @@ curl -s -b ck.txt -c ck.txt -e "$B/register.php" \
   --data-urlencode "rgpermit=1" --data-urlencode "regreason=测试" \
   --data-urlencode "apartment=820001" "$B/register.php?"
 ```
-结果：`HTTP 302`，cookie 出现 `winduser`（= `target133.example.com:298 if ($rgyz == 1) Cookie("winduser",...)`）
+结果：`HTTP 302`，cookie 出现 `winduser`（= `register.php:298 if ($rgyz == 1) Cookie("winduser",...)`）
 ⇒ 同时证明 `rg_emailcheck=0`（`_setEmailCheck()` 令 `yz=1`），账号无需激活邮件即可登录。
 
 ## apartment 合法值（从注册页内联 `var areas` 数组提取）
@@ -76,11 +76,11 @@ areas['820002']=['澳门特别行政区','820001','0'];
 areas['110101']=['东城区','110100','1'];
 areas['810001']=['香港','810000','1'];
 ```
-服务端校验链：`target106.example.com:149 checkCustomerField` → `target135.example.com:99 checkData`
-→ `target136.example.com:245 checkData` → `type==area` 分支 → `checkArea($data)`。
+服务端校验链：`registercheck.class.php:149 checkCustomerField` → `customerfieldservice.class.php:99 checkData`
+→ `customerfielddata.class.php:245 checkData` → `type==area` 分支 → `checkArea($data)`。
 
 ## 重要限制（不要误判）
-**注册成功 ≠ 能发帖。** `_setGroupid()`（`target134.example.com:285-289`）：
+**注册成功 ≠ 能发帖。** `_setGroupid()`（`register.class.php:285-289`）：
 ```php
 if ($this->data['groupid'] == 0)
     $this->data['groupid'] = L::reg('rg_ifcheck') ? 7 : -1;

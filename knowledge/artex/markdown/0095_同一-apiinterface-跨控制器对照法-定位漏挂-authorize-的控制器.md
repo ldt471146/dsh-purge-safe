@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt9942-com 靶标实测（203.0.113.73，Host: target65.example.com）：30 个方法名 × 4 控制器全矩阵请求后，`ApiInterface=systemseting` 在 `/api/NotLoggedInApi` 返回 **200 / 626 字节完整系统配置 JSON**（含 web_url=target67.example.com、phoneurl=wap1/Index、USDT 汇率），而同名方法在 `/api/MemberApi` 返回 74 字节登录跳转脚本、在 `/api/CashOperationApi` 与 `/api/RecordingApi` 均返回 `{"code":1002,"msg":"请登陆！"}` ⇒ 精确定位为该控制器漏挂 [Authorize]。另：不带 Content-Length 的 POST 会被 HTTP.sys 以 411 拒绝（易误判）。
+- **verified_note**: 在 449918-com 靶标实测（203.0.113.73，Host: net.ng-api.vip）：30 个方法名 × 4 控制器全矩阵请求后，`ApiInterface=systemseting` 在 `/api/NotLoggedInApi` 返回 **200 / 626 字节完整系统配置 JSON**（含 web_url=www.neapi.com、phoneurl=wap1/Index、USDT 汇率），而同名方法在 `/api/MemberApi` 返回 74 字节登录跳转脚本、在 `/api/CashOperationApi` 与 `/api/RecordingApi` 均返回 `{"code":1002,"msg":"请登陆！"}` ⇒ 精确定位为该控制器漏挂 [Authorize]。另：不带 Content-Length 的 POST 会被 HTTP.sys 以 411 拒绝（易误判）。
 - **path**: pocs/同一-apiinterface-跨控制器对照法-定位漏挂-authorize-的控制器/apiinterface-cross-controller-authorize-diff.md
 - **tags**: unauthorized,aspnet,mvc,authorize,反射接口,对照实验
 - **created_at**: 2026-09-28T22:41:39.437Z

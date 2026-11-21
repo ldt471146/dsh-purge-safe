@@ -7,7 +7,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 example-com 靶标的龙门直播 API（example.com / 无 WAF 镜像 target294.example.com）上实测：解析 279 接口 / 450 definitions，命中 126 个带 id 类字段的接口，63 个只读接口逐个与他人 id 对照，命中 /api/live/getLivePageData 传他人 anchorid 返回他人完整直播间对象（含签名 pull_url）与 /api/live/ticket_list 返回他人观赛券余额；并用「未文档化参数注入」确认 /api/user/getUserInfo、/api/user/getBanks、/api/user/getAddress、/api/auth/getAuthInfo 均为 token 绑定（注入 uid/user_id/query 全无效）。
+- **verified_note**: 在 example-com 靶标的龙门直播 API（example.com / 无 WAF 镜像 images.lmim1.com）上实测：解析 279 接口 / 450 definitions，命中 126 个带 id 类字段的接口，63 个只读接口逐个与他人 id 对照，命中 /api/live/getLivePageData 传他人 anchorid 返回他人完整直播间对象（含签名 pull_url）与 /api/live/ticket_list 返回他人观赛券余额；并用「未文档化参数注入」确认 /api/user/getUserInfo、/api/user/getBanks、/api/user/getAddress、/api/auth/getAuthInfo 均为 token 绑定（注入 uid/user_id/query 全无效）。
 - **path**: pocs/swagger-驱动的水平越权批量探测-自己-他人-id-对照-未文档化参数注入-加密响应长度-oracle/swagger_idor_sweep.py
 - **tags**: idor,swagger,openapi,越权,加密响应,oracle
 - **created_at**: 2026-10-08T15:39:39.505Z
@@ -77,7 +77,7 @@ def decrypt(blob):
 
 def call(path, body, token=TOKEN, uid=ME, timeout=20):
     try:
-        r = target9.example.com(HOST + path, data=json.dumps(body),
+        r = requests.post(HOST + path, data=json.dumps(body),
                           headers={'Authorization': 'token=%s; uid=%s' % (token, uid),
                                    'Content-Type': 'application/json;charset=UTF-8'},
                           timeout=timeout, verify=False)

@@ -28,7 +28,7 @@
    GET /bbs/<name>.php?adminjob=admin
    若响应为 installfile_exists 提示 → install.php 还在根目录，任何后台账号都进不去（example.com:42）。
 3) 若已知创始人账号口令，可用浏览器登录：认证是 Cookie AdminUser = StrCode("用户名\t密码hash\tuid...")，
-   SafeCheck 有效期 1800 秒，且与 User-Agent 绑定（target105.example.com:243 PwdCode 用 HTTP_USER_AGENT）。
+   SafeCheck 有效期 1800 秒，且与 User-Agent 绑定（common.php:243 PwdCode 用 HTTP_USER_AGENT）。
    → 用脚本重放时必须保持 UA 一致，否则 Cookie 立即失效。
 4) 若能拿到管理员（if_manager）账号，managerRight 列表里的模块是最高权限集合：
    rightset manager ystats diyoption optimize modepage sphinx app ajaxhandler
@@ -68,6 +68,6 @@
 //   admin/cache.php:2  !function_exists('writeover') && exit('Forbidden');   // 纯函数库，无参数调度，末尾无 adminjob 分支
 //   admin/upgrade.php 是 $adminjob 模块之一（example.com?adminjob=upgrade），根目录无 upgrade.php
 // 前台 require admin/cache.php 的位置（不能当后台入口，只是复用函数）：
-//   target194.example.com:295,890,1407 / pw_example.com:890,921,960 / target195.example.com:187 /
-//   hack/toolcenter/require/target196.example.com:74 / require/postconcle.php:8, require/target197.example.com:17 等 30+ 处
+//   forumcp.php:295,890,1407 / pw_example.com:890,921,960 / masingle.php:187 /
+//   hack/toolcenter/require/changename.php:74 / require/postconcle.php:8, require/task.php:17 等 30+ 处
 ```

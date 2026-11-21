@@ -56,7 +56,7 @@ grep -rnE "new Client\s*\(|->(get|post|request)\s*\(\s*\\$|httpGet|httpPost|http
 ```bash
 grep -rn "api_url\|notify_url\|callback_url" app/ plugin/ | grep -E "->(insert|update|save)"
 ```
-- 若写入者只在**后台插件**（本项目：`plugin/admin/.../target358.example.com:514,605`）→ 该路径要"先拿后台"才成立 → 在本靶标**判死**；
+- 若写入者只在**后台插件**（本项目：`plugin/admin/.../GameController.php:514,605`）→ 该路径要"先拿后台"才成立 → 在本靶标**判死**；
 - 若写入者落在**未授权可达**的方法上 → **未授权改配置 + 触发一次外发 = 完整 SSRF**。
   本项目核对结论：`app/` 下**没有任何**写 `caipiao_game_platform` 的方法（全部是读），所以这条链不成立。
 
@@ -67,7 +67,7 @@ grep -oE "\.(get|post|put)\(\`/[a-z0-9/_-]+\`,\{[^}]*\}" chunks/*.js
 ```
 本项目从 `chunks/electronic-CUH5hoh8.js` 直接读到：
 ```js
-target359.example.com(`/electronic/launch`, {platform:…, gameId:…, device:…}, {timeout:6e4})
+i.post(`/electronic/launch`, {platform:…, gameId:…, device:…}, {timeout:6e4})
 ```
 → 确认该接口**没有 url/host 参数**，无需发包即可判定"不是 SSRF 入口"。
 

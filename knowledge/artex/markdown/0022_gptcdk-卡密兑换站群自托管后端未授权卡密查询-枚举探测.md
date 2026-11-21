@@ -8,7 +8,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 20xx-09-28 在靶标「tgt9215app集群」的三个同源码站上实测通过：203.0.113.106（GET /api/v1/public/cdk/result-by-code 与 /api/v1/lookup/cdk → 200 {"code":404,"msg":"没有查到这张卡的兑换记录"}，无鉴权、无格式校验）；203.0.113.105/example.com（POST /api/v1/cdk/lookup → 200/262B 完整卡密对象，含 can_redeem/plan/order 字段）；203.0.113.98/example.com（FastAPI，POST /api/v1/cdk/lookup 与 /api/v1/cdk/redeem-account 经 422 泄露字段 code+account_email，无鉴权）。均无需任何 Cookie/Token。
+- **verified_note**: 20xx-09-28 在靶标「大港澳app集群」的三个同源码站上实测通过：203.0.113.106（GET /api/v1/public/cdk/result-by-code 与 /api/v1/lookup/cdk → 200 {"code":404,"msg":"没有查到这张卡的兑换记录"}，无鉴权、无格式校验）；203.0.113.105/example.com（POST /api/v1/cdk/lookup → 200/262B 完整卡密对象，含 can_redeem/plan/order 字段）；203.0.113.98/example.com（FastAPI，POST /api/v1/cdk/lookup 与 /api/v1/cdk/redeem-account 经 422 泄露字段 code+account_email，无鉴权）。均无需任何 Cookie/Token。
 - **path**: pocs/gptcdk-卡密兑换站群自托管后端未授权卡密查询-枚举探测/probe_gptcdk_backend.sh
 - **tags**: 卡密兑换中心,gptcdk,未授权访问,枚举,fastapi,c ChatGPT卡台
 - **created_at**: 2026-09-28T06:36:08.636Z

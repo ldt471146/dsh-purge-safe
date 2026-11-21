@@ -8,7 +8,7 @@
 - **severity**: info
 - **language**: http
 - **source**: self
-- **verified_note**: 本条为**源码级与版本级判据汇总**，非目标实测（情报角色零请求）。其中 mawhole.php 的 intval 证否、target188.example.com:154 的 `$` 转义、example.com 的 `$db_hackdb` 白名单、S::escapePath 过滤清单，均取自 PHPWind 8.7 同源源码（C:\Users\user\Desktop\168\runs\hklot\pw-src\upload）逐行读取；register_globals 在 PHP 5.4.0 被移除为 PHP 官方事实；api 全 404 为任务给定已知前提。
+- **verified_note**: 本条为**源码级与版本级判据汇总**，非目标实测（情报角色零请求）。其中 mawhole.php 的 intval 证否、setstyles.php:154 的 `$` 转义、example.com 的 `$db_hackdb` 白名单、S::escapePath 过滤清单，均取自 PHPWind 8.7 同源源码（C:\Users\user\Desktop\168\runs\hklot\pw-src\upload）逐行读取；register_globals 在 PHP 5.4.0 被移除为 PHP 官方事实；api 全 404 为任务给定已知前提。
 - **path**: pocs/phpwind-7.3.2-负面情报清单-register_globals-已移除-mawhole-eval-证否-setstyles-转义-hack.php/poc.http
 - **created_at**: 2026-10-06T11:27:12.109Z
 - **found_by**: exploit
@@ -36,7 +36,7 @@ PHP 5.5.38 中 register_globals 于 **PHP 5.4.0 被彻底移除**。因此**所�
 · 目标上已存在的 `${@eval($a)}` uid=8916 / `${@eval($_)}` uid=8913 是**前人留下的无效 payload**，不要以为照着做就能打通。
 · **正确做法**：payload 必须显式引用超全局变量，如 `${@eval($_POST[1])}`；或使用短常量参数，如 `${system(id)}`（PHP<8 下裸词 `id` 回退成字符串 'id'）。
 
-## 一、target108.example.com:992/1023 eval 点 —— 源码级证否（死路）
+## 一、mawhole.php:992/1023 eval 点 —— 源码级证否（死路）
 ```php
 if ($topped > 0){ eval("\$specialSort = PW_THREADSPECIALSORT_TOP$topped;"); }
 ```
@@ -46,13 +46,13 @@ if ($topped > 0){ eval("\$specialSort = PW_THREADSPECIALSORT_TOP$topped;"); }
 
 ## 二、admin/setstyles.php 写 CSS —— 写入侧有 `$` 转义（A1 那条 eval 的拦路虎）
 ```php
-// target188.example.com:154
+// setstyles.php:154
 $style_css = str_replace("$","\$",$cssadd[0].'<!--css-->'.$style_css.'<!--css-->'.$cssadd[2]);
-// target188.example.com:156
+// setstyles.php:156
 writeover(D_P."data/style/{$tplpath}_css.htm",$style_css);
 ```
 · 后台正常改 CSS 会把每个 `$` 变成 `\$`，进 eval 的双引号字符串后成为字面 `$`，**插值/Eval 失效**。
-· 想走 admin/target117.example.com:684 那个 eval，必须另找**能把 `${...}` 原样写入 `data/style/*_css.htm` 的写入点**（风格包 zip 导入解压 / 任意文件写 / SQL OUTFILE）。不要指望在后台 CSS 编辑框里直接填 payload。
+· 想走 admin/cache.php:684 那个 eval，必须另找**能把 `${...}` 原样写入 `data/style/*_css.htm` 的写入点**（风格包 zip 导入解压 / 任意文件写 / SQL OUTFILE）。不要指望在后台 CSS 编辑框里直接填 payload。
 
 ## 三、example.com?H_name= 看似 LFI —— 实为白名单锁死
 ```php

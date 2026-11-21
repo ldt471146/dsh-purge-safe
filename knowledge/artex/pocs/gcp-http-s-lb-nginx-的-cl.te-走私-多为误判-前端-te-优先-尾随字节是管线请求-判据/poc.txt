@@ -1,0 +1,16 @@
+# 结论
+「GCP LB → nginx」上看到的 CL.TE 现象，绝大多数是前端 TE 优先 + HTTP/1.1 流水线，不是请求走私。
+
+# 证据（task#614, 2026-11-04）
+- 复现：外层 POST /IOSDownload_2/ios.plist Host: down.i663r4.com + CL + TE: chunked，body = "0\r\n\r\n" + 内嵌 GET → 502 + 206（真实 plist）。两 IP（34.49.31.132 / 136.110.243.85）均复现。
+- 决定性：内嵌 POST 不带 CL → 第二段为 HTTP/1.0 411，正文 "POST requests require a <code>Content-length</code> header."（GFE 模板，286B），说明尾随请求由前端解析。
+- 方法/路径/vhost：走私 POST/PUT → 502（源站断连，无写入）；/.env → 502、/web.config → 404（与直连一致）；Host: mpadmin + /apk/<精确文件名> → 206（直连也 206）。
+- 队列：A 连接发走私、B 连接独立 GET → B 收到自己的缓存对象（ETag 6a544a0f-510, Age 4028），无串包。
+
+# 判据速查
+1. tail = POST 无 CL：得前端 411 页 → 前端解析，假走私。
+2. tail = 源站模板错误（Microsoft-IIS / nginx 模板、HTTP/1.1）→ 才可能是真走私。
+3. 跨连接投毒必须用两条自有连接验证；只看到自己连接上的第二段响应不算投毒。
+
+# 启发
+GCP GFE 对 TE+CL 共存按 RFC 处理（TE 优先）且做请求规范化；当首请求被源站断连（非 GET/HEAD → 502）时，同连接后续流水线请求仍会被处理，容易被误读成「源站执行了夹带请求」。

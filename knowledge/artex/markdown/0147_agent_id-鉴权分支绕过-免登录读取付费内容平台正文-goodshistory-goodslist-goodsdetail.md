@@ -69,7 +69,7 @@ def call(base, path, data, pace=0.4, **kw):
     h.update(kw)
     time.sleep(pace)
     try:
-        r = target9.example.com(base + path, data=data, headers=h, timeout=15, verify=False)
+        r = requests.post(base + path, data=data, headers=h, timeout=15, verify=False)
         try:
             return r.status_code, r.json()
         except Exception:

@@ -7,9 +7,9 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 厂商情报与部署路径：从 example.com 公开帮助页（help_wizard.html/help_cmwall.html）与公开 launcher.sh 读取（HTTP 200）。二进制证据：公开 release example.com wizard.tar.gz（19,628,097B，HTTP 200）解包得 wizard（3,439,708B, ELF x86-64, UPX），upx -d 解包为 8,810,680B，字符串中命中 os/exec.Command/StartProcess、裸 `sh`(95)/`-c`(3)（/bin/sh、bash 均 0）与多条 shell 命令模板（`cd run && date >> service_&lt;name&gt;.log 2>&1 && exec ../bin/cmwall -l &lt;license&gt; -q &lt;queue_num&gt;`、`/service_update_301multi; iptables -D OUTPUT -j … -j NFQUEUE --queue-num …` 等）。同一面板在靶标 203.0.113.111:38888 上已实测：零凭据可读全部服务配置（含 License 明文与内网 bind_ip 10.0.0.165）、未授权写真实生效且可完整回滚（改 name 标签→读回变化→回滚后 SHA256 逐字节还原）、可远程新建并启停自建服务；命令注入本身因目标出网受限（target319.example.com/target300.example.com 双通道 0 回连）尚未完成端到端验证。
+- **verified_note**: 厂商情报与部署路径：从 example.com 公开帮助页（help_wizard.html/help_cmwall.html）与公开 launcher.sh 读取（HTTP 200）。二进制证据：公开 release example.com wizard.tar.gz（19,628,097B，HTTP 200）解包得 wizard（3,439,708B, ELF x86-64, UPX），upx -d 解包为 8,810,680B，字符串中命中 os/exec.Command/StartProcess、裸 `sh`(95)/`-c`(3)（/bin/sh、bash 均 0）与多条 shell 命令模板（`cd run && date >> service_&lt;name&gt;.log 2>&1 && exec ../bin/cmwall -l &lt;license&gt; -q &lt;queue_num&gt;`、`/service_update_301multi; iptables -D OUTPUT -j … -j NFQUEUE --queue-num …` 等）。同一面板在靶标 203.0.113.111:38888 上已实测：零凭据可读全部服务配置（含 License 明文与内网 bind_ip 10.0.0.165）、未授权写真实生效且可完整回滚（改 name 标签→读回变化→回滚后 SHA256 逐字节还原）、可远程新建并启停自建服务；命令注入本身因目标出网受限（webhook.site/dnslog.cn 双通道 0 回连）尚未完成端到端验证。
 - **path**: pocs/cmwall-过移动墙-wizard-面板-静态分析速查-命令注入实现基础-含厂商公开包-部署路径-注入验证要点/cmwall_wizard_static_analysis.md
-- **tags**: cmwall,target318.example.com,wizard,过移动墙,命令注入,UPX,面板,红队
+- **tags**: cmwall,655665.xyz,wizard,过移动墙,命令注入,UPX,面板,红队
 - **created_at**: 2026-10-10T20:51:44.574Z
 
 ## 描述
@@ -19,7 +19,7 @@ cmwall「过移动墙」wizard 面板的静态分析速查：厂商公开分发�
 ## 正文
 
 ```
-# cmwall / target318.example.com 「服务设置向导面板」wizard 静态分析速查（复用）
+# cmwall / 655665.xyz 「服务设置向导面板」wizard 静态分析速查（复用）
 # 目标特征：38888 端口、首页 372B「本面板默认用户名和密码都为空」、/service_manage.html 直接 200
 
 ## 0. 厂商情报（公开，只读）
@@ -32,12 +32,12 @@ cmwall「过移动墙」wizard 面板的静态分析速查：厂商公开分发�
 面板源码片段: js301tohttps.go（同仓库，公开；只解析 -laddr/-cwait，无 shell 无文件操作）
 
 ## 1. 面板部署事实（由 launcher.sh + help_wizard.html 得来，判断"打到哪里/读什么")
-安装目录:   /opt/target318.example.com
-版本目录:   /opt/target318.example.com/<版本>/panel（当前 example.com）
+安装目录:   /opt/655665.xyz
+版本目录:   /opt/655665.xyz/<版本>/panel（当前 example.com）
 配置:       wizard.config.json → { ListenAddr, Username, Password, ProbeIPv4URL, ProbeIPv6URL,
                                   DatabasePath, ChainPrefix }
-数据:       /opt/target318.example.com/database/database.json   ← 服务/授权配置库（拿到 shell 的第一读取目标）
-启动:       nohup ./wizard wizard.config.json ；一键脚本安装到 /opt/target318.example.com/startup.sh
+数据:       /opt/655665.xyz/database/database.json   ← 服务/授权配置库（拿到 shell 的第一读取目标）
+启动:       nohup ./wizard wizard.config.json ；一键脚本安装到 /opt/655665.xyz/startup.sh
 默认:       0.0.0.0:8080（本靶标被改成 38888）且 Username/Password 为空 → 未授权读写
 服务二进制: panel/../bin/{cmwall,cmwallhttp,geneva,js301,js301tohttps,real301,real301multi}
 

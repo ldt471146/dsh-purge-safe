@@ -1,10 +1,8 @@
 ---
 name: browser-automation
-description: 【侦察】无依赖驱动 Chrome/Chromium 抓取 JS 渲染页面、截图、执行 JS、抓接口清单（headless 兜底 + playwright-cli）
+description: 无依赖驱动 Chrome/Chromium 抓取 JS 渲染页面、截图、执行 JS、抓接口清单（headless 兜底 + playwright-cli）
 whenToUse: 需要渲染 SPA / 取 JS 生成的内容 / 截图留证 / 批量抓页面时（Kimi 扩展不可用时首选）
 role: recon
-category: 侦察
-tags: [browser, js, screenshot]
 enabled: true
 ---
 
@@ -80,5 +78,5 @@ $PW -s=recon1 close                                                   # 关闭�
 
 ## 注意事项
 - `--no-sandbox` 仅在本机演练环境使用；不要把该参数带进生产。
-- 抓到的 URL/标题写回 `redteam_asset_add`（`url`/`title` 字段），接口清单写 `runs/` 并在资产 `test`/`surface` 里引用。
+- 抓到的 URL/标题写回 `redteam_asset_add`（`url`/`title` 字段），接口清单写 `runs/` 并在攻击链里引用。
 - 截图与页面内容可能含敏感数据，只落 `runs/`，不要写进资产库。

@@ -17,5 +17,5 @@
 ## 用法
 
 ```
-复用判据：1) 先用 GET /melody/actuator 看 media type 定 Spring Boot 世代；2) Shiro 存在性用 `Cookie: rememberMe=1` 看 Set-Cookie 是否 deleteMe（务必带一个已知有 Shiro 的目标做阳对照）；3) 判断是否值得打 Spring4Shell/CVE-2018-1273：用 form-urlencoded 提交业务字段，若返回「参数校验未通过」而 JSON 能进业务，即无 @ModelAttribute 绑定，直接放弃；4) Fastjson 判别：发 {"@type":"target297.example.com.Inet4Address","val":"<rand>.<dnslog域名>"}，被当未知字段忽略与空 body 同响应即 Jackson；5) dnslog 必须用同一 Session 取域名并轮询，否则 getrecords 恒空（本坑已踩）。
+复用判据：1) 先用 GET /melody/actuator 看 media type 定 Spring Boot 世代；2) Shiro 存在性用 `Cookie: rememberMe=1` 看 Set-Cookie 是否 deleteMe（务必带一个已知有 Shiro 的目标做阳对照）；3) 判断是否值得打 Spring4Shell/CVE-2018-1273：用 form-urlencoded 提交业务字段，若返回「参数校验未通过」而 JSON 能进业务，即无 @ModelAttribute 绑定，直接放弃；4) Fastjson 判别：发 {"@type":"java.net.Inet4Address","val":"<rand>.<dnslog域名>"}，被当未知字段忽略与空 body 同响应即 Jackson；5) dnslog 必须用同一 Session 取域名并轮询，否则 getrecords 恒空（本坑已踩）。
 ```

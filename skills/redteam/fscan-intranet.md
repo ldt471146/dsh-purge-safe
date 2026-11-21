@@ -1,10 +1,8 @@
 ---
 name: fscan-intranet
-description: 【内网】fscan v2.2.1 内网综合扫描：存活探测、端口/服务识别、28 类弱口令爆破、未授权访问与高危漏洞（MS17-010/SMBGhost）、Redis 利用与 SOCKS5 隧道
+description: fscan v2.2.1 内网综合扫描：存活探测、端口/服务识别、28 类弱口令爆破、未授权访问与高危漏洞（MS17-010/SMBGhost）、Redis 利用与 SOCKS5 隧道
 whenToUse: 进入内网（跳板机/WebShell/socks5 隧道）后快速铺开资产面、找弱口令与未授权、把可达性变成可打点
 role: internal
-category: 内网
-tags: [internal, scan, credential]
 enabled: true
 ---
 
@@ -31,6 +29,8 @@ enabled: true
        $DSH_HOME/redteam/toolkit/fscan/fscan_linux_arm64
 VPS  : http://<你的VPS_IP>:9100/fscan                     （技能 vps-reverse-shell 的载荷目录）
 ```
+
+安装脚本只下载 linux/amd64 的 `fscan`。Windows 与 ARM 文件需自行补上；当前平台只用上面的主文件。
 
 **传到跳板机/目标**（内网扫描必须在能到达内网的位置执行）：
 
@@ -191,7 +191,7 @@ redteam_asset_add  { engagement, ip, port, service, banner }   # 或 asset_link 
 # 爆破/未授权成功的凭据与访问
 redteam_credential_add { engagement, host, username, secret_type, secret_ref: "runs/fscan-<段>.txt" }
 redteam_access_add     { engagement, host, username, method: "ssh", privilege, session_ref }
-# 确认的漏洞（request/response 或等价证据）
+# 确认的漏洞（必须配 http_evidence 或等价证据）
 redteam_vuln_add   { engagement, target, name: "Redis 未授权访问", severity: "high", evidence_ref }
 ```
 

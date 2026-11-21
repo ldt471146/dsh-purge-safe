@@ -53,7 +53,7 @@ curl.exe -k -sS --noproxy "*" -m 25 -o outlook.html "$B/tools/outlook-mail"
 curl.exe -k -sS --noproxy "*" -m 25 -X POST -H 'Content-Type: application/json' -A "$UA" \
   --data-binary '{"email":"probe-nonexistent@outlook.com"}' "$B/api/outlook/remote-token"
 curl.exe -k -sS --noproxy "*" -m 25 -X POST -H 'Content-Type: application/json' -A "$UA" \
-  --data-binary '{"alias_email":"user@example.com","top":5,"skip":0}' "$B/api/open/icloud/alias/emails"
+  --data-binary '{"alias_email":"probe-nonexistent@icloud.com","top":5,"skip":0}' "$B/api/open/icloud/alias/emails"
 curl.exe -k -sS --noproxy "*" -m 25 -X POST -H 'Content-Type: application/json' -A "$UA" \
   --data-binary '{"code":"PROBE0000","top":5,"skip":0}' "$B/api/open/temp-mail/inbox"
 

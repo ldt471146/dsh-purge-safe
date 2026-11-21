@@ -21,7 +21,7 @@
 ## 用法
 
 ```
-1) 源站 203.0.113.86 对我方出口 L4 黑洞时，先跑 `python dysaas_agent_client.py edges`，从 CNAME 链（target292.example.com）的多解析器 A/AAAA 里穷举边缘 IP，实测仍放行的（本次为 203.0.113.48 / 203.0.113.93），后续所有请求固定 SNI+Host 打到该边缘。
+1) 源站 203.0.113.86 对我方出口 L4 黑洞时，先跑 `python dysaas_agent_client.py edges`，从 CNAME 链（letebeto.ccname.org）的多解析器 A/AAAA 里穷举边缘 IP，实测仍放行的（本次为 203.0.113.48 / 203.0.113.93），后续所有请求固定 SNI+Host 打到该边缘。
    2) 请求口径：路径必须双写 /agent/agent/api/v1/...；Accept: application/vnd.dysaas.v1+json 才路由到代理后台；POST 体必须 {"param":{...}}；代理后台 Authorization 用**裸 token（无 Bearer）**。
    3) 口令加密：AES-CBC，key=iv=b'pigxpigxpigxpigx'，Pkcs7，base64（encrypt("Sr960823") = 2w1KjdndZSyRb8h0Mt3GTQ==）。
    4) 同一批边缘也反代 example.com（/xxa 网关），主站侧被拉黑时同样可用本手法换边缘。
@@ -100,7 +100,7 @@ def aes_pkcs7(txt):
 def doh_ips():
     ips = set()
     for base in ('https://dns.google/resolve', 'https://dns.alidns.com/resolve'):
-        for name in ('target292.example.com', 'example.com', 'target293.example.com'):
+        for name in ('letebeto.ccname.org', 'example.com', 'sportagent.ptcxypzj.vip'):
             for rt in ('A', 'AAAA'):
                 try:
                     op = urllib.request.build_opener(urllib.request.ProxyHandler(

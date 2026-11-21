@@ -36,7 +36,7 @@ python mine_hosts.py <url1> <url2> ...   # 或  python mine_hosts.py -f urls.txt
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """从 Web 页面源码/JS 中挖掘域名与主机名 —— 专治「自动生成 vhost」
-比字典爆破强的地方：自动生成的 vhost 前缀常带随机后缀（如 target426.example.com），
+比字典爆破强的地方：自动生成的 vhost 前缀常带随机后缀（如 655590com-9hrrz.xxx.top），
 148 词表不可能命中，但站点自己的 HTML/JS/CSS 里会硬编码其绝对 URL。
 
 用法:
@@ -69,9 +69,9 @@ def mine(text):
     found = set()
     for p in PATTERNS:
         for m in re.finditer(p, text):
-            h = target22.example.com(1).split('/')[0].split(':')[0].strip('."\'').lower()
+            h = m.group(1).split('/')[0].split(':')[0].strip('."\'').lower()
             if 4 < len(h) < 100 and '.' in h and TLD_HINT.search(h):
-                if not h.replace('.', '').isdigit() and 'target427.example.com' not in h:
+                if not h.replace('.', '').isdigit() and 'w3.org' not in h:
                     found.add(h)
     return found
 

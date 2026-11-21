@@ -4,7 +4,7 @@
 
 <h1 align="center">⚔️ DeepSeek Harness cybersecurity red-team tool (dsh-purge-safe)</h1>
 
-<p align="center"><strong>Version 2.1.1</strong></p>
+<p align="center"><strong>Version 2.2.0</strong></p>
 
 <p align="center">
   <em>Full-featured edition + Super Agent support · DSH 0.2.2-rc.3 · Optimized prompts, fewer refusals, improved stability.</em>
@@ -46,6 +46,13 @@ Join our Telegram community to learn, exchange ideas, get technical support, and
 ---
 
 ## Latest updates
+
+**2.2.0 — ARTEX 0.4.5 + version picker**
+
+- Bundled **ARTEX knowledge base 0.4.5**: 575 server rows merged with the shipped 0.4.4 set (**720 rows in the package**, 829 after merging into an existing install), bodies backfilled so **no entry is blank**, and the **FTS index is rebuilt on merge** (it used to carry only a couple of dozen rows).
+- **525 POC directories** from 0.4.5 merged into `knowledge/artex/pocs` (679 dirs shipped), index CSV regenerated.
+- **Skills synced to 0.4.5**: 57 flat skills + **627 directory skill packs** (684 total) — adds `hunter-recon`, `scopesentry`, `chains-*`, `memshell-fallback`, `tunnel-selection` and the `_domains` packs.
+- **Version-selective self-update**: click the version tag in the console top bar to list remote tags/branches, pick any of them and install; `redteam_plugin_update` exposes the same to the agent. Installs overlay the plugin directory only, snapshot the old tree to `$DSH_HOME/dsh-purge-safe/pre-update-*`, and never restart the host or re-patch it. The old `SEALED` "updates disabled" stub is gone.
 
 **2.1.1 — skills & knowledge bundle**
 

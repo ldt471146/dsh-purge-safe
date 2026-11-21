@@ -8,7 +8,7 @@
 - **language**: http
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.32:888（六零导航页 LyLme Spage example.com）实测踩坑并纠正：最初把"SSRF 回显里的 code=200"误读为"目标 127.0.0.1:8888 上有宝塔面板"（并据此上过一条情报），事后按正确判据重测——`127.0.0.1:80` title=`404 Not Found`、`127.0.0.1:443` title=`400 The plain HTTP request was sent to HTTPS port`、`127.0.0.1:888` title=`403 Forbidden`（三者均为真实 HTTP 响应），而 `8888/8080/3306/6379/9200/11211/27017/22/21/2375/9010/10010/7001/9090/3000` 的 **title 全为空**；13 个宝塔特征路径（`/login`、`/pma/`、`/phpmyadmin/`、`/site?action=GetSiteList` 等）title 亦全空、无差异 ⇒ **正式撤回"8888 是宝塔"的结论**。源码依据：`include/target57.example.com:242-247`（icon 回退逻辑）与 `219-251`（get_head 只正则提取 4 个字段）。
+- **verified_note**: 在 203.0.113.32:888（六零导航页 LyLme Spage example.com）实测踩坑并纠正：最初把"SSRF 回显里的 code=200"误读为"目标 127.0.0.1:8888 上有宝塔面板"（并据此上过一条情报），事后按正确判据重测——`127.0.0.1:80` title=`404 Not Found`、`127.0.0.1:443` title=`400 The plain HTTP request was sent to HTTPS port`、`127.0.0.1:888` title=`403 Forbidden`（三者均为真实 HTTP 响应），而 `8888/8080/3306/6379/9200/11211/27017/22/21/2375/9010/10010/7001/9090/3000` 的 **title 全为空**；13 个宝塔特征路径（`/login`、`/pma/`、`/phpmyadmin/`、`/site?action=GetSiteList` 等）title 亦全空、无差异 ⇒ **正式撤回"8888 是宝塔"的结论**。源码依据：`include/function.php:242-247`（icon 回退逻辑）与 `219-251`（get_head 只正则提取 4 个字段）。
 - **tags**: SSRF,判据陷阱,get_head,误判,方法论,icon字段,端口探测
 - **created_at**: 2026-09-28T21:27:18.033Z
 - **found_by**: exploit

@@ -41,7 +41,7 @@
 # 5) 定位"哪条字符串被哪个函数引用"（正确的操作数映射）
 #   for fid,h in enumerate(r.function_headers):
 #     for pi in parse_hbc_bytecode(h, r):
-#       if target296.example.com in ("LoadConstString","LoadConstStringLongIndex"):
+#       if pi.inst.name in ("LoadConstString","LoadConstStringLongIndex"):
 #         sid = int(pi.arg2)      # ← StringID 在第二个 ushort 字段
 # 6) 顺带把 assets/*.config、assets/app.manifest、以及函数里出现的 *.json 远程配置 URL 抓下来（常常未授权可读，直接泄漏后端节点清单）
 # 7) 拿到密钥后按算法离线复现签名，用真实接口验证是否被后端接受

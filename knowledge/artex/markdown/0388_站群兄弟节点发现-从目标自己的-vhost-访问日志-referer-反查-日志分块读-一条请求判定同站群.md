@@ -8,7 +8,7 @@
 - **language**: php
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 203.0.113.101（经 FastCGI 越权获得 open_basedir=/ 的任意文件读）实测：从 /www/wwwlogs 的 11 个 vhost 日志（最大 3.65GB）抽出 1808 个唯一域名 / 219 个运营方二级域；批量解析后定位到 5 台全新节点（203.0.113.132/.156/.166、203.0.113.69、203.0.113.135，另 203.0.113.68、203.0.113.66），全部满足 200/3B "502" 判据；并确认 target413.example.com、target407.example.com、target414.example.com 等由 176 在服（341485B 天花板）。
+- **verified_note**: 在 203.0.113.101（经 FastCGI 越权获得 open_basedir=/ 的任意文件读）实测：从 /www/wwwlogs 的 11 个 vhost 日志（最大 3.65GB）抽出 1808 个唯一域名 / 219 个运营方二级域；批量解析后定位到 5 台全新节点（203.0.113.132/.156/.166、203.0.113.69、203.0.113.135，另 203.0.113.68、203.0.113.66），全部满足 200/3B "502" 判据；并确认 www.202604514.xyz、zsm1girvry.de59cubc2w.xyz、www.202519211.xyz 等由 176 在服（341485B 天花板）。
 - **path**: pocs/站群兄弟节点发现-从目标自己的-vhost-访问日志-referer-反查-日志分块读-一条请求判定同站群/recon_vhost_referer_sibling_discovery.php
 - **tags**: 站群,信息收集,Referer,vhost日志,兄弟节点,DNS,指纹
 - **created_at**: 2026-10-13T12:47:48.269Z
@@ -90,11 +90,11 @@ GET /example.com?g=Home&m=Article&a=edit_cont&id=5   无凭据
      203.0.113.68 / 203.0.113.69 / 203.0.113.66
      203.0.113.135
 ⑤ 域名生成规律（可直接用来预测未公开节点）：
-     <品牌前缀+随机盐>.<随机10位>.xyz      例 target407.example.com、target408.example.com
+     <品牌前缀+随机盐>.<随机10位>.xyz      例 zsm1girvry.de59cubc2w.xyz、thbac3dsua6v.vrhsufccqu.xyz
      sdfjdsfd-{1,2,3}.<202xxxxxx>.xyz      序号型，数量最大
      tianzs-{1,2,3}.<2026xxxxx>.xyz
-     target409.example.com
-     <品牌>.one/target410.example.com、mp.<域>      （target411.example.com / target412.example.com 全解析到同一 IP）
+     thb-0X.eos-daohang-X.thb2025xxx.xyz
+     <品牌>.one/tow.thb6.top、mp.<域>      （thb6.top / t6hb.top 全解析到同一 IP）
      短跳转页：<任意 .xyz> 返回 90 字节 <script>window.location.href="https://<后台域>/#<品牌代号>#"</script>
               ⇒ **一个 90 字节页面就把"这个域名属于哪个品牌"告诉我们了**
 ```

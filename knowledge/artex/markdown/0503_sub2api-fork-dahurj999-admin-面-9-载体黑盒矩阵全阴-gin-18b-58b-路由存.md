@@ -6,9 +6,9 @@
 - **component**: Sub2API (Wei-Shaw/sub2api) fork / gin / Photon-Edge
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-03 04:0x 对 https://target485.example.com 实测：39 发矩阵（7 路由 × noauth/userJWT/adm_sc_test/小写bearer/空key+JWT/WS子协议/错key+JWT/OPTIONS/尾斜杠）+14 发额外载体，全部 401/403（仅尾斜杠 301）；阳性对照 /api/v1/user/profile 带 user1013 JWT 返 200/2957B。同一 oracle 反向校准成功（/api/v1/admin/backups/export→401 存在，/api/v1/admin/backup→404|18 不存在）。产物 D:/ARTEX/data/tasks/612/i7800/SUMMARY.txt、i7825/{extra,exist,jwtprobe}.txt。
+- **verified_note**: 2026-11-03 04:0x 对 https://www.dahurj999.top 实测：39 发矩阵（7 路由 × noauth/userJWT/adm_sc_test/小写bearer/空key+JWT/WS子协议/错key+JWT/OPTIONS/尾斜杠）+14 发额外载体，全部 401/403（仅尾斜杠 301）；阳性对照 /api/v1/user/profile 带 user1013 JWT 返 200/2957B。同一 oracle 反向校准成功（/api/v1/admin/backups/export→401 存在，/api/v1/admin/backup→404|18 不存在）。产物 D:/ARTEX/data/tasks/612/i7800/SUMMARY.txt、i7825/{extra,exist,jwtprobe}.txt。
 - **created_at**: 2026-11-02T20:05:31.499Z
-- **engine**: https://target485.example.com
+- **engine**: https://www.dahurj999.top
 
 ## 描述
 

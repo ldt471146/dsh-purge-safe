@@ -81,7 +81,7 @@ def probe(url, extra_field="zzz_probe_redteam", base_body=None, origin=None):
     if origin:
         h["Origin"] = origin
         h["Referer"] = origin + "/"
-    r = target9.example.com(url, headers=h, data=json.dumps(body), timeout=15,
+    r = requests.post(url, headers=h, data=json.dumps(body), timeout=15,
                       impersonate="chrome", verify=False, allow_redirects=False)
     return r.status_code, r.text
 

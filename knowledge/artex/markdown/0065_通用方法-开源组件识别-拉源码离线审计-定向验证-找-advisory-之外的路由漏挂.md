@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-09-28 在该靶标实操有效：① codeload tarball 拉 new-api target1.example.com 成功（3.6MB / 1.3s），而 `git clone --depth 1` 两次均卡在 `fetch-pack: unexpected disconnect` / `early EOF`；② 靠该法在 `router/target36.example.com:208-210` 找到 `GET /image/:id` 注册在 `.Use(TokenAuth())` 之前，**并在目标上实测 `/probe-e5/mj/image/1` → 400 midjourney_task_not_found 确认通配变体同样免认证**；③ 靠 `middleware/header_nav.go:17-37` 解释了 `/api/pricing`、`/api/rankings`、`/api/perf-metrics/*` 匿名可读是「空配置回退 RequireAuth:false」的设计公开而非绕过；④ 靠读 `controller/target35.example.com:357-429` 与 `model/target35.example.com:241` 纠正了两个错误前提，并发现「普通用户可自设 unlimited_quota」的计费绕过缺陷（vuln_id=26, candidate）。
+- **verified_note**: 2026-09-28 在该靶标实操有效：① codeload tarball 拉 new-api v1.0.0-example.com 成功（3.6MB / 1.3s），而 `git clone --depth 1` 两次均卡在 `fetch-pack: unexpected disconnect` / `early EOF`；② 靠该法在 `router/relay-router.go:208-210` 找到 `GET /image/:id` 注册在 `.Use(TokenAuth())` 之前，**并在目标上实测 `/probe-e5/mj/image/1` → 400 midjourney_task_not_found 确认通配变体同样免认证**；③ 靠 `middleware/header_nav.go:17-37` 解释了 `/api/pricing`、`/api/rankings`、`/api/perf-metrics/*` 匿名可读是「空配置回退 RequireAuth:false」的设计公开而非绕过；④ 靠读 `controller/token.go:357-429` 与 `model/token.go:241` 纠正了两个错误前提，并发现「普通用户可自设 unlimited_quota」的计费绕过缺陷（vuln_id=26, candidate）。
 - **path**: pocs/通用方法-开源组件识别-拉源码离线审计-定向验证-找-advisory-之外的路由漏挂/poc.sh
 - **tags**: 源码审计,中间件,漏挂认证,gin,new-api,codeload,方法论
 - **created_at**: 2026-09-28T15:06:39.892Z
@@ -31,7 +31,7 @@
 
 ## 第 0 步：先识别组件与精确版本（不要猜）
 - 响应头 / 前端资源哈希 / 错误页 / `/api/status` 之类的指数字段。
-- 例：New API 的 `X-New-Api-Version: target1.example.com`（`curl -sS -k -D - -o /dev/null https://<host>/api/status | grep -i x-new-api-version`）。
+- 例：New API 的 `X-New-Api-Version: v1.0.0-example.com`（`curl -sS -k -D - -o /dev/null https://<host>/api/status | grep -i x-new-api-version`）。
 
 ## 第 1 步：拿到对应版本源码（**不要用 git clone，改用 codeload tarball**）
 ```bash
@@ -63,7 +63,7 @@ grep -nE '(^\s*(self|admin|router|Group|Route)|\.Use\(|GET|POST|PUT|DELETE|PATCH
 
 ## 第 4 步：源码里的“隐藏捷径与假前提”
 - 列表接口脱敏 **≠** 拿不到明文：找有没有**专用取明文接口**（New API 的 `POST /api/token/:id/key` → `GetFullKey()`）。
-- “凭据正确但被拒”要读校验函数定位真因：New API 的 `model/target35.example.com:241` 把 `!UnlimitedQuota && RemainQuota<=0` 判成 `ErrTokenInvalid` ⇒ 看起来像 token 无效，其实只是额度为 0。
+- “凭据正确但被拒”要读校验函数定位真因：New API 的 `model/token.go:241` 把 `!UnlimitedQuota && RemainQuota<=0` 判成 `ErrTokenInvalid` ⇒ 看起来像 token 无效，其实只是额度为 0。
 - 顺着“能改自己”的写接口找**越权/提权**：`PUT /api/token/` 仅挂 UserAuth，且 `unlimited_quota=true` 时跳过额度校验 ⇒ 普通用户自设无限额度（计费绕过）。
 - 汇报纪律：**源码审出但未在目标验证的一律 `status=candidate` + `source=源码审计` + evidence 写清文件:行号与函数**；已实测的才 `confirmed`，并配原始请求。
 ```

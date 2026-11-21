@@ -14,7 +14,7 @@
 
 ## 描述
 
-PHPWind 7.x 全局入参清洗的真实边界，直接决定 payload 怎么写。target116.example.com:53-61 对 $_POST 逐键调用 CheckVar，但 atc_content / atc_title / prosign / pwuser / pwpwd 这 5 个键名被显式豁免；$_GET 则无豁免全量清洗。CheckVar（require/target105.example.com:667-679）把 ) → &#41;、= → &#61;、< → &#60;、.. → &#46;&#46;，左括号 ( 不转义。Char_cv（646-666）把 " ' < > 转成 HTML 实体并折叠制表符/双空格。结论：payload 里不能出现右括号与等号，除非把内容放进上述 5 个 POST 白名单字段；$ { } ( [ ] ; . / : _ @ 全部可通过。
+PHPWind 7.x 全局入参清洗的真实边界，直接决定 payload 怎么写。global.php:53-61 对 $_POST 逐键调用 CheckVar，但 atc_content / atc_title / prosign / pwuser / pwpwd 这 5 个键名被显式豁免；$_GET 则无豁免全量清洗。CheckVar（require/common.php:667-679）把 ) → &#41;、= → &#61;、< → &#60;、.. → &#46;&#46;，左括号 ( 不转义。Char_cv（646-666）把 " ' < > 转成 HTML 实体并折叠制表符/双空格。结论：payload 里不能出现右括号与等号，除非把内容放进上述 5 个 POST 白名单字段；$ { } ( [ ] ; . / : _ @ 全部可通过。
 
 ## 用法
 
@@ -33,7 +33,7 @@ PHPWind 7.x 全局入参清洗的真实边界，直接决定 payload 怎么写�
 ## 正文
 
 ```
-// target116.example.com:53-61  —— 所有前台请求必经
+// global.php:53-61  —— 所有前台请求必经
 foreach ($_POST as $_key => $_value) {
 	if (!in_array($_key,array('atc_content','atc_title','prosign','pwuser','pwpwd'))) {
 		CheckVar($_POST[$_key]);
@@ -43,7 +43,7 @@ foreach ($_GET as $_key => $_value) {
 	CheckVar($_GET[$_key]);        // GET 无豁免，全量
 }
 
-// require/target105.example.com:667-679
+// require/common.php:667-679
 function CheckVar(&$var) {
 	if (is_array($var)) {
 		foreach ($var as $key => $value) { CheckVar($var[$key]); }
@@ -55,7 +55,7 @@ function CheckVar(&$var) {
 }
 // 注意：只转义右括号 ) 与 = < ..，左括号 ( 保留。
 
-// require/target105.example.com:646-666  Char_cv（InitGP 默认 cvtype=1 会调用）
+// require/common.php:646-666  Char_cv（InitGP 默认 cvtype=1 会调用）
 '"'    → &quot;
 "'"    → &#39;
 "<"    → &lt;      ("%3C" 同样)
@@ -64,6 +64,6 @@ function CheckVar(&$var) {
 去掉 \0 %00 \r 与控制字符；$istrim=true 时先 trim
 // 保留：$ { } ( [ ] ; . / : _ @ 以及全部 ASCII 字母数字
 
-// target116.example.com:40-51 URL 重写模式（$_GET = $_NGET）发生在 CheckVar 之前，
+// global.php:40-51 URL 重写模式（$_GET = $_NGET）发生在 CheckVar 之前，
 // 所以重写出来的参数同样会被 CheckVar 处理，无法借此绕过。
 ```

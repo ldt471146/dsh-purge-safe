@@ -7,7 +7,7 @@
 - **language**: bash
 - **source**: self
 - **verified**: 1
-- **verified_note**: 在 tgt9942-com 靶标实测：`target62.example.com` 的 admin/netadmin/net/bwpc1 四子域全解析到 Cloudflare（203.0.113.70 / 203.0.113.21），而证书 CN `example.com` 直连 203.0.113.73；以 `Host: target65.example.com` 请求 http://203.0.113.73/ 得到 **200 / 15102 字节** 的完整 ASP.NET MVC 博彩平台首页（含 X-AspNetMvc-Version: 5.2 指纹），而未注册 Host 一律返回 HTTP.sys 裸 404（315 字节）。全过程直连源站，未经过 Cloudflare，零封禁。
+- **verified_note**: 在 449918-com 靶标实测：`ng-api.vip` 的 admin/netadmin/net/bwpc1 四子域全解析到 Cloudflare（203.0.113.70 / 203.0.113.21），而证书 CN `example.com` 直连 203.0.113.73；以 `Host: net.ng-api.vip` 请求 http://203.0.113.73/ 得到 **200 / 15102 字节** 的完整 ASP.NET MVC 博彩平台首页（含 X-AspNetMvc-Version: 5.2 指纹），而未注册 Host 一律返回 HTTP.sys 裸 404（315 字节）。全过程直连源站，未经过 Cloudflare，零封禁。
 - **path**: pocs/从-tls-证书-cn-反查不走-cdn-的子域-源站-ip-泄露-绕过-cloudflare-含-http.sys-host-头路由命中技巧/origin-ip-leak-via-cert-cn.md
 - **tags**: recon,cloudflare,源站泄露,http.sys,host头路由,cert-cn
 - **created_at**: 2026-09-28T22:41:39.408Z
@@ -46,8 +46,8 @@ nmap -Pn -sT -n -sV -p 443,8443 --script ssl-cert <IP>
 
 ### 2) 子域枚举，找出所有子域
 ```bash
-subfinder -d target62.example.com -all -silent
-subfinder -d target62.example.com -silent | dnsx -a -resp     # 有 dnsx 时
+subfinder -d ng-api.vip -all -silent
+subfinder -d ng-api.vip -silent | dnsx -a -resp     # 有 dnsx 时
 ```
 
 ### 3) 逐个解析，比对解析结果 —— 找出不走 CDN 的那个
@@ -57,17 +57,17 @@ Get-Content subs.txt | ForEach-Object { $d=$_; $r=(Resolve-DnsName -Name $d -Typ
 判据：**解析到 Cloudflare 段（172.67.x / 104.21.x / 104.16-31.x / 188.114.x）的是走 CDN 的；
 解析到目标自有网段/其它 IP 的 = 源站**。本例结果：
 ```
-target63.example.com      -> 203.0.113.70,203.0.113.21   ← Cloudflare
-target64.example.com   -> 203.0.113.70,203.0.113.21   ← Cloudflare
-target65.example.com        -> 203.0.113.70,203.0.113.21   ← Cloudflare
-target66.example.com      -> 203.0.113.21,203.0.113.70   ← Cloudflare
+admin.ng-api.vip      -> 203.0.113.70,203.0.113.21   ← Cloudflare
+netadmin.ng-api.vip   -> 203.0.113.70,203.0.113.21   ← Cloudflare
+net.ng-api.vip        -> 203.0.113.70,203.0.113.21   ← Cloudflare
+bwpc1.ng-api.vip      -> 203.0.113.21,203.0.113.70   ← Cloudflare
 example.com -> 203.0.113.73  ← ⭐ 直连，源站泄露
 ```
 
 ### 4) 用泄露的子域 IP 作为“源站 IP”，绕过 CDN/WAF 直连
 ```bash
 curl.exe -s -k -o NUL -w "%{http_code}|%{size_download}" \
-  -A "<Chrome UA>" -H "Host: target65.example.com" "http://203.0.113.73/"
+  -A "<Chrome UA>" -H "Host: net.ng-api.vip" "http://203.0.113.73/"
 # => 200|15102  ← 直连源站成功，绕过 Cloudflare
 ```
 
@@ -82,7 +82,7 @@ foreach($h in (Get-Content subs.txt)){
   curl.exe -s -o NUL -w "$h -> %{http_code}|%{size_download}`n" -A "<Chrome UA>" -H "Host: $h" "http://<源站IP>/"
 }
 ```
-本例命中：`Host: target65.example.com` → **200 / 15102 字节**（完整业务站首页），
+本例命中：`Host: net.ng-api.vip` → **200 / 15102 字节**（完整业务站首页），
 而 `admin`/`netadmin`/`bwpc1`/`app`/`mail` 全部 404。**HTTP.sys 上只注册了 net 这一个前缀**。
 
 ## 判据与坑

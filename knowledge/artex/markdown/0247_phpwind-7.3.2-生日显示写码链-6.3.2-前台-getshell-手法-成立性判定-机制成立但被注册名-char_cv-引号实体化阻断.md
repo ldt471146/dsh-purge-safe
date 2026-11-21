@@ -7,8 +7,8 @@
 - **versions**: PHPWind 6.3.2 前台 getshell（手法来源）；PHPWind 7.3.2 机制成立但被 Char_cv 阻断（结论）。Char_cv 的引号实体化自 7.x 起即存在，故 7.x 全系该链均死
 - **language**: http
 - **source**: web
-- **source_url**: https://target274.example.com/index.php/archives/777/
-- **verified_note**: 【情报角色零目标请求】。手法来源为公开博客（target274.example.com，6.3.2 实测有效）。7.3.2 的成立性判定为**源码级**：require/example.com 全文 27 行逐行读出（写入无转义、跨请求 include、功能默认开启 db_bdayautohide='1'）；阻断点 xinyin.php L160 的 InitGP 调用与 require/common.php L564-579/L603-623 的 Char_cv 清洗规则逐行核对。**未在目标上实测**（无需实测即可判定：Char_cv 必然执行，且为字节级 str_replace，宽字节亦无效）。
+- **source_url**: https://9bie.org/index.php/archives/777/
+- **verified_note**: 【情报角色零目标请求】。手法来源为公开博客（9bie.org，6.3.2 实测有效）。7.3.2 的成立性判定为**源码级**：require/example.com 全文 27 行逐行读出（写入无转义、跨请求 include、功能默认开启 db_bdayautohide='1'）；阻断点 xinyin.php L160 的 InitGP 调用与 require/common.php L564-579/L603-623 的 Char_cv 清洗规则逐行核对。**未在目标上实测**（无需实测即可判定：Char_cv 必然执行，且为字节级 str_replace，宽字节亦无效）。
 - **path**: pocs/phpwind-7.3.2-生日显示写码链-6.3.2-前台-getshell-手法-成立性判定-机制成立但被注册名-char_cv-引号实体化阻断/phpwind-birth-cache-writecode-verdict.md
 - **tags**: phpwind,7.3.2,生日缓存,brith_cache,写码,前台getshell,Char_cv,引号实体化,负面情报,6.3.2手法
 - **created_at**: 2026-10-06T18:15:56.647Z
@@ -28,8 +28,8 @@
 
 ```
 【待验证手法来源】
-target274.example.com「phpwind 6.3.2 前/后台 getshell」(2021-02-28)
-https://target274.example.com/example.com/archives/777/
+9bie.org「phpwind 6.3.2 前/后台 getshell」(2021-02-28)
+https://9bie.org/example.com/archives/777/
 原文要点：「如果后台开启了首页生日显示，那么就可以前台 getshell」——生日显示功能写 PHP 文件不过滤，
 注册用户名为 ';phpinfo();// 即绕过；因用户名长度限制，注册 5 个用户分段写 payload：
   ';$a="_GET";'
@@ -74,7 +74,7 @@ require/example.com 全文 27 行：
 
 【顺带：2006 年的宽字节注册提权手法，低优先级可试】
 80sec「Phpwind 所有版本管理权限泄露漏洞利用」(2006) 的手法：
-  regname=<目标管理员名>%c1&regpwd=@80sec&regpwdrepeat=@80sec&regemail=user@example.com&regemailtoall=1&step=2
+  regname=<目标管理员名>%c1&regpwd=@80sec&regpwdrepeat=@80sec&regemail=foo@foo.com&regemailtoall=1&step=2
 原理是 GBK 宽字节 + 用户名截断导致与管理员同名。该洞 2006 年公开，7.3.2（2009+）大概率已修；
 但成本仅 1 个包，且注册接口 register.php/xinyin.php 可用现成流程，可作为最后余量时的低优先级尝试。
 注意本靶标注册有 12 字节长度校验（注册 13B/18B 均回「注册名长度错误」，实测已知）。

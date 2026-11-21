@@ -8,11 +8,11 @@
 - **language**: markdown
 - **source**: self
 - **verified**: 1
-- **verified_note**: 2026-11-02 在 168six 站群源站 192.0.2.11 实测（finding#1215，finding_checks=verified）：会员会话下 up_photo 与 a_photo 两处都接受「200x200 真 PNG + 尾部 <?php system($_GET[c]) ?> + filename=a1.php」，均返回 200「上傳完成」，但页面 IMG SRC 虽硬编码 .php（/U/50/188350/1-135x135.php?4862、/A/188350/1-135x135.php?7440），GET 该 .php 均 404（body: The requested URL /cgi-bin/ad.cgi/U/50/188350/1-135x135.php was not found）；同路径换 .png 得 200 / image/png / 290B / 字节以 IEND 结束（PHP 尾已丢）。公开列表 ?PUT=a_show&TYPE=A 实见 /A/88609/1-200x200.png、/A/91861/1-200x200.jpg、/A/61443/1-200x200.JPG，证明落盘名=1-<w>x<h>.<真实图片扩展名>，上传文件名被丢弃。故判「上传成功但不可执行」成立。
+- **verified_note**: 2026-11-02 在 168six 站群源站 61.31.226.59 实测（finding#1215，finding_checks=verified）：会员会话下 up_photo 与 a_photo 两处都接受「200x200 真 PNG + 尾部 <?php system($_GET[c]) ?> + filename=a1.php」，均返回 200「上傳完成」，但页面 IMG SRC 虽硬编码 .php（/U/50/188350/1-135x135.php?4862、/A/188350/1-135x135.php?7440），GET 该 .php 均 404（body: The requested URL /cgi-bin/ad.cgi/U/50/188350/1-135x135.php was not found）；同路径换 .png 得 200 / image/png / 290B / 字节以 IEND 结束（PHP 尾已丢）。公开列表 ?PUT=a_show&TYPE=A 实见 /A/88609/1-200x200.png、/A/91861/1-200x200.jpg、/A/61443/1-200x200.JPG，证明落盘名=1-<w>x<h>.<真实图片扩展名>，上传文件名被丢弃。故判「上传成功但不可执行」成立。
 - **path**: pocs/sclub-168six-up_photo-a_photo-头像与直播台图标上传-.php-文件名被丢弃-gd-重编码裁/sclub_168six_upload_php_not_exec.md
 - **tags**: sclub,168six,头像上传,up_photo,a_photo,file-upload,gd重编码,扩展名丢弃,不可执行,php
 - **created_at**: 2026-11-02T09:32:37.746Z
-- **engine**: 192.0.2.11（target74.example.com 源站）
+- **engine**: 61.31.226.59（168six.six168.com 源站）
 
 ## 描述
 
@@ -35,7 +35,7 @@ SCLUB 免费论坛的会员头像（?PUT=up_photo）与直播台图标（?PUT=a_
 ```
 # 结论（先看这条，省一轮）
 
-SCLUB 免费论坛（168six 站群，源站 192.0.2.11，Apache 2.2.3 + PHP 5.1.6）的两个会员上传点
+SCLUB 免费论坛（168six 站群，源站 61.31.226.59，Apache 2.2.3 + PHP 5.1.6）的两个会员上传点
 `?PUT=up_photo`（头像）与 `?PUT=a_photo`（直播台图标）：
 
 - 接受 multipart 上传，接受 `filename=a1.php`，一律回 `200` +「上傳完成」；

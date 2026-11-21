@@ -119,7 +119,7 @@ def raw(method="GET", path="/", headers=None, body=None, host=None, extra=None, 
     return (hl[0] if hl else ""), hm, hraw.decode("latin-1", "replace"), braw
 
 if __name__ == "__main__":
-    CAN = "poc-" + uq(6) + ".target301.example.com"
+    CAN = "poc-" + uq(6) + ".evil.com"
     print("== 1. 找缓存层生效范围 ==")
     for p in ["/", "/example.com", "/robots.txt", "/favicon.ico", "/style.css", "/app.js"]:
         st, hm, hr, bd = raw(path=p)

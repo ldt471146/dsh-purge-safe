@@ -150,7 +150,7 @@ release_policy_unconfigured 服务端未配可信发布证书（该功能可能�
 await query('storage.list');
 action('保存新的 OSS 配置','storage.configure',{credentialSource:'ACCESS_KEY'},[
   field('region',         {placeholder:'cn-hangzhou',                       maxlength:40}),
-  field('endpoint',       {placeholder:'https://target341.example.com',maxlength:160}),  // ★ 可控 endpoint
+  field('endpoint',       {placeholder:'https://oss-cn-hangzhou.aliyuncs.com',maxlength:160}),  // ★ 可控 endpoint
   field('bucket',         {maxlength:63}),
   field('prefix',         {placeholder:'chat/v27/',                        maxlength:200}),  // ★ 目录前缀
   field('accessKeyId',    {maxlength:128}),
@@ -185,13 +185,13 @@ POST admin/query    attachment.read    {id, thumbnail:"true", offset:"<n>", limi
 {scope:'SUPPORT', conversationId:<会话id>}       // 客服会话
 {scope:'ROOM',    conversationId:<roomId>}       // 聊天室（chat.message 用）
 ```
-附件 ID 引用形态：`forum://<id>`（`target342.example.com`）
+附件 ID 引用形态：`forum://<id>`（`forum-example.com`）
 
 ★ 旧版图片存储桶（可直接访问，公开读）
 ```javascript
-export const IMAGE_HOSTS=['target343.example.com',
-                          'target344.example.com',
-                          'target345.example.com'];
+export const IMAGE_HOSTS=['lhzs-tk2.oss-cn-beijing.aliyuncs.com',
+                          'uploadpic-lhzs.oss-cn-beijing.aliyuncs.com',
+                          'lhzs-tk.oss-cn-beijing.aliyuncs.com'];
 // 缩略图在对象名后加 /midPic
 ```
 ⇒ **测这三个桶的 ACL（匿名 ListObject / PutObject）** —— 可写即存储型 XSS / 供应链投毒。
@@ -204,7 +204,7 @@ export const IMAGE_HOSTS=['target343.example.com',
 **用户**：`users.search` `users.password.reset` `users.edit` `users.messages` `users.violations` `users.devices` `users.restrict` `users.release` `users.record_unlock` `users.identity` `users.forum_unlock` `users.profile`
 　`users.restrict` payload：`{targetUserId, scope:'FORUM_SPEAK'|..., untilMs}`
 **财务**：`finance.read` `finance.write` `finance.adjust` `finance.reverse`(`{ledgerId}`)
-**提现**：`withdrawals.summary|workers|queue|records|stats`(q) `withdrawals.release`(`{id,claimToken,notTransferred:'true'}`) `withdrawals.release_stale`(`{id,notTransferred,reason,expectedClaimId}`) `withdrawals.operation`(`{operationId}`) `withdrawals.status` `withdrawals.complete_all` `withdrawals.acquire` `withdrawals.delegate` `withdrawals.workers.save` `withdrawals.correct` `target346.example.com` `withdrawals.note` `withdrawals.claim` `withdrawals.result` `withdrawals.legacy_decide`
+**提现**：`withdrawals.summary|workers|queue|records|stats`(q) `withdrawals.release`(`{id,claimToken,notTransferred:'true'}`) `withdrawals.release_stale`(`{id,notTransferred,reason,expectedClaimId}`) `withdrawals.operation`(`{operationId}`) `withdrawals.status` `withdrawals.complete_all` `withdrawals.acquire` `withdrawals.delegate` `withdrawals.workers.save` `withdrawals.correct` `withdrawals.review` `withdrawals.note` `withdrawals.claim` `withdrawals.result` `withdrawals.legacy_decide`
 **论坛/聊天/举报**：`forum.admin.posts`(q) `forum.admin.reported`(q) `forum.recycle`(q) `forum.delete`(`{id}`) `forum.restore` `forum.legacy.release` `chat.message`(`{scope:'ROOM',conversationId,messageId,deleted}`) `rooms.list`(q) `rooms.history`(`{roomId[,before]}`) `rooms.mute`(`{roomId,mode:'ALL'|'NONE'}`) `reports.read` `reports.reporter` `reports.manage` `reports.archive` `reports.detail`
 **客服**：`support.list`(q) `support.claim` `support.read` `support.close` `support.receive` `support.reply` `support.send`(`{conversationId,attachmentId}`) `support.images.save`(`{attachmentId,description}`) `support.images.send`(`{conversationId,imageId}`)
 **通知/短信/工单/权限**：`notice.publish`(`{category,title,body,link,audienceUserId,expiresDays}`) `notice.admin.list`(q) `sms.list`(q) `sms.issue` `sms.history.read` `sms.sensitive` `recovery.list`(q) `recovery.create` `roles.admins`(q) `roles.list`(q) `roles.manage` `roles.template` `audit.list`(q) `tickets.list`(q) `tickets.manage` `overview`(q) `operation.status`(q,`{operationId}`) `dashboard.read` `asset.withdrawal.apply`
@@ -212,7 +212,7 @@ export const IMAGE_HOSTS=['target343.example.com',
 **只读缓存白名单**（`example.com` 原文，确定可查）：
 `overview, withdrawals.summary, withdrawals.workers, withdrawals.queue, withdrawals.records, withdrawals.stats, tickets.list, support.list, forum.admin.posts, forum.admin.reported, forum.recycle, users.search, roles.admins, roles.list, audit.list, notice.admin.list, release.list, rooms.list, sms.list, recovery.list, routing.state, storage.accounts.list`
 
-**权限名全表**（`dom.js` 原文）：`dashboard.read users.read users.password.reset users.edit users.messages users.violations users.devices users.restrict finance.read finance.write finance.adjust reports.read reports.reporter reports.manage forum.manage recovery.read recovery.create sms.read sms.sensitive sms.issue audit.read roles.read roles.manage chat.rooms.manage chat.roles.manage chat.moderate chat.reports.manage support.queue support.claim support.read support.close support.receive support.reply storage.read storage.manage routing.read routing.edit routing.publish storage.accounts.read storage.accounts.manage routing.metrics.read withdrawals.read withdrawals.process withdrawals.manage withdrawals.delegate target346.example.com withdrawals.freeze withdrawals.correct withdrawals.claim withdrawals.result withdrawals.correction withdrawals.note withdrawals.legacy_decide users.profile users.release users.record_unlock users.identity users.forum_unlock forum.delete forum.restore reports.archive withdrawals.workers.save withdrawals.status withdrawals.complete_all withdrawals.acquire sms.history.read routing.preview routing.save routing.accounts.save`
+**权限名全表**（`dom.js` 原文）：`dashboard.read users.read users.password.reset users.edit users.messages users.violations users.devices users.restrict finance.read finance.write finance.adjust reports.read reports.reporter reports.manage forum.manage recovery.read recovery.create sms.read sms.sensitive sms.issue audit.read roles.read roles.manage chat.rooms.manage chat.roles.manage chat.moderate chat.reports.manage support.queue support.claim support.read support.close support.receive support.reply storage.read storage.manage routing.read routing.edit routing.publish storage.accounts.read storage.accounts.manage routing.metrics.read withdrawals.read withdrawals.process withdrawals.manage withdrawals.delegate withdrawals.review withdrawals.freeze withdrawals.correct withdrawals.claim withdrawals.result withdrawals.correction withdrawals.note withdrawals.legacy_decide users.profile users.release users.record_unlock users.identity users.forum_unlock forum.delete forum.restore reports.archive withdrawals.workers.save withdrawals.status withdrawals.complete_all withdrawals.acquire sms.history.read routing.preview routing.save routing.accounts.save`
 
 ════════════════════════════════════════
 ## 七、为什么 v27 字段名必须从管理台 JS 取，不要反编译 APK

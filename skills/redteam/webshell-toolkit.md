@@ -1,10 +1,8 @@
 ---
 name: webshell-toolkit
-description: 【访问】冰蝎 / 哥斯拉 / 中国蚁剑 的启动与用法，用于上传并管理 WebShell、维持访问、操作目标服务器
+description: 冰蝎 / 哥斯拉 / 中国蚁剑 的启动与用法，用于上传并管理 WebShell、维持访问、操作目标服务器
 whenToUse: 已获得上传点/文件写入/命令执行，需要落地并操作 WebShell 时
 role: exploit
-category: 访问
-tags: [webshell, behinder, godzilla]
 enabled: true
 ---
 
@@ -18,20 +16,6 @@ enabled: true
 - **默认只落地冰蝎马（Behinder）或哥斯拉马（Godzilla）的加密马**，并把 `shell_type` + `pass_key` 落库（`redteam_webshell_add`）。
 - **一句话马（`?cmd=`）/ 自研马 / 内存马不算交付**：用户连不上、无法交互操作。只能作为**临时中转**（例如只为投递真正的马或建隧道），且必须在 note 里写明"临时中转，非交付入口"。
 - 哥斯拉 GUI 生成需要人在场；**优先用下面「无 GUI 生成冰蝎马」的方式**，一条命令就能产出可交付的马。
-
-## 互联网 RCE 后：WebShell 优先
-
-能写文件/上传时，**先落一个加密 WebShell**，再建隧道；它可复用、用户能直接连，是交付入口。决策顺序：
-
-```text
-RCE → 目标目录可写/可上传 → 冰蝎或哥斯拉加密马 → 实测用户能连 → 隧道
-    → 不可写 / WAF 拦上传 → Linux 写 SSH key；否则反弹 Shell
-    → 不能出网 → OOB 验证 + 其他路径
-```
-
-- 不要为了传马把 RCE 打成半成品；传不上去就记录原因，走 SSH key / 反弹 Shell 回退。
-- 上传后必须用**用户侧客户端**实际连一次（不是只看 HTTP 200），再 `redteam_webshell_add` 落库。
-- 每个目标只保留一个稳定入口；多余的马登记 `redteam_cleanup`。
 
 ## 无 GUI 生成冰蝎马（推荐，可脚本化）
 
@@ -86,7 +70,8 @@ DISPLAY=:10.0 java -jar $DSH_HOME/redteam/toolkit/Godzilla/godzilla.jar
    - `redteam_webshell_add`（url / **shell_type** / **pass_key** / privilege / secret_ref）
    - `redteam_access_add`（host/账号/方式 webshell/权限/会话引用）
    - `redteam_vuln_update` 把入口漏洞置为 `exploited`
-   - 上传请求与 shell 访问请求放进 `redteam_vuln_add` 的 `request`/`response`；记分时带 `command`/`result`
+   - `redteam_http_evidence_add` 保存上传请求与 shell 访问请求
+   - `redteam_chain_add`（stage=exploit/access）
 
 ## 命令执行（临时中转时才用）
 如果只需要一次性命令执行，优先直接用已有 RCE 或隧道，不必落一句话马：

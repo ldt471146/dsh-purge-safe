@@ -1,14 +1,10 @@
 ---
 name: active-scan
-description: 【侦察】主动端口与服务扫描（nmap/masscan），严格遵守授权范围
+description: 主动端口与服务扫描（nmap/masscan），严格遵守授权范围
 whenToUse: 需要确认资产存活与开放端口时
 role: recon
-category: 侦察
-tags: [external, scan, nmap]
 enabled: true
 ---
-
-> 只扫 **T0/T1**；T2 旁站/同 C 段需用户明确同意，T3 不碰。
 
 ## 前置检查
 1. 确认目标 CIDR 在授权范围内。
@@ -31,6 +27,8 @@ enabled: true
 | 目录爆破 | `ffuf`、`~/.dsh/redteam/toolkit/dirsearch/dirsearch` |
 | 隧道 | `~/.dsh/redteam/toolkit/suo5/suo5-linux-amd64`、`toolkit/chisel/chisel`、`toolkit/frp/{frpc,frps}` |
 | 完整清单 | `~/.dsh/redteam/toolkit/清单.md`、`技能工具清单.md` |
+
+`setup.sh` 不下载 dirsearch。`清单.md` 是说明文件，缺了不代表扫描器没装。Windows 与 ARM 构建也不在安装脚本里。
 
 ## 落库要求
 provenance = `active`，tool = `nmap`/`masscan`，记录 scan_run。

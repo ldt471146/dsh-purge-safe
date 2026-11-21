@@ -15,7 +15,7 @@
 
 ## 描述
 
-目标上已存在前人注册的用户名 ${@eval($a)}(uid=8916) 与 ${@eval($_)} (uid=8913)，11/8 字节，恰在 username 12 字节上限内。要让它们在 bank_sort.php 的 "${expr}" 里求值，需要 $a 或 $_ 是裸全局变量。InitGP()（require/target105.example.com:605-620）确实把 $_GET[$key]/$_POST[$key] 写进 $GLOBALS[$key]，且 target116.example.com:233 有 InitGP(array('u','a'))。但 target116.example.com:241 在同一层作用域无条件执行 unset($u,$a,$cookie_userads)，且该 InitGP 的触发条件极苛刻（$db_ads 为真、!$windid 未登录、strlen($_GET['a'])<16、Referer 不含本站 Host）。$_ 从未被任何 InitGP 装载。故 7.5 SP3 上两者都取不到值 → 死 payload。
+目标上已存在前人注册的用户名 ${@eval($a)}(uid=8916) 与 ${@eval($_)} (uid=8913)，11/8 字节，恰在 username 12 字节上限内。要让它们在 bank_sort.php 的 "${expr}" 里求值，需要 $a 或 $_ 是裸全局变量。InitGP()（require/common.php:605-620）确实把 $_GET[$key]/$_POST[$key] 写进 $GLOBALS[$key]，且 global.php:233 有 InitGP(array('u','a'))。但 global.php:241 在同一层作用域无条件执行 unset($u,$a,$cookie_userads)，且该 InitGP 的触发条件极苛刻（$db_ads 为真、!$windid 未登录、strlen($_GET['a'])<16、Referer 不含本站 Host）。$_ 从未被任何 InitGP 装载。故 7.5 SP3 上两者都取不到值 → 死 payload。
 
 ## 用法
 
@@ -25,7 +25,7 @@
   Host: example.com
   Cookie: <登录 cookie>
   Referer: 留空或非本站
-注意：a 的值里绝对不能出现右括号 )，否则 target116.example.com:59-61 的 CheckVar 会把它替换成 &#41; 造成 PHP 语法错误。同理 = < .. 也会被转义。
+注意：a 的值里绝对不能出现右括号 )，否则 global.php:59-61 的 CheckVar 会把它替换成 &#41; 造成 PHP 语法错误。同理 = < .. 也会被转义。
 判定：页面（bank 排行榜区域）出现 123 → $a 可控，RCE 成立；
       页面无 123 且无报错 → $a 被 unset 或从未装载，此路不通。
 升级利用（若 123 出现且 allow_url_fopen=On）：
@@ -37,7 +37,7 @@
 ## 正文
 
 ```
-// require/target105.example.com:605-620 —— PHPWind 的“register_globals 等价物”
+// require/common.php:605-620 —— PHPWind 的“register_globals 等价物”
 function InitGP($keys,$method=null,$cvtype=1){
 	!is_array($keys) && $keys = array($keys);
 	foreach ($keys as $key) {
@@ -54,7 +54,7 @@ function InitGP($keys,$method=null,$cvtype=1){
 	}
 }
 
-// target116.example.com:226-241 —— 唯一装载 'a' 的地方，且立刻 unset
+// global.php:226-241 —— 唯一装载 'a' 的地方，且立刻 unset
 if ($db_bbsifopen==2 && SCR!='login' && !defined('CK')) { ... }
 if ($db_ifsafecv && !$safecv && !defined('PRO') && strpos($db_safegroup,",$groupid,") !== false ) {
 	Showmsg('safecv_prompt');

