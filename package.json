@@ -1,6 +1,6 @@
 {
   "name": "dsh-purge-safe",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "DeepSeek Harness 破甲：让所有模型都能破甲，不同模型可换不同提示词；默认提示词面向国模「鸢码」。含 ARTEX 0.4.5 知识库与技能、版本可选自更新（面板点版本号即可换版本）。",
   "type": "module",
   "main": "lib/index.js",

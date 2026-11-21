@@ -5044,6 +5044,9 @@ body[data-ds-dark-theme] .dshp-rewind-item span{color:var(--dsw-alias-label-tert
 		function recoverComposerAfterIdle() {
 			try {
 				if (typeof document === "undefined") return;
+				/* 全局面板（Plugins / 智能体团队 等）本来就没有输入框，别把面板踢回会话 */
+				if (document.querySelector("[data-plugin-panel='true'], [data-plugin-panel]")) return;
+				if (document.querySelector("[data-slot='main'] section[aria-busy]")) return;
 				const seat = document.querySelector("[data-composer-card], [data-composer-seat]");
 				const box = seat && seat.querySelector("[contenteditable='true'], textarea");
 				if (seat && box) return;
